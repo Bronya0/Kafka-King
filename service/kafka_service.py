@@ -12,7 +12,7 @@ import traceback
 from collections import defaultdict
 from typing import Optional
 
-from kafka import KafkaAdminClient, KafkaClient, KafkaConsumer, TopicPartition
+from kafka import KafkaAdminClient, KafkaClient, KafkaConsumer, TopicPartition, KafkaProducer
 from kafka.admin import NewPartitions
 
 # 配置日志输出
@@ -123,3 +123,22 @@ class KafkaService:
         except Exception as e:
             traceback.print_exc()
         return False
+
+    def send_msgs(self, topic, msg: bytes, enable_gzip=False, msg_multiplier=1, msg_key=None):
+        """
+        send msgs发送消息
+        """
+        config = {
+            "bootstrap_servers": self.bootstrap_servers,
+        }
+        if enable_gzip:
+            config['compression_type'] = 'gzip'
+
+        p = KafkaProducer(**config)
+
+        for i in range(msg_multiplier):
+            p.send(topic=topic, value=msg, key=msg_key)
+        p.flush()
+        p.close()
+
+

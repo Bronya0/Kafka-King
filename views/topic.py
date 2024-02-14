@@ -17,6 +17,7 @@ class Topic(object):
 
     def __init__(self, KafkaService):
         # _lag_label: when select consumer groups, use it, that is 'loading...'
+        self.table_topics = []
         self._lag_label = None
         self.topic_offset = None
         self.topic_lag = None
@@ -32,7 +33,7 @@ class Topic(object):
 
         # 创建topic输入框
         self.create_topics_multi_text_input = ft.TextField(
-            helper_text="such as: topic1,1,1",
+            hint_text="such as: \ntopic1,1,1\ntopic2,1,1\ntopic3,1,1",
             multiline=True,
             dense=False,
             keyboard_type=ft.KeyboardType.MULTILINE,
@@ -58,9 +59,7 @@ class Topic(object):
 
         # 创建分区
         self.create_partition_text_input = ft.TextField(
-            label='extra partition nums',
-            helper_text="请注意，增加分区的操作可能会导致数据分布的不均匀，且不能在分区增加后立刻生效，"
-                        "可能需要一定时间来完成分配和平衡。另外，增加分区的数量受限于Kafka集群的具体配置，以及集群剩余的资源。",
+            label='extra partition nums'
         )
         self.create_partition_modal = ft.AlertDialog(
             modal=True,
@@ -92,7 +91,7 @@ class Topic(object):
         )
 
         # search datatable
-        self.search_text = ft.TextField(label='search', on_submit=self.search_table, autofocus=True, width=200,
+        self.search_text = ft.TextField(label='search', on_submit=self.search_table, width=200,
                                         height=30, text_size=14, content_padding=10)
 
         # topic list tap
@@ -138,6 +137,7 @@ class Topic(object):
             ],
             rows=rows,
         )
+        _topics = []
         for i, topic in enumerate(self.describe_topics):
             topic_name_ = topic.get('topic')
 
@@ -171,6 +171,8 @@ class Topic(object):
                     ],
                 )
             )
+            _topics.append(topic_name_)
+        self.table_topics = _topics
 
         # 消费组初始化
         self.topic_groups_dd.options = [ft.dropdown.Option(text=i) for i in self.KafkaService.get_groups()]
@@ -424,7 +426,8 @@ class Topic(object):
         self.init()
         e.page.update()
 
-        topics = self.describe_topics_map.keys()
+        topics = self.table_topics
+        print(topics)
         # topic_offset[topic][partition] = [last_committed, end_offsets, _lag]
         # topic_lag[topic] = _lag
         self.topic_offset, self.topic_lag, = self.KafkaService.get_topic_offsets(topics, group_id)
