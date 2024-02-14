@@ -8,11 +8,12 @@
 """
 
 import logging
+import time
 import traceback
 from collections import defaultdict
 from typing import Optional
 
-from kafka import KafkaAdminClient, KafkaClient, KafkaConsumer, TopicPartition, KafkaProducer
+from kafka import KafkaAdminClient, KafkaClient, KafkaConsumer, TopicPartition, KafkaProducer, OffsetAndMetadata
 from kafka.admin import NewPartitions
 
 # 配置日志输出
@@ -141,4 +142,33 @@ class KafkaService:
         p.flush()
         p.close()
 
+    def fetch_msgs(self, topic, group_id, size=10, timeout=10):
+        """
+        拉取消息
+        """
+        consumer = KafkaConsumer(topic,
+                                 group_id=group_id,
+                                 enable_auto_commit=False,
+                                 auto_offset_reset="earliest",
+                                 bootstrap_servers=self.bootstrap_servers,
+                                 max_poll_records=size,
 
+                                 )
+
+        # 计数器
+        n = 0
+        res = ""
+        st = time.time()
+        for message in consumer:
+            res += "topic: {}, partition: {}, offset: {}, key: {}, value: {}\n".format(message.topic, message.partition,
+                                                                                       message.offset,
+                                                                                       message.key.decode('utf-8'),
+                                                                                       message.value.decode('utf-8'))
+            n += 1
+
+            if n >= size or time.time()-st >= timeout:
+                break
+
+        consumer.commit()
+        consumer.close()
+        return res

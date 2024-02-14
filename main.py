@@ -230,7 +230,7 @@ def main(page: ft.Page):
         ft.Row(
             [
                 Navigation,  # 侧边
-                ft.VerticalDivider(width=1),  #竖线
+                ft.VerticalDivider(width=1),  # 竖线
                 body  # 内容
             ],
             expand=True,

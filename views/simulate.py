@@ -18,7 +18,14 @@ from common import dd_common_configs, S_Button, open_snack_bar
 class Simulate(object):
 
     def __init__(self, KafkaService):
+        self.describe_topics_map = None
+        self.describe_topics = None
         self.KafkaService = KafkaService
+        self.__kafka_king_group = "__kafka_king_group"
+        self.kafka_fetch_timeout = 10
+
+        if not self.KafkaService.kac:
+            raise Exception("请先选择一个kafka连接！")
 
         # producer tab's topic Dropdown
         self.producer_topic_dd = ft.Dropdown(
@@ -44,16 +51,17 @@ class Simulate(object):
         )
 
         # 消息倍数
-        self.producer_slider = ft.Slider(min=1, max=10000,divisions=20,  label="×{value}", value=1)
+        self.producer_slider = ft.Slider(min=1, max=10000, divisions=20, label="×{value}", value=1)
 
         # send button
         self.producer_send_button = S_Button(
-                            text="Send Message",
-                            on_click=self.click_send_msg,
-                        )
+            text="Send Message",
+            on_click=self.click_send_msg,
+        )
 
         # producer tab's enable compress switch
-        self.producer_compress_switch = ft.Switch(label="开启gzip压缩：", label_position=ft.LabelPosition.LEFT, value=False)
+        self.producer_compress_switch = ft.Switch(label="开启gzip压缩：", label_position=ft.LabelPosition.LEFT,
+                                                  value=False)
 
         # producer tap
         self.producer_tab = ft.Tab(
@@ -66,29 +74,31 @@ class Simulate(object):
             **dd_common_configs
         )
 
-        # consumer groups Dropdown
-        self.consumer_groups_dd = ft.Dropdown(
-            label="consumer groups",
-            **dd_common_configs
-        )
-
-        # consumer groups input
-        self.consumer_groups_input = ft.TextField(
-            label="new consumer group",
+        # consumer fetch size
+        self.consumer_fetch_size_input = ft.TextField(
+            label="fetch size",
+            value="10",
+            keyboard_type=ft.KeyboardType.NUMBER,
             width=200, height=30, text_size=14, content_padding=10
         )
 
         # consumer groups input
-        self.consumer_groups_input = ft.TextField(
-            label="new consumer group",
-            width=200, height=30, text_size=14, content_padding=10
-        )
+        # self.consumer_groups_input = ft.TextField(
+        #     label="new consumer group",
+        #     width=200, height=30, text_size=14, content_padding=10
+        # )
 
         # consumer fetch msg button
         self.consumer_fetch_msg_button = S_Button(
-                            text="Fetch Message",
-                            on_click=self.click_fetch_msg,
-                        )
+            text="Fetch Message",
+            on_click=self.click_fetch_msg,
+        )
+
+        # consumer fetch msg text
+        self.consumer_fetch_msg_body = ft.Text(
+            selectable=True,
+            size=14,
+        )
 
         # consumer tap
         self.consumer_tab = ft.Tab(
@@ -124,7 +134,7 @@ class Simulate(object):
         self.consumer_topic_dd.options = [ft.dropdown.Option(text=i) for i in _topic_lst]
 
         # 消费组初始化
-        self.consumer_groups_dd.options = [ft.dropdown.Option(text=i) for i in self.KafkaService.get_groups()]
+        # self.consumer_groups_dd.options = [ft.dropdown.Option(text=i) for i in self.KafkaService.get_groups()]
 
         # init producer tab
         self.producer_tab.content = ft.Container(
@@ -155,10 +165,15 @@ class Simulate(object):
             content=ft.Column([
                 ft.Row([
                     self.consumer_topic_dd,
-                    self.consumer_groups_dd,
-                    ft.Text(" OR "),
-                    self.consumer_groups_input,
+                    self.consumer_fetch_size_input,
+                    # self.consumer_groups_dd,
+                    # ft.Text(" OR "),
+                    # self.consumer_groups_input,
+                    ft.Text(f"Group:  {self.__kafka_king_group}"),
+                    ft.Text(f"FetchTimeout:  {self.kafka_fetch_timeout}")
                 ]),
+                self.consumer_fetch_msg_button,
+                self.consumer_fetch_msg_body,
             ],
 
                 scroll=ft.ScrollMode.ALWAYS,
@@ -199,4 +214,45 @@ class Simulate(object):
         """
         根据topic 和 group、size、拉取消息
         """
-        pass
+        err = None
+        topic = self.consumer_topic_dd.value
+        if topic is None:
+            err = "请选择topic"
+        group = self.__kafka_king_group
+        size = self.consumer_fetch_size_input.value
+        try:
+            size = int(size)
+            if size <= 0:
+                err = "size需要大于0"
+            if size > 10000:
+                err = "size不能大于10000"
+        except:
+            err = "请输入正确的size，整数类型"
+        if err:
+            self.consumer_fetch_msg_body.value = err
+            e.page.update()
+            return
+
+        self.consumer_fetch_msg_button.disabled = True
+        self.consumer_fetch_msg_body.value = "fetching..."
+        e.page.update()
+
+        print(topic, group, size)
+
+        st = time.time()
+        res = "拉取成功"
+        msgs = "拉取失败"
+
+        try:
+            msgs = self.KafkaService.fetch_msgs(topic=topic, group_id=group, size=size,
+                                                timeout=self.kafka_fetch_timeout)
+        except Exception as e_:
+            traceback.print_exc()
+            res = f"拉取失败：{e_}"
+        self.consumer_fetch_msg_body.value = msgs
+
+        et = time.time() - st
+        res += f"\n拉取耗时{et} s"
+        print(res)
+        self.consumer_fetch_msg_button.disabled = False
+        open_snack_bar(e.page, e.page.snack_bar, res)
