@@ -1,0 +1,3 @@
+flet>=0.3.2
+python-dotenv>=0.20.0
+kafka-python==2.0.2
