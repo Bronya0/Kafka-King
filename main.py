@@ -13,7 +13,6 @@ def init_page(page: ft.Page):
     page.window_min_width = 800
     page.window_min_height = 600
 
-
 def main(page: ft.Page):
 
     init_page(page)
