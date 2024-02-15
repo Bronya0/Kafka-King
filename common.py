@@ -8,11 +8,15 @@
 """
 import flet
 
+# 假设有一个全局的存储连接信息的变量
+prefix = "__kafka_connects__"
+
 
 def S_Text(value, **kwargs):
     return flet.Text(
         selectable=True,
         value=value,
+        tooltip=value,
         **kwargs
     )
 
@@ -25,7 +29,6 @@ def S_Button(**kwargs):
                 flet.MaterialState.DEFAULT: flet.RoundedRectangleBorder(radius=10),
             },
         ),
-
         **kwargs,
     )
 

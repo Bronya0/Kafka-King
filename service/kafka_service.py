@@ -14,7 +14,8 @@ from collections import defaultdict
 from typing import Optional
 
 from kafka import KafkaAdminClient, KafkaClient, KafkaConsumer, TopicPartition, KafkaProducer, OffsetAndMetadata
-from kafka.admin import NewPartitions
+from kafka.admin import NewPartitions, ConfigResource, ConfigResourceType
+from kafka.protocol.admin import DescribeConfigsResponse_v2
 
 # 配置日志输出
 logging.basicConfig(level=logging.INFO)
@@ -160,15 +161,37 @@ class KafkaService:
         res = ""
         st = time.time()
         for message in consumer:
-            res += "topic: {}, partition: {}, offset: {}, key: {}, value: {}\n".format(message.topic, message.partition,
-                                                                                       message.offset,
-                                                                                       message.key.decode('utf-8'),
-                                                                                       message.value.decode('utf-8'))
+            res += "{}: topic: {}, partition: {}, key: {}, value: {}\n".format(message.offset, message.topic,
+                                                                               message.partition,
+
+                                                                               message.key.decode('utf-8'),
+                                                                               message.value.decode(
+                                                                                   'utf-8'))
             n += 1
 
-            if n >= size or time.time()-st >= timeout:
+            if n >= size or time.time() - st >= timeout:
                 break
 
         consumer.commit()
         consumer.close()
         return res
+
+    def get_configs(self, res_type, name):
+        """
+        获取topic或broker的配置
+        """
+        name = str(name)
+        if res_type == "topic":
+            config_resource = ConfigResource(ConfigResourceType.TOPIC, name)
+        elif res_type == "broker":
+            config_resource = ConfigResource(ConfigResourceType.BROKER, name)
+        else:
+            return
+        res_lst = self.kac.describe_configs([config_resource])
+        res: DescribeConfigsResponse_v2 = res_lst[0]
+        configs = res.to_object()['resources'][0]['config_entries']
+        configs = sorted(configs, key=lambda item: item['config_names'])
+        return configs
+
+
+kafka_service = KafkaService()

@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*-coding:utf-8 -*-
+
 import flet as ft
+from flet_core import ControlEvent
 
 from common import S_Text
+from service.kafka_service import kafka_service
 
 
 class Broker(object):
@@ -14,15 +17,15 @@ class Broker(object):
     cluster_id = 'cluster_id'
     controller_id = 'controller_id'
     version = 'api_version'
+    detail_configs = 'detail_configs'
 
-    def __init__(self, ks):
+    def __init__(self):
         self.base_info = None
         self.api_version = None
         self.meta = None
         self.cluster_table = None
-        self.KafkaService = ks
 
-        if not self.KafkaService.kac:
+        if not kafka_service.kac:
             raise Exception("请先选择一个kafka连接！")
 
         # 先加载框架
@@ -34,11 +37,16 @@ class Broker(object):
             text='集群节点列表', content=ft.Container()
         )
 
+        self.config_tab = ft.Tab(
+            text='Broker配置', content=ft.Container()
+        )
+
         self.tab = ft.Tabs(
             animation_duration=300,
             tabs=[
+                self.node_tab,
                 self.base_info_tab,
-                self.node_tab
+                self.config_tab,
             ],
             expand=1,
         )
@@ -48,9 +56,9 @@ class Broker(object):
         ]
 
     def init(self):
-        if not self.KafkaService.kac:
+        if not kafka_service.kac:
             return "请先选择一个kafka连接！"
-        self.meta, self.api_version = self.KafkaService.get_brokers()
+        self.meta, self.api_version = kafka_service.get_brokers()
         self.base_info = ft.DataTable(
             columns=[
                 ft.DataColumn(S_Text(f"{self.throttle_time_ms}")),
@@ -67,11 +75,7 @@ class Broker(object):
                         ft.DataCell(S_Text(f"{self.api_version}")),
                     ],
                 )
-            ],
-            border=ft.border.all(1),
-            border_radius=1,
-            vertical_lines=ft.border.BorderSide(1),
-            horizontal_lines=ft.border.BorderSide(1),
+            ]
 
         )
 
@@ -81,6 +85,7 @@ class Broker(object):
                 ft.DataColumn(S_Text("host")),
                 ft.DataColumn(S_Text("port")),
                 ft.DataColumn(S_Text("机架感知")),
+                ft.DataColumn(S_Text("查看配置")),
             ],
             rows=[
                 ft.DataRow(
@@ -89,14 +94,12 @@ class Broker(object):
                         ft.DataCell(S_Text(broker['host'])),
                         ft.DataCell(S_Text(broker['port'])),
                         ft.DataCell(S_Text(broker['rack'])),
+                        ft.DataCell(ft.IconButton(icon=ft.icons.CONSTRUCTION, data=broker['node_id'],
+                                                  on_click=self.show_config_tab)),
                     ],
                 )
                 for broker in self.meta['brokers']
             ],
-            border=ft.border.all(1),
-            border_radius=1,
-            vertical_lines=ft.border.BorderSide(1),
-            horizontal_lines=ft.border.BorderSide(1),
 
         )
 
@@ -108,4 +111,35 @@ class Broker(object):
             self.cluster_table, alignment=ft.alignment.top_left, padding=10
         )
 
+    def show_config_tab(self, e: ControlEvent):
+        """
+        打开侧边栏
+        """
+        e.control.disabled = True
+        broker_id = e.control.data
+        configs = kafka_service.get_configs(res_type='broker', name=broker_id)
 
+        md_text = """
+        | 配置名 | 配置值 | 只读 |\n|-|-|-|\n"""
+        for config in configs:
+            config_names = f"**{config['config_names']}**"
+            config_value = f"{config['config_value']}" if config['config_value'] is not None else ""
+            read_only = True if config['read_only'] is True else ""
+            md_text += f"| {config_names} | {config_value} | {read_only} |\n"
+        self.config_tab.content = ft.Container(
+            ft.Column(
+                [
+                    ft.Markdown(
+                        value=f"""{md_text}""",
+                        extension_set=ft.MarkdownExtensionSet.GITHUB_FLAVORED,
+                        selectable=True
+                    ),
+                ],
+                scroll=ft.ScrollMode.ALWAYS
+            ),
+            padding=10
+        )
+
+        self.tab.selected_index = 2
+        e.control.disabled = False
+        e.page.update()

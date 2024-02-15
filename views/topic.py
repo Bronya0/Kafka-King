@@ -8,6 +8,7 @@ from kafka import KafkaAdminClient
 from kafka.admin import NewTopic
 
 from common import S_Text, open_snack_bar, S_Button, dd_common_configs
+from service.kafka_service import kafka_service
 
 
 class Topic(object):
@@ -15,7 +16,7 @@ class Topic(object):
     topic页的组件
     """
 
-    def __init__(self, KafkaService):
+    def __init__(self):
         # _lag_label: when select consumer groups, use it, that is 'loading...'
         self.table_topics = []
         self._lag_label = None
@@ -26,9 +27,8 @@ class Topic(object):
         self.partition_table = None
         self.describe_topics = None
         self.topic_table = None
-        self.KafkaService = KafkaService
 
-        if not self.KafkaService.kac:
+        if not kafka_service.kac:
             raise Exception("请先选择一个kafka连接！")
 
         # 创建topic输入框
@@ -76,6 +76,9 @@ class Topic(object):
             actions_alignment=ft.MainAxisAlignment.CENTER,
         )
 
+        # refresh button
+        self.refresh_button = ft.IconButton(icon=ft.icons.REFRESH_OUTLINED, on_click=self.topic_page_refresh)
+
         # consumer groups Dropdown
         self.topic_groups_dd = ft.Dropdown(
             label="consumer groups",
@@ -104,12 +107,18 @@ class Topic(object):
             icon=ft.icons.WAVES_OUTLINED, text="Partition", content=ft.Container()
         )
 
+        # config tap
+        self.config_tab = ft.Tab(
+            text='Topic配置', content=ft.Container()
+        )
+
         # all in one
         self.tab = ft.Tabs(
             animation_duration=300,
             tabs=[
                 self.topic_tab,
                 self.partition_tab,
+                self.config_tab,
             ],
             expand=1,
         )
@@ -119,9 +128,9 @@ class Topic(object):
         ]
 
     def init(self):
-        if not self.KafkaService.kac:
+        if not kafka_service.kac:
             return "请先选择一个kafka连接！"
-        self.describe_topics = self.KafkaService.get_topics()
+        self.describe_topics = kafka_service.get_topics()
         self.describe_topics_map = {i['topic']: i for i in self.describe_topics}
 
         # init topic table data
@@ -130,10 +139,10 @@ class Topic(object):
             columns=[
                 ft.DataColumn(S_Text("ID")),
                 ft.DataColumn(S_Text("Topic")),
-                ft.DataColumn(S_Text("是否内置")),
                 ft.DataColumn(S_Text("分区数")),
                 ft.DataColumn(S_Text("积压量")),
-                ft.DataColumn(S_Text("操作")),
+                ft.DataColumn(S_Text("查看配置")),
+                ft.DataColumn(S_Text("删除")),
             ],
             rows=rows,
         )
@@ -157,9 +166,10 @@ class Topic(object):
                             color="#DA3A66",
                             on_click=self.click_topic_button,
                         )),
-                        ft.DataCell(S_Text(topic.get('is_internal'))),
                         ft.DataCell(S_Text(len(topic.get('partitions')))),
                         ft.DataCell(S_Text(lag, color='#315EFB')),
+                        ft.DataCell(
+                            ft.IconButton(icon=ft.icons.CONSTRUCTION, data=topic_name_, on_click=self.show_config_tab)),
                         ft.DataCell(
                             ft.IconButton(
                                 icon=ft.icons.DELETE_FOREVER_OUTLINED,
@@ -167,7 +177,7 @@ class Topic(object):
                                 data=topic_name_,
                                 tooltip=f"删除{topic_name_}",
                             )
-                        ) if not topic.get('is_internal') else ft.DataCell(ft.Text())
+                        ) if not topic.get('is_internal') else ft.DataCell(ft.Text("not allowed"))
                     ],
                 )
             )
@@ -175,7 +185,7 @@ class Topic(object):
         self.table_topics = _topics
 
         # 消费组初始化
-        self.topic_groups_dd.options = [ft.dropdown.Option(text=i) for i in self.KafkaService.get_groups()]
+        self.topic_groups_dd.options = [ft.dropdown.Option(text=i) for i in kafka_service.get_groups()]
 
         # init topic tab
         self.topic_tab.content = ft.Container(
@@ -185,6 +195,7 @@ class Topic(object):
                     self.search_text,
                     S_Button(text="Create Topic", on_click=self.open_create_topic_dlg_modal,
                              tooltip="批量输入要创建的topic及参数，一行一个", ),
+                    self.refresh_button
                 ]),
                 self.topic_table,
             ],
@@ -345,7 +356,7 @@ class Topic(object):
             msg = str(e_)
         else:
             try:
-                res = self.KafkaService.kac.create_topics(new_topics=list_, validate_only=False, timeout_ms=60 * 1000)
+                res = kafka_service.kac.create_topics(new_topics=list_, validate_only=False, timeout_ms=60 * 1000)
                 msg = f"{len(lines)}个主题创建成功"
                 self.create_topics_multi_text_input.value = None
             except Exception as _e:
@@ -362,7 +373,7 @@ class Topic(object):
         extra_num = int(extra_num)
         topic = self.partition_topic_dd.value
         old_partition_num = len(self.describe_topics_map[topic]['partitions'])
-        res = self.KafkaService.create_partitions(topic, old_partition_num, extra_num)
+        res = kafka_service.create_partitions(topic, old_partition_num, extra_num)
         msg = f"Topic：{topic} 成功创建 {extra_num} 个分区，当前总共 {old_partition_num + extra_num} 个"
         if not res:
             msg = "分区创建失败，请尝试减小分区数量"
@@ -405,7 +416,7 @@ class Topic(object):
     def delete_topic(self, topic_name):
 
         try:
-            kac: KafkaAdminClient = self.KafkaService.kac
+            kac: KafkaAdminClient = kafka_service.kac
             res = kac.delete_topics([topic_name])
             print(res)
             msg = f"topic：{topic_name}删除成功"
@@ -430,7 +441,7 @@ class Topic(object):
         print(topics)
         # topic_offset[topic][partition] = [last_committed, end_offsets, _lag]
         # topic_lag[topic] = _lag
-        self.topic_offset, self.topic_lag, = self.KafkaService.get_topic_offsets(topics, group_id)
+        self.topic_offset, self.topic_lag, = kafka_service.get_topic_offsets(topics, group_id)
         self.init()
         e.page.update()
 
@@ -441,4 +452,41 @@ class Topic(object):
         :return:
         """
         self.init()
+        e.page.update()
+
+    def topic_page_refresh(self, e):
+        self.init()
+        self.groups_dd_onchange(e)
+        e.page.update()
+
+    def show_config_tab(self, e: ControlEvent):
+        """
+        打开侧边栏
+        """
+        e.control.disabled = True
+        topic = e.control.data
+        configs = kafka_service.get_configs(res_type='topic', name=topic)
+
+        md_text = """
+        | 配置名 | 配置值 |\n|-|-|\n"""
+        for config in configs:
+            config_names = f"**{config['config_names']}**"
+            config_value = f"{config['config_value']}" if config['config_value'] is not None else ""
+            md_text += f"| {config_names} | {config_value} |\n"
+        self.config_tab.content = ft.Container(
+            ft.Column(
+                [
+                    ft.Markdown(
+                        value=f"""{md_text}""",
+                        extension_set=ft.MarkdownExtensionSet.GITHUB_FLAVORED,
+                        selectable=True
+                    ),
+                ],
+                scroll=ft.ScrollMode.ALWAYS
+            ),
+            padding=10
+        )
+
+        self.tab.selected_index = 2
+        e.control.disabled = False
         e.page.update()

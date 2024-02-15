@@ -13,18 +13,18 @@ import flet as ft
 from flet_core import ControlEvent
 
 from common import dd_common_configs, S_Button, open_snack_bar
+from service.kafka_service import kafka_service
 
 
 class Simulate(object):
 
-    def __init__(self, KafkaService):
+    def __init__(self):
         self.describe_topics_map = None
         self.describe_topics = None
-        self.KafkaService = KafkaService
         self.__kafka_king_group = "__kafka_king_group"
         self.kafka_fetch_timeout = 10
 
-        if not self.KafkaService.kac:
+        if not kafka_service.kac:
             raise Exception("请先选择一个kafka连接！")
 
         # producer tab's topic Dropdown
@@ -120,7 +120,7 @@ class Simulate(object):
         ]
 
     def init(self):
-        self.describe_topics = self.KafkaService.get_topics()
+        self.describe_topics = kafka_service.get_topics()
         self.describe_topics_map = {i['topic']: i for i in self.describe_topics}
 
         _topic_lst = []
@@ -134,7 +134,7 @@ class Simulate(object):
         self.consumer_topic_dd.options = [ft.dropdown.Option(text=i) for i in _topic_lst]
 
         # 消费组初始化
-        # self.consumer_groups_dd.options = [ft.dropdown.Option(text=i) for i in self.KafkaService.get_groups()]
+        # self.consumer_groups_dd.options = [ft.dropdown.Option(text=i) for i in kafka_service.get_groups()]
 
         # init producer tab
         self.producer_tab.content = ft.Container(
@@ -196,7 +196,7 @@ class Simulate(object):
         st = time.time()
         res = "发送成功"
         try:
-            self.KafkaService.send_msgs(
+            kafka_service.send_msgs(
                 topic=topic,
                 msg=msg.encode('utf-8'),
                 enable_gzip=enable_gzip,
@@ -244,8 +244,8 @@ class Simulate(object):
         msgs = "拉取失败"
 
         try:
-            msgs = self.KafkaService.fetch_msgs(topic=topic, group_id=group, size=size,
-                                                timeout=self.kafka_fetch_timeout)
+            msgs = kafka_service.fetch_msgs(topic=topic, group_id=group, size=size,
+                                            timeout=self.kafka_fetch_timeout)
         except Exception as e_:
             traceback.print_exc()
             res = f"拉取失败：{e_}"

@@ -10,14 +10,16 @@ class Monitor(object):
     """
 
     def __init__(self):
-
         self.controls = [
             Column(
                 [
                     Row(
                         [
-                         ]
+                        ]
                     )
                 ],
             )
         ]
+
+    def init(self):
+        pass

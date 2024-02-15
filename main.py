@@ -1,10 +1,10 @@
 import traceback
 
 import flet as ft
-from flet_core import Dropdown, Icon, IconButton, ElevatedButton, TextField, Theme, ProgressBar, NavigationBar
+from flet_core import TextField
 
-from common import S_Text
-from service.kafka_service import KafkaService
+from common import S_Text, prefix
+from service.kafka_service import kafka_service
 from views.init import views_index_map
 
 
@@ -14,19 +14,9 @@ def init_page(page: ft.Page):
     page.window_min_height = 600
 
 
-# 假设有一个全局的存储连接信息的变量
-prefix = "__kafka_connects__"
-
-
 def main(page: ft.Page):
 
-    kafka_service = KafkaService()
-
     init_page(page)
-
-    def check_item_clicked(e):
-        e.control.checked = not e.control.checked
-        page.update()
 
     def test_connect(e):
         print(kafka_input.value)
@@ -94,11 +84,11 @@ def main(page: ft.Page):
 
         # 先加载框架主体
         try:
-            view = view(kafka_service)
+            view = view()
             body.controls = view.controls
         except Exception as e:
             traceback.print_exc()
-            body.controls = [S_Text(value=str(e))]
+            body.controls = [S_Text(value=str(e), size=24)]
             page.update()
             return
 
@@ -110,10 +100,10 @@ def main(page: ft.Page):
         try:
             err = view.init()
             if err:
-                body.controls = [S_Text(value=str(err))]
+                body.controls = [S_Text(value=str(err), size=24)]
         except Exception as e:
             traceback.print_exc()
-            body.controls = [S_Text(value=str(e))]
+            body.controls = [S_Text(value=str(e), size=24)]
             page.update()
             return
 
@@ -192,6 +182,11 @@ def main(page: ft.Page):
                 icon=ft.icons.SETTINGS_OUTLINED,
                 selected_icon_content=ft.Icon(ft.icons.SETTINGS_SUGGEST_OUTLINED),
                 label_content=S_Text("Settings"),
+            ),
+            ft.NavigationRailDestination(
+                icon=ft.icons.AUTO_GRAPH_OUTLINED,
+                selected_icon_content=ft.Icon(ft.icons.AUTO_GRAPH),
+                label_content=S_Text("Suggest"),
             ),
         ],
         on_change=refresh_body,

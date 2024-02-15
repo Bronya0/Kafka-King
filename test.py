@@ -4,6 +4,7 @@ import datetime
 import json
 
 from kafka import KafkaProducer, KafkaAdminClient, KafkaClient, KafkaConsumer
+from kafka.admin import ConfigResource, ConfigResourceType
 from kafka.cluster import ClusterMetadata
 from kafka.protocol.admin import DescribeConfigsResponse
 from kafka.protocol.api import Response
@@ -56,15 +57,18 @@ c = KafkaAdminClient(bootstrap_servers=bootstrap_servers)
 #
 # 获取所有主题列表
 
+# config_resource = ConfigResource(ConfigResourceType.TOPIC, 'test')
+config_resource = ConfigResource(ConfigResourceType.BROKER, '1')
+res_ = c.describe_configs([config_resource])[0]
+print(json.dumps(res_.to_object()))
 
-# print(c.describe_configs())
 # print(c._get_cluster_metadata())
 # print(c.describe_cluster())
 # print(json.dumps(c.describe_topics()))
-print(json.dumps(c.list_consumer_groups()))  # [["query-gateway-group", "consumer"],
-print(c.list_consumer_group_offsets(group_id='group1'))  # TopicPartition字典：k：topic+分区，v：end_offset
-group_ids = [i[0] for i in c.list_consumer_groups()]
-print(c.describe_consumer_groups(group_ids=group_ids))   # 查看多个消费者组的state、protocol、members（MemberInformation\client_id\client_host）
+# print(json.dumps(c.list_consumer_groups()))  # [["query-gateway-group", "consumer"],
+# print(c.list_consumer_group_offsets(group_id='group1'))  # TopicPartition字典：k：topic+分区，v：end_offset
+# group_ids = [i[0] for i in c.list_consumer_groups()]
+# print(c.describe_consumer_groups(group_ids=group_ids))   # 查看多个消费者组的state、protocol、members（MemberInformation\client_id\client_host）
 
 # print(c.describe_configs())
 # print(c.describe_acls())
