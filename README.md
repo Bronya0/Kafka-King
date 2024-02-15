@@ -14,5 +14,12 @@
 # 快速开始
 当前还在开发中，稳定版本发布后可以在右侧 发行版里看到。
 
+
+# 构建
+
+pip install -r requirements.txt -i https://pypi.douban.com/simple
+flet pack -i assets/icon.png -name kafka-king
+
+
 # License
 Apache-2.0 license
