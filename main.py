@@ -110,9 +110,18 @@ def main(page: ft.Page):
         view.controls.pop()
         page.update()
 
+    def change_theme(e):
+        change = {
+            ft.ThemeMode.DARK: ft.ThemeMode.LIGHT,
+            ft.ThemeMode.LIGHT: ft.ThemeMode.DARK,
+            ft.ThemeMode.SYSTEM: ft.ThemeMode.DARK
+        }
+        page.theme_mode = change[page.theme_mode]
+        page.update()
+
     # 创建输入表单控件
-    conn_name_input = TextField(label="连接名", hint_text="例如：本地环境", height=40, icon=ft.icons.LABEL)
-    kafka_input = TextField(label="Kafka地址", hint_text="例如：127.0.0.1:9092", height=40, icon=ft.icons.LINK_OFF)
+    conn_name_input = TextField(label="连接名", hint_text="例如：本地环境", height=40)
+    kafka_input = TextField(label="Kafka地址", hint_text="例如：127.0.0.1:9092", height=40)
     connect_input_column = ft.Column([
         conn_name_input,
         kafka_input,
@@ -209,11 +218,11 @@ def main(page: ft.Page):
         bgcolor=ft.colors.SURFACE_VARIANT,
         actions=[
             connect_dd,
-            ft.IconButton(ft.icons.ADD, on_click=open_dlg_modal),
-            ft.IconButton(ft.icons.WB_SUNNY_OUTLINED),
-            ft.IconButton(ft.icons.TRANSLATE),
-            ft.IconButton(ft.icons.TIPS_AND_UPDATES_OUTLINED),
-            ft.IconButton(ft.icons.STAR_RATE_OUTLINED),
+            ft.IconButton(ft.icons.ADD, on_click=open_dlg_modal),  # add link
+            ft.IconButton(ft.icons.WB_SUNNY_OUTLINED, on_click=change_theme),  # theme
+            # ft.IconButton(ft.icons.TRANSLATE),
+            # ft.IconButton(ft.icons.TIPS_AND_UPDATES_OUTLINED),
+            # ft.IconButton(ft.icons.STAR_RATE_OUTLINED),
         ],
     )
 
