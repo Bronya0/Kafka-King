@@ -15,6 +15,8 @@ class Monitor(object):
                 [
                     Row(
                         [
+                            flet.Text("敬请期待")
+
                         ]
                     )
                 ],

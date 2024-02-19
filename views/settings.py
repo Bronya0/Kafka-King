@@ -15,6 +15,7 @@ class Settings(object):
                 [
                     Row(
                         [
+                            flet.Text("敬请期待")
                         ]
                     )
                 ],

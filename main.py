@@ -143,7 +143,7 @@ def main(page: ft.Page):
         alignment=ft.alignment.center_left,
         dense=True,
         content_padding=10,
-        focused_bgcolor='#ff0000'
+        focused_bgcolor='#ff0000',
     )
 
     # 侧边导航栏 NavigationRail
