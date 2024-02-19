@@ -26,7 +26,7 @@ class Broker(object):
         self.cluster_table = None
 
         if not kafka_service.kac:
-            raise Exception("请先选择一个kafka连接！")
+            raise Exception("请先选择一个可用的kafka连接！")
 
         # 先加载框架
         self.base_info_tab = ft.Tab(
@@ -57,7 +57,7 @@ class Broker(object):
 
     def init(self):
         if not kafka_service.kac:
-            return "请先选择一个kafka连接！"
+            return "请先选择一个可用的kafka连接！"
         self.meta, self.api_version = kafka_service.get_brokers()
         self.base_info = ft.DataTable(
             columns=[

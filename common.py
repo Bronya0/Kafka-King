@@ -54,3 +54,4 @@ dd_common_configs = {
     "content_padding": 10,
     "bgcolor": '#F0F4FA',
 }
+

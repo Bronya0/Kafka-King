@@ -25,7 +25,7 @@ class Simulate(object):
         self.kafka_fetch_timeout = 10
 
         if not kafka_service.kac:
-            raise Exception("请先选择一个kafka连接！")
+            raise Exception("请先选择一个可用的kafka连接！")
 
         # producer tab's topic Dropdown
         self.producer_topic_dd = ft.Dropdown(

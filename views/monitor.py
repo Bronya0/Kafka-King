@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*-coding:utf-8 -*-
-import flet
-from flet_core import Column, Row
+from flet_core import Column, Row, Text
 
 
 class Monitor(object):
@@ -15,7 +14,7 @@ class Monitor(object):
                 [
                     Row(
                         [
-                            flet.Text("敬请期待")
+                            Text("敬请期待")
 
                         ]
                     )

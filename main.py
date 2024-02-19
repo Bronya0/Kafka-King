@@ -61,12 +61,20 @@ def main(page: ft.Page):
         选中下拉后的操作：刷新kafka连接信息
         connect_dd.value实际上就是dropdown.Option里面的key
         """
+        # 进度条 loading
+        page.controls.append(ft.ProgressBar())
+        page.update()
+
         key = connect_dd.value
         connect_dd.label = key[len(prefix):]
         bootstrap_servers = page.client_storage.get(key)
         print(bootstrap_servers)
-        kafka_service.set_bootstrap_servers(bootstrap_servers)
-        refresh_body()
+        try:
+            kafka_service.set_bootstrap_servers(bootstrap_servers)
+            refresh_body()
+        except Exception as e:
+            body.controls = [S_Text(value=f"连接失败：{str(e)}", size=24)]
+            page.controls.pop()
         page.update()
 
     def refresh_body(e=None):

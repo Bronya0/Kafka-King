@@ -29,7 +29,7 @@ class Topic(object):
         self.topic_table = None
 
         if not kafka_service.kac:
-            raise Exception("请先选择一个kafka连接！")
+            raise Exception("请先选择一个可用的kafka连接！")
 
         # 创建topic输入框
         self.create_topics_multi_text_input = ft.TextField(
@@ -129,7 +129,7 @@ class Topic(object):
 
     def init(self):
         if not kafka_service.kac:
-            return "请先选择一个kafka连接！"
+            return "请先选择一个可用的kafka连接！"
         self.describe_topics = kafka_service.get_topics()
         self.describe_topics_map = {i['topic']: i for i in self.describe_topics}
 
