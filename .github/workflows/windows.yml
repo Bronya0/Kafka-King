@@ -41,24 +41,13 @@ jobs:
         pip install -r requirements.txt
         flet pack main.py -i assets/icon.ico  -n kafka-king
 
-    - name: Create GitHub Draft Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ github.sha }}
-        release_name: Release v${{ github.sha }}
-        draft: true
-        prerelease: false
-
     - name: Upload Release Asset
       id: upload-release-asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }} # 这会自动获取到draft release的上传链接
+        upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ github.event.release.id }}/assets
         asset_path: ./dist/kafka-king.exe
-        asset_name: kafka-king_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.exe # 或者使用您需要的版本和平台标记
-        content_type: application/x-msdownload # 对于.exe文件
+        asset_name: kafka-king_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.exe # 替换成适当的版本和平台标记
+        content_type: application/octet-stream # 对于.exe文件，可以是application/octet-stream
