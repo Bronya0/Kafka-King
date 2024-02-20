@@ -1,5 +1,5 @@
 # Kafka King
-一个漂亮、现代、实用的kafka客户端，使用python flet、flutter构建。
+一个漂亮、现代、实用的kafka客户端，使用python flet构建。
 
 # 功能清单
 - 查看集群节点列表
