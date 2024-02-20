@@ -1,4 +1,4 @@
-name: Python application mac
+name: mac
 
 on:
   release:
