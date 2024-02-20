@@ -42,11 +42,24 @@ jobs:
         pip install -r requirements.txt
         flet pack main.py -i assets/icon.ico  -n kafka-king
 
-    - name: Upload release asset
-      shell: bash
-      working-directory: ./dist
-      run: |
-        filepath="kafka-king.dmg"
-        filename="kafka-king_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.dmg"
-        upload_url="https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ github.event.release.id }}/assets"
-        curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/x-apple-diskimage" --data-binary @$filepath "$upload_url?name=$filename"
+    - name: Create GitHub Draft Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.sha }}
+        release_name: Release v${{ github.sha }}
+        draft: true
+        prerelease: false
+
+    - name: Upload Release Asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./dist/kafka-king # 假设这里是生成的适用于MacOS的可执行文件或归档文件
+        asset_name: kafka-king_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}" # 示例性地为MacOS指定文件名
+        content_type: application/octet-stream # 根据实际文件类型选择合适的MIME类型
