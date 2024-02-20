@@ -1,4 +1,6 @@
-# Kafka King
+<div align=center><img src="assets/icon.ico"></div>
+
+# Kafka King 
 [![License](https://img.shields.io/github/license/Bronya0/Kafka-King)](https://github.com/tiny-craft/tiny-rdm/blob/main/LICENSE)
 [![GitHub release](https://img.shields.io/github/release/Bronya0/Kafka-King)](https://github.com/tiny-craft/tiny-rdm/releases)
 ![GitHub All Releases](https://img.shields.io/github/downloads/Bronya0/Kafka-King/total)
