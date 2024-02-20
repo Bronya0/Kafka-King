@@ -51,7 +51,8 @@
 
 
 # 快速开始
-当前还在开发中，稳定版本发布后可以在右侧 发行版里看到。
+在右侧release下的Assets选择对应版本下载即可。
+或者点击 https://github.com/Bronya0/Kafka-King/releases
 
 
 # 构建
