@@ -58,8 +58,7 @@
 
 pip install -r requirements.txt -i https://pypi.douban.com/simple
 
-flet pack main.py -i assets/icon.ico -n kafka-king
-
+flet pack main.py -i assets/icon.ico  -n kafka-king
 
 # License
 Apache-2.0 license
