@@ -2,7 +2,7 @@ name: windows
 
 on:
   release:
-    types: [ published ]
+    types: [ created ]
 
 jobs:
   build:
@@ -41,20 +41,13 @@ jobs:
         pip install -r requirements.txt
         flet pack main.py -i assets/icon.ico  -n kafka-king
 
-    - name: Get Latest Release ID
-      id: get_latest_release_id
-      run: |
-        # 获取最近的draft release ID
-        LATEST_RELEASE_ID=$(gh api -X GET repos/:owner/:repo/releases/latest --jq .id)
-        echo "LATEST_RELEASE_ID=$LATEST_RELEASE_ID" >> $GITHUB_ENV
-
     - name: Upload Release Asset
       id: upload-release-asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: https://uploads.github.com/repos/${{ github.repository }}/releases/$LATEST_RELEASE_ID/assets
+        upload_url: ${{ github.event.release.upload_url }}
         asset_path: ./dist/kafka-king.exe
         asset_name: kafka-king_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.exe # 替换成适当的版本和平台标记
         asset_content_type: application/octet-stream # 对于.exe文件，可以是application/octet-stream
