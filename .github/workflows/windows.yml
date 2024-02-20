@@ -50,4 +50,4 @@ jobs:
         upload_url: https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ github.event.release.id }}/assets
         asset_path: ./dist/kafka-king.exe
         asset_name: kafka-king_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.exe # 替换成适当的版本和平台标记
-        content_type: application/octet-stream # 对于.exe文件，可以是application/octet-stream
+        asset_content_type: application/octet-stream # 对于.exe文件，可以是application/octet-stream
