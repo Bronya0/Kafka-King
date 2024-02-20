@@ -1,4 +1,4 @@
-name: Python application windows
+name: Python application mac
 
 on:
   release:
@@ -6,11 +6,12 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: macos-latest
     strategy:
       matrix:
         platform:
-          - windows/amd64
+          - darwin/amd64
+          - darwin/arm64
     # 步骤合集
     steps:
     - uses: actions/checkout@v3
@@ -19,7 +20,7 @@ jobs:
       id: normalise_platform
       shell: bash
       run: |
-        tag=$(echo ${{ matrix.platform }} | sed -e 's/\//_/g')
+        tag=$(echo ${{ matrix.platform }} | sed -e 's/\//_/g' -e 's/darwin/mac/g' -e 's/amd64/intel/g')
         echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
     - name: Normalise version tag
@@ -44,7 +45,7 @@ jobs:
       shell: bash
       working-directory: ./dist
       run: |
-        filepath="kafka-king.exe"
-        filename="kafka-king_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.exe"
+        filepath="kafka-king.dmg"
+        filename="kafka-king_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.dmg"
         upload_url="https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${{ github.event.release.id }}/assets"
-        curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/octet-stream" --data-binary @$filepath "$upload_url?name=$filename"
+        curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/x-apple-diskimage" --data-binary @$filepath "$upload_url?name=$filename"
