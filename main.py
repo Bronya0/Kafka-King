@@ -3,7 +3,7 @@ import gc
 import flet as ft
 from flet_core import TextField
 
-from common import S_Text, prefix, S_Button
+from common import S_Text, prefix, S_Button, githup_url
 from service.kafka_service import kafka_service
 from views.init import views_index_map
 
@@ -233,7 +233,7 @@ def main(page: ft.Page):
 
     # 顶部导航
     page.appbar = ft.AppBar(
-        leading=ft.Image(src="assets/icon.png"),
+        leading=ft.Image(src="assets/icon.png",),
         leading_width=40,
         title=S_Text("Kafka Client"),
         center_title=False,
@@ -244,7 +244,7 @@ def main(page: ft.Page):
             ft.IconButton(ft.icons.WB_SUNNY_OUTLINED, on_click=change_theme, tooltip="切换明暗"),  # theme
             # ft.IconButton(ft.icons.TRANSLATE),
             ft.IconButton(ft.icons.TIPS_AND_UPDATES_OUTLINED, tooltip="去github更新或者提出想法",
-                          url="https://github.com/Bronya0/Kafka-King"),
+                          url=githup_url),
             # ft.IconButton(ft.icons.STAR_RATE_OUTLINED),
         ],
     )

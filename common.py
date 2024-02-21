@@ -10,6 +10,7 @@ import flet
 
 # 假设有一个全局的存储连接信息的变量
 prefix = "__kafka_connects__"
+githup_url = "https://github.com/Bronya0/Kafka-King"
 
 
 def S_Text(value, **kwargs):
