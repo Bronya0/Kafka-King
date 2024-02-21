@@ -7,10 +7,7 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    strategy:
-      matrix:
-        platform:
-          - darwin/amd64
+
     # 步骤合集
     steps:
     - uses: actions/checkout@v3
@@ -41,6 +38,12 @@ jobs:
         flet pack main.py -i assets/icon.icns  -n kafka-king
         ls -al dist/
 
+    # 打包.app文件夹为zip或tar.gz以方便传输
+    - name: Package .app folder
+      run: |
+         cd dist
+         tar -czf kafka-king-macos.tar.gz kafka-king.app
+
     - name: Upload Release Asset
       id: upload-release-asset
       uses: actions/upload-release-asset@v1
@@ -48,6 +51,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./dist/kafka-king.app
-        asset_name: kafka-king_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.app # 替换成适当的版本和平台标记
-        asset_content_type: application/octet-stream # 对于.exe文件，可以是application/octet-stream
+        asset_path: ./dist/kafka-king-macos.tar.gz
+        asset_name: kafka-king_${{ steps.normalise_version.outputs.version }}_macos.tar.gz
+        asset_content_type: application/octet-stream
