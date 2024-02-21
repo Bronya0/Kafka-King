@@ -175,6 +175,7 @@ class Topic(object):
                                 icon=ft.icons.DELETE_FOREVER_OUTLINED,
                                 on_click=self.open_delete_dialog,
                                 data=topic_name_,
+                                icon_color="#DA3A66",
                                 tooltip=f"删除{topic_name_}",
                             )
                         ) if not topic.get('is_internal') else ft.DataCell(ft.Text("not allowed"))
