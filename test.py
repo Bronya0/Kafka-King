@@ -10,8 +10,7 @@ from kafka.protocol.admin import DescribeConfigsResponse
 from kafka.protocol.api import Response
 from kafka.structs import BrokerMetadata, TopicPartition
 
-bootstrap_servers = ['10.19.50.46:9092']
-# bootstrap_servers = ['127.0.0.1:9092']
+bootstrap_servers = ['127.0.0.1:9092']
 # admin_client = KafkaAdminClient(bootstrap_servers=bootstrap_servers)
 # client = KafkaClient(bootstrap_servers=bootstrap_servers)
 

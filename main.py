@@ -12,6 +12,9 @@ def init_page(page: ft.Page):
     page.title = "Kafka King"
     page.window_min_width = 800
     page.window_min_height = 600
+    theme = page.client_storage.get("theme")
+    if theme:
+        page.theme_mode = theme
 
 
 def main(page: ft.Page):
@@ -120,11 +123,14 @@ def main(page: ft.Page):
 
     def change_theme(e):
         change = {
-            ft.ThemeMode.DARK: ft.ThemeMode.LIGHT,
-            ft.ThemeMode.LIGHT: ft.ThemeMode.DARK,
-            ft.ThemeMode.SYSTEM: ft.ThemeMode.DARK
+            ft.ThemeMode.DARK.value: ft.ThemeMode.LIGHT.value,
+            ft.ThemeMode.LIGHT.value: ft.ThemeMode.DARK.value,
+            ft.ThemeMode.SYSTEM.value: ft.ThemeMode.DARK.value
         }
-        page.theme_mode = change[page.theme_mode]
+        new_theme = change[page.theme_mode]
+        page.theme_mode = new_theme
+
+        page.client_storage.set("theme", new_theme)
         page.update()
 
     # 创建输入表单控件
