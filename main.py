@@ -104,7 +104,6 @@ def main(page: ft.Page):
             view = view()
             body.controls = view.controls
         except Exception as e:
-            traceback.print_exc()
             body.controls = [S_Text(value=str(e), size=24)]
             page.update()
             return
