@@ -214,7 +214,6 @@ class Topic(object):
         rows = []
         self.partition_table = ft.DataTable(
             columns=[
-                ft.DataColumn(S_Text("ID")),
                 ft.DataColumn(S_Text("分区编号")),
                 ft.DataColumn(S_Text("Leader分布")),
                 ft.DataColumn(S_Text("Replicas分布")),
@@ -239,7 +238,6 @@ class Topic(object):
             rows.append(
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(S_Text(i)),
                         ft.DataCell(S_Text(p_id)),
                         ft.DataCell(S_Text(partitions.get('leader'))),
                         ft.DataCell(S_Text(partitions.get('replicas'))),

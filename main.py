@@ -1,5 +1,5 @@
 import traceback
-
+import gc
 import flet as ft
 from flet_core import TextField
 
@@ -127,6 +127,7 @@ def main(page: ft.Page):
         # 去掉进度条
         view.controls.pop()
         page.update()
+        gc.collect()
 
     def change_theme(e):
         change = {
