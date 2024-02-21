@@ -39,6 +39,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         flet pack main.py -i assets/icon.icns  -n kafka-king
+        ls -al dist/
 
     - name: Upload Release Asset
       id: upload-release-asset
@@ -47,6 +48,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./dist/kafka-king
-        asset_name: kafka-king_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }} # 替换成适当的版本和平台标记
+        asset_path: ./dist/kafka-king.app
+        asset_name: kafka-king_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.app # 替换成适当的版本和平台标记
         asset_content_type: application/octet-stream # 对于.exe文件，可以是application/octet-stream
