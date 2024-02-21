@@ -3,7 +3,7 @@ import traceback
 import flet as ft
 from flet_core import TextField
 
-from common import S_Text, prefix
+from common import S_Text, prefix, S_Button
 from service.kafka_service import kafka_service
 from views.init import views_index_map
 
@@ -187,33 +187,33 @@ def main(page: ft.Page):
         # 定义在导航栏中排列的按钮项的外观，该值必须是两个或更多NavigationRailDestination实例的列表。
         destinations=[
             ft.NavigationRailDestination(
-                icon_content=ft.Icon(ft.icons.HIVE_OUTLINED),
+                icon_content=ft.Icon(ft.icons.HIVE_OUTLINED, tooltip="查看集群broker节点和配置"),
                 selected_icon_content=ft.Icon(ft.icons.HIVE),
                 label="Broker",
             ),
             ft.NavigationRailDestination(
-                icon_content=ft.Icon(ft.icons.LIBRARY_BOOKS_OUTLINED),
+                icon_content=ft.Icon(ft.icons.LIBRARY_BOOKS_OUTLINED, tooltip="增删改topic及partition"),
                 selected_icon_content=ft.Icon(ft.icons.LIBRARY_BOOKS),
                 label="Topic",
             ),
             ft.NavigationRailDestination(
-                icon_content=ft.Icon(ft.icons.SWITCH_ACCESS_SHORTCUT_ADD_OUTLINED),
+                icon_content=ft.Icon(ft.icons.SWITCH_ACCESS_SHORTCUT_ADD_OUTLINED, tooltip="模拟producer及consumer"),
                 selected_icon_content=ft.Icon(ft.icons.SWITCH_ACCESS_SHORTCUT_ADD),
                 label="Simulate",
             ),
 
             ft.NavigationRailDestination(
-                icon_content=ft.Icon(ft.icons.STACKED_BAR_CHART_OUTLINED),
+                icon_content=ft.Icon(ft.icons.STACKED_BAR_CHART_OUTLINED, tooltip="监控（开发中）"),
                 selected_icon_content=ft.Icon(ft.icons.STACKED_BAR_CHART),
                 label="Monitor",
             ),
             ft.NavigationRailDestination(
-                icon=ft.icons.SETTINGS_OUTLINED,
+                icon_content=ft.Icon(ft.icons.SETTINGS_OUTLINED, tooltip="配置（开发中）"),
                 selected_icon_content=ft.Icon(ft.icons.SETTINGS_SUGGEST_OUTLINED),
                 label_content=S_Text("Settings"),
             ),
             ft.NavigationRailDestination(
-                icon=ft.icons.AUTO_GRAPH_OUTLINED,
+                icon_content=ft.Icon(ft.icons.AUTO_GRAPH_OUTLINED, tooltip="建议我们"),
                 selected_icon_content=ft.Icon(ft.icons.AUTO_GRAPH),
                 label_content=S_Text("Suggest"),
             ),
@@ -239,10 +239,10 @@ def main(page: ft.Page):
         bgcolor=ft.colors.SURFACE_VARIANT,
         actions=[
             connect_dd,
-            ft.IconButton(ft.icons.ADD, on_click=open_dlg_modal),  # add link
-            ft.IconButton(ft.icons.WB_SUNNY_OUTLINED, on_click=change_theme),  # theme
+            ft.IconButton(ft.icons.ADD, on_click=open_dlg_modal, tooltip="添加kafka地址"),  # add link
+            ft.IconButton(ft.icons.WB_SUNNY_OUTLINED, on_click=change_theme, tooltip="切换明暗"),  # theme
             # ft.IconButton(ft.icons.TRANSLATE),
-            # ft.IconButton(ft.icons.TIPS_AND_UPDATES_OUTLINED),
+            ft.IconButton(ft.icons.TIPS_AND_UPDATES_OUTLINED, tooltip="去github更新或者提出想法"),
             # ft.IconButton(ft.icons.STAR_RATE_OUTLINED),
         ],
     )
