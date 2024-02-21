@@ -21,13 +21,20 @@ def main(page: ft.Page):
     init_page(page)
 
     def test_connect(e):
-        print(kafka_input.value)
-        res = kafka_service.new_client(bootstrap_servers=kafka_input.value.split(','))
-        if res:
-            msg = f"连接成功"
+        if kafka_input.value == "":
+            msg = "请先填写kafka连接"
+            color = "#000000"
         else:
-            msg = f"连接失败"
+            res = kafka_service.new_client(bootstrap_servers=kafka_input.value.split(','))
+            if res:
+                msg = f"连接成功"
+                color = "#00a0b0"
+            else:
+                msg = f"连接失败"
+                color = "#000000"
+
         page.snack_bar.content = ft.Text(msg)
+        page.snack_bar.bgcolor = color
         page.snack_bar.open = True
         page.update()
 
