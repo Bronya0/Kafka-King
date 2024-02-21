@@ -241,7 +241,8 @@ def main(page: ft.Page):
             ft.IconButton(ft.icons.ADD, on_click=open_dlg_modal, tooltip="添加kafka地址"),  # add link
             ft.IconButton(ft.icons.WB_SUNNY_OUTLINED, on_click=change_theme, tooltip="切换明暗"),  # theme
             # ft.IconButton(ft.icons.TRANSLATE),
-            ft.IconButton(ft.icons.TIPS_AND_UPDATES_OUTLINED, tooltip="去github更新或者提出想法"),
+            ft.IconButton(ft.icons.TIPS_AND_UPDATES_OUTLINED, tooltip="去github更新或者提出想法",
+                          url="https://github.com/Bronya0/Kafka-King"),
             # ft.IconButton(ft.icons.STAR_RATE_OUTLINED),
         ],
     )
