@@ -82,9 +82,10 @@ def main(page: ft.Page):
         try:
             kafka_service.set_bootstrap_servers(bootstrap_servers)
             refresh_body()
+            page.appbar.title = S_Text(key[len(prefix):])
         except Exception as e:
             body.controls = [S_Text(value=f"连接失败：{str(e)}", size=24)]
-            page.controls.pop()
+        page.controls.pop()
         page.update()
 
     def refresh_body(e=None):
@@ -231,7 +232,7 @@ def main(page: ft.Page):
 
     # 顶部导航
     page.appbar = ft.AppBar(
-        leading=ft.Icon(ft.icons.KAYAKING),
+        leading=ft.Image(src="assets/icon.png"),
         leading_width=40,
         title=S_Text("Kafka Client"),
         center_title=False,
