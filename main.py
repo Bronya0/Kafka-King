@@ -241,7 +241,7 @@ def main(page: ft.Page):
 
     # 顶部导航
     page.appbar = ft.AppBar(
-        leading=ft.Image(src="assets/icon.png",),
+        leading=ft.Image(src="icon.png",),
         leading_width=40,
         title=S_Text("Kafka Client"),
         center_title=False,
