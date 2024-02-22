@@ -64,7 +64,9 @@ def main(page: ft.Page):
             connect_dd.label = "请选择kafka连接"
             connect_dd.options = []
             for i in conns:
-                connect_dd.options.append(ft.dropdown.Option(key=i, text=f'{page.client_storage.get(i)}'))
+                text = f'{page.client_storage.get(i)}'
+                op = ft.dropdown.Option(key=i, text=text)
+                connect_dd.options.append(op)
 
     def dropdown_changed(e):
         """
