@@ -3,14 +3,14 @@
 import datetime
 import json
 
-from kafka import KafkaProducer, KafkaAdminClient, KafkaClient, KafkaConsumer
-from kafka.admin import ConfigResource, ConfigResourceType
-from kafka.cluster import ClusterMetadata
-from kafka.protocol.admin import DescribeConfigsResponse
-from kafka.protocol.api import Response
-from kafka.structs import BrokerMetadata, TopicPartition
-
-bootstrap_servers = ['127.0.0.1:9092']
+# from kafka import KafkaProducer, KafkaAdminClient, KafkaClient, KafkaConsumer
+# from kafka.admin import ConfigResource, ConfigResourceType
+# from kafka.cluster import ClusterMetadata
+# from kafka.protocol.admin import DescribeConfigsResponse
+# from kafka.protocol.api import Response
+# from kafka.structs import BrokerMetadata, TopicPartition
+#
+# bootstrap_servers = ['127.0.0.1:9092']
 # admin_client = KafkaAdminClient(bootstrap_servers=bootstrap_servers)
 # client = KafkaClient(bootstrap_servers=bootstrap_servers)
 
@@ -22,7 +22,7 @@ bootstrap_servers = ['127.0.0.1:9092']
 
 
 # 全部topic
-c = KafkaAdminClient(bootstrap_servers=bootstrap_servers)
+# c = KafkaAdminClient(bootstrap_servers=bootstrap_servers)
 # 获取集群的元数据
 # cluster_metadata = c.describe_cluster()
 
@@ -57,9 +57,9 @@ c = KafkaAdminClient(bootstrap_servers=bootstrap_servers)
 # 获取所有主题列表
 
 # config_resource = ConfigResource(ConfigResourceType.TOPIC, 'test')
-config_resource = ConfigResource(ConfigResourceType.BROKER, '1')
-res_ = c.describe_configs([config_resource])[0]
-print(json.dumps(res_.to_object()))
+# config_resource = ConfigResource(ConfigResourceType.BROKER, '1')
+# res_ = c.describe_configs([config_resource])[0]
+# print(json.dumps(res_.to_object()))
 
 # print(c._get_cluster_metadata())
 # print(c.describe_cluster())
@@ -72,3 +72,17 @@ print(json.dumps(res_.to_object()))
 # print(c.describe_configs())
 # print(c.describe_acls())
 # print(c.describe_consumer_groups())
+
+# import requests
+#
+# def get_latest_tag():
+#     api_url = f'https://api.github.com/repos/Bronya0/Kafka-King/tags'
+#     response = requests.get(api_url)
+#
+#     if response.status_code == 200:
+#         latest_tag = response.json()[0]['name']
+#         return latest_tag
+#     else:
+#         raise Exception(f"Failed to fetch tags from GitHub. Status code: {response.status_code}")
+#
+# print(get_latest_tag())
