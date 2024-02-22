@@ -130,15 +130,21 @@ def main(page: ft.Page):
         gc.collect()
 
     def change_theme(e):
+
         change = {
             ft.ThemeMode.DARK.value: ft.ThemeMode.LIGHT.value,
             ft.ThemeMode.LIGHT.value: ft.ThemeMode.DARK.value,
             ft.ThemeMode.SYSTEM.value: ft.ThemeMode.DARK.value
         }
-        new_theme = change[page.theme_mode]
-        page.theme_mode = new_theme
+        try:
+            new_theme = change[page.theme_mode]
+            page.theme_mode = new_theme
+            page.client_storage.set("theme", new_theme)
+        except Exception as e:
+            traceback.print_exc()
+            page.theme_mode = ft.ThemeMode.DARK.value
+            page.client_storage.set("theme", ft.ThemeMode.DARK.value)
 
-        page.client_storage.set("theme", new_theme)
         page.update()
 
     # 创建输入表单控件
