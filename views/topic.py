@@ -40,6 +40,7 @@ class Topic(object):
             max_length=1000,
             max_lines=10,
             min_lines=2,
+            helper_text="分区数后续可以增加但是不能减少; 0 < 副本因子 <= broker数（必须）；"
         )
         self.create_topic_modal = ft.AlertDialog(
             modal=True,
@@ -140,7 +141,7 @@ class Topic(object):
                 ft.DataColumn(S_Text("ID")),
                 ft.DataColumn(S_Text("Topic")),
                 ft.DataColumn(S_Text("分区数")),
-                ft.DataColumn(S_Text("积压量")),
+                ft.DataColumn(S_Text("积压量(先选择组)")),
                 ft.DataColumn(S_Text("查看配置")),
                 ft.DataColumn(S_Text("删除")),
             ],
@@ -178,7 +179,7 @@ class Topic(object):
                                 icon_color="#DA3A66",
                                 tooltip=f"删除{topic_name_}",
                             )
-                        ) if not topic.get('is_internal') else ft.DataCell(ft.Text("not allowed"))
+                        ) if not topic.get('is_internal') else ft.DataCell(ft.Text("禁止"))  # not allowed
                     ],
                 )
             )

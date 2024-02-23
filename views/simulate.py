@@ -33,25 +33,49 @@ class Simulate(object):
             # on_change=self.click_partition_topic_dd_onchange,
             **dd_common_configs
         )
+        input_kwargs = {
+            "width": 200,
+            "height": 30,
+            "text_size": 14,
+            "content_padding": 10
+        }
 
         # msg key
         self.producer_msg_key_input = ft.TextField(
             label="msg key",
-            width=200, height=30, text_size=14, content_padding=10
+            **input_kwargs
+        )
+        self.producer_acks_input = ft.TextField(
+            label="acks：0、1、-1",
+            value="1",
+            **input_kwargs
+        )
+
+        self.producer_batch_size_input = ft.TextField(
+            label="batch_size",
+            value="16384",
+            **input_kwargs
+
+        )
+        self.producer_linger_ms_input = ft.TextField(
+            label="linger_ms",
+            value="0",
+            **input_kwargs
         )
 
         # 消息输入框
         self.producer_send_input = ft.TextField(
             multiline=True,
             keyboard_type=ft.KeyboardType.MULTILINE,
-            max_length=1000,
+            max_length=10000,
             min_lines=8,
             max_lines=8,
+            text_size=14,
             hint_text="支持字符串，可以输入String、Json等消息。"
         )
 
         # 消息倍数
-        self.producer_slider = ft.Slider(min=1, max=10000, divisions=20, label="×{value}", value=1)
+        self.producer_slider = ft.Slider(min=1, max=10000, divisions=50, label="×{value}", value=1)
 
         # send button
         self.producer_send_button = S_Button(
@@ -79,14 +103,8 @@ class Simulate(object):
             label="fetch size",
             value="10",
             keyboard_type=ft.KeyboardType.NUMBER,
-            width=200, height=30, text_size=14, content_padding=10
+            **input_kwargs
         )
-
-        # consumer groups input
-        # self.consumer_groups_input = ft.TextField(
-        #     label="new consumer group",
-        #     width=200, height=30, text_size=14, content_padding=10
-        # )
 
         # consumer fetch msg button
         self.consumer_fetch_msg_button = S_Button(
@@ -142,6 +160,9 @@ class Simulate(object):
                 ft.Row([
                     self.producer_topic_dd,
                     self.producer_msg_key_input,
+                    self.producer_acks_input,
+                    self.producer_batch_size_input,
+                    self.producer_linger_ms_input
                 ]),
                 ft.Markdown(value="""# 输入单条消息内容"""),
                 # msg input
@@ -187,11 +208,25 @@ class Simulate(object):
         发送消息
         乘以倍数，and 是否压缩
         """
-        topic = self.producer_topic_dd.value
-        msg = self.producer_send_input.value
-        enable_gzip = self.producer_compress_switch.value
-        msg_multiplier = int(self.producer_slider.value)
-        msg_key = self.producer_msg_key_input.value.rstrip()
+        ori = self.producer_send_button.text
+        self.producer_send_button.text = "Sending..."
+        e.page.update()
+        try:
+            topic = self.producer_topic_dd.value
+            msg = self.producer_send_input.value
+            enable_gzip = self.producer_compress_switch.value
+            msg_multiplier = int(self.producer_slider.value)
+            msg_key = self.producer_msg_key_input.value.rstrip()
+            acks = int(self.producer_acks_input.value.rstrip())
+            batch_size = int(self.producer_batch_size_input.value.rstrip())
+            linger_ms = int(self.producer_linger_ms_input.value.rstrip())
+
+            if acks not in [0, 1, -1] or linger_ms < 0 or batch_size < 0 or msg is None:
+                raise Exception("参数填写不正确")
+        except:
+            self.producer_send_button.text = ori
+            open_snack_bar(e.page, e.page.snack_bar, "参数填写不正确")
+            return
 
         st = time.time()
         res = "发送成功"
@@ -202,12 +237,16 @@ class Simulate(object):
                 enable_gzip=enable_gzip,
                 msg_multiplier=msg_multiplier,
                 msg_key=msg_key.encode('utf-8'),
+                acks=acks,
+                batch_size=batch_size,
+                linger_ms=linger_ms
             )
         except Exception as e_:
             traceback.print_exc()
             res = f"发送失败：{e_}"
         et = time.time() - st
         res += f"\n发送耗时{et} s"
+        self.producer_send_button.text = ori
         open_snack_bar(e.page, e.page.snack_bar, res)
 
     def click_fetch_msg(self, e: ControlEvent):

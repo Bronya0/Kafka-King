@@ -126,12 +126,13 @@ class KafkaService:
             traceback.print_exc()
         return False
 
-    def send_msgs(self, topic, msg: bytes, enable_gzip=False, msg_multiplier=1, msg_key=None):
+    def send_msgs(self, topic, msg: bytes, enable_gzip=False, msg_multiplier=1, msg_key=None, **kwargs):
         """
         send msgs发送消息
         """
         config = {
             "bootstrap_servers": self.bootstrap_servers,
+            **kwargs
         }
         if enable_gzip:
             config['compression_type'] = 'gzip'
