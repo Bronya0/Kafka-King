@@ -75,7 +75,7 @@ class Simulate(object):
         )
 
         # 消息倍数
-        self.producer_slider = ft.Slider(min=1, max=10000, divisions=20, label="×{value}", value=1)
+        self.producer_slider = ft.Slider(min=1, max=10000, divisions=50, label="×{value}", value=1)
 
         # send button
         self.producer_send_button = S_Button(
@@ -208,6 +208,9 @@ class Simulate(object):
         发送消息
         乘以倍数，and 是否压缩
         """
+        ori = self.producer_send_button.text
+        self.producer_send_button.text = "Sending..."
+        e.page.update()
         try:
             topic = self.producer_topic_dd.value
             msg = self.producer_send_input.value
@@ -221,6 +224,7 @@ class Simulate(object):
             if acks not in [0, 1, -1] or linger_ms < 0 or batch_size < 0 or msg is None:
                 raise Exception("参数填写不正确")
         except:
+            self.producer_send_button.text = ori
             open_snack_bar(e.page, e.page.snack_bar, "参数填写不正确")
             return
 
@@ -242,6 +246,7 @@ class Simulate(object):
             res = f"发送失败：{e_}"
         et = time.time() - st
         res += f"\n发送耗时{et} s"
+        self.producer_send_button.text = ori
         open_snack_bar(e.page, e.page.snack_bar, res)
 
     def click_fetch_msg(self, e: ControlEvent):
