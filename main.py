@@ -5,7 +5,7 @@ import flet as ft
 from flet_core import TextField
 
 from common import S_Text, prefix, githup_url
-from language.translate import lang
+from language.translate import lang, i18n
 from service.kafka_service import kafka_service
 from views.init import views_index_map
 
@@ -176,9 +176,9 @@ class Main:
     def refresh_dd_links(self):
         conns = self.page.client_storage.get_keys(prefix)
         if not conns:
-            self.connect_dd.label = "请添加kafka连接"
+            self.connect_dd.label = i18n("请添加kafka连接")
         else:
-            self.connect_dd.label = "请选择kafka连接"
+            self.connect_dd.label = i18n("请选择kafka连接")
             self.connect_dd.options = []
             for i in conns:
                 text = f'{self.page.client_storage.get(i)}'

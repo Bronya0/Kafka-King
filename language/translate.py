@@ -11,11 +11,12 @@ class Lang(object):
         self.language = language
 
     def i18n(self, default_str: str):
+        print(default_str, self.language)
         if self.language is None:
             return default_str
-        res = lang_dict.get(default_str, {}).get(self.language)
-        if res == "":
-            return default_str
+        res = lang_dict.get(default_str, {}).get(self.language, default_str)
+        return res
 
 
 lang = Lang(language=None)
+i18n = lang.i18n

@@ -2,6 +2,12 @@
     "请先选择一个可用的kafka连接！": {
         "en": ""
     },
+    "请添加kafka连接": {
+        "en": "Please add kafka connection"
+    },
+    "请选择kafka连接": {
+        "en": "Please select kafka connection"
+    },
     "基础信息": {
         "en": ""
     },
