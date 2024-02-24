@@ -32,26 +32,26 @@
 
 支持根据消费者组统计每个topic的消息积压量
 
-![](assets/snap/p9.png)
+![](docs/snap/p9.png)
 
 创建主题（支持批量）
 
-![](assets/snap/p4.png)
+![](docs/snap/p4.png)
 
 ## 查看topic的详细配置
-![](assets/snap/p6.png)
+![](docs/snap/p6.png)
 
 ## 自动获取集群broker列表
-![](assets/snap/p2.png)
+![](docs/snap/p2.png)
 
 ## 获取broker详细配置
-![](assets/snap/p3.png)
+![](docs/snap/p3.png)
 
 ## 模拟生产者消费者
 - 支持模拟生产者，批量发送消息，是否开启gzip压缩
 - 支持模拟消费者，按照内置的组进行指定size的消费
 
-![](assets/snap/p8.png)
+![](docs/snap/p8.png)
 
 
 
@@ -60,7 +60,7 @@
 - 支持为主题添加额外的分区
 - 支持查看每个分区的消息offset
 
-![](assets/snap/p5.png)
+![](docs/snap/p5.png)
 
 
 # 快速开始
@@ -72,7 +72,7 @@
 
 pip install -r requirements.txt
 
-flet pack main.py -i assets/icon.ico  -n kafka-king
+flet pack main.py -i assets/icon.ico  -n kafka-king --add-data=assets/icon.png:assets
 
 # License
 Apache-2.0 license
