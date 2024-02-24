@@ -70,7 +70,7 @@
 
 # 构建
 
-pip install -r requirements.txt -i https://pypi.douban.com/simple
+pip install -r requirements.txt
 
 flet pack main.py -i assets/icon.ico  -n kafka-king
 

@@ -5,6 +5,7 @@ import flet as ft
 from flet_core import TextField
 
 from common import S_Text, prefix, githup_url
+from language.translate import lang
 from service.kafka_service import kafka_service
 from views.init import views_index_map
 
@@ -116,7 +117,6 @@ class Main:
                 self.connect_dd,
                 ft.IconButton(ft.icons.ADD, on_click=self.open_dlg_modal, tooltip="添加kafka地址"),  # add link
                 ft.IconButton(ft.icons.WB_SUNNY_OUTLINED, on_click=self.change_theme, tooltip="切换明暗"),  # theme
-                # ft.IconButton(ft.icons.TRANSLATE),
                 ft.IconButton(ft.icons.TIPS_AND_UPDATES_OUTLINED, tooltip="去github更新或者提出想法",
                               url=githup_url),
                 # ft.IconButton(ft.icons.STAR_RATE_OUTLINED),
@@ -272,8 +272,11 @@ def init(page: ft.Page):
     page.window_min_width = 800
     page.window_min_height = 600
     theme = page.client_storage.get("theme")
-    if theme:
+    if theme is not None:
         page.theme_mode = theme
+    language = page.client_storage.get("language")
+    if language is not None:
+        lang.language = language
     Main(page)
 
 

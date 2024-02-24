@@ -60,7 +60,7 @@ class Topic(object):
 
         # 创建分区
         self.create_partition_text_input = ft.TextField(
-            label='extra partition nums'
+            label='额外的分区数量'
         )
         self.create_partition_modal = ft.AlertDialog(
             modal=True,
@@ -82,7 +82,7 @@ class Topic(object):
 
         # consumer groups Dropdown
         self.topic_groups_dd = ft.Dropdown(
-            label="consumer groups",
+            label="请选择消费组",
             on_change=self.groups_dd_onchange,
             **dd_common_configs
         )
@@ -357,7 +357,7 @@ class Topic(object):
         else:
             try:
                 res = kafka_service.kac.create_topics(new_topics=list_, validate_only=False, timeout_ms=60 * 1000)
-                msg = f"{len(lines)}个主题创建成功"
+                msg = "{}个主题创建成功".format(len(lines))
                 self.create_topics_multi_text_input.value = None
             except Exception as _e:
                 msg = f"创建失败： {str(_e)}"
@@ -374,7 +374,7 @@ class Topic(object):
         topic = self.partition_topic_dd.value
         old_partition_num = len(self.describe_topics_map[topic]['partitions'])
         res = kafka_service.create_partitions(topic, old_partition_num, extra_num)
-        msg = f"Topic：{topic} 成功创建 {extra_num} 个分区，当前总共 {old_partition_num + extra_num} 个"
+        msg = "Topic：{} 成功创建 {} 个分区，当前总共 {} 个".format(topic, extra_num, old_partition_num + extra_num)
         if not res:
             msg = "分区创建失败，请尝试减小分区数量"
         self.create_partition_modal.open = False
@@ -402,7 +402,7 @@ class Topic(object):
         dlg_modal = ft.AlertDialog(
             modal=True,
             title=ft.Text("请确认"),
-            content=ft.Text(f"您真的要删除topic: {topic_name}吗？"),
+            content=ft.Text("您真的要删除topic: {}吗？".format(topic_name)),
             actions=[
                 ft.TextButton("删除", on_click=ensure),
                 ft.TextButton("取消", on_click=cancel),
@@ -419,9 +419,9 @@ class Topic(object):
             kac: KafkaAdminClient = kafka_service.kac
             res = kac.delete_topics([topic_name])
             print(res)
-            msg = f"topic：{topic_name}删除成功"
+            msg = "topic：{}删除成功".format(topic_name)
         except Exception as e_:
-            msg = f"{topic_name}删除失败： {str(e_)}"
+            msg = "{}删除失败： {}".format(topic_name, str(e_))
         return msg
 
     def groups_dd_onchange(self, e: ControlEvent):

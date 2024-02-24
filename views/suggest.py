@@ -24,10 +24,10 @@ class Suggest(object):
                     ft.Row(
                         [
                             ft.Markdown(
-                                value=f"""
-- suggest us on github: [{githup_url})
+                                value="""
+- suggest us on github: [{})
 - If you like it, you can give it a star
-                                """,
+                                """.format(githup_url),
                                 selectable=True,
                                 auto_follow_links=True,
                             ),

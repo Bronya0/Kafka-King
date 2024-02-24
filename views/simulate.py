@@ -243,9 +243,9 @@ class Simulate(object):
             )
         except Exception as e_:
             traceback.print_exc()
-            res = f"发送失败：{e_}"
+            res = "发送失败：{}".format(e_)
         et = time.time() - st
-        res += f"\n发送耗时{et} s"
+        res += "\n发送耗时{} s".format(et)
         self.producer_send_button.text = ori
         open_snack_bar(e.page, e.page.snack_bar, res)
 
@@ -287,11 +287,11 @@ class Simulate(object):
                                             timeout=self.kafka_fetch_timeout)
         except Exception as e_:
             traceback.print_exc()
-            res = f"拉取失败：{e_}"
+            res = "拉取失败：{}".format(e_)
         self.consumer_fetch_msg_body.value = msgs
 
         et = time.time() - st
-        res += f"\n拉取耗时{et} s"
+        res += "\n拉取耗时{} s".format(et)
         print(res)
         self.consumer_fetch_msg_button.disabled = False
         open_snack_bar(e.page, e.page.snack_bar, res)

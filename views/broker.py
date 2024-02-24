@@ -120,7 +120,7 @@ class Broker(object):
         configs = kafka_service.get_configs(res_type='broker', name=broker_id)
 
         md_text = """
-        | 配置名 | 配置值 | 只读 |\n|-|-|-|\n"""
+        | config_name | config_value | read_only |\n|-|-|-|\n"""
         for config in configs:
             config_names = f"**{config['config_names']}**"
             config_value = f"{config['config_value']}" if config['config_value'] is not None else ""

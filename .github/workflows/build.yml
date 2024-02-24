@@ -5,7 +5,53 @@ on:
     types: [ created ]
 
 jobs:
-  build:
+  build-win:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        platform:
+          - windows/amd64
+    # 步骤合集
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Normalise platform tag
+      id: normalise_platform
+      shell: bash
+      run: |
+        tag=$(echo ${{ matrix.platform }} | sed -e 's/\//_/g')
+        echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+    - name: Normalise version tag
+      id: normalise_version
+      shell: bash
+      run: |
+        version=$(echo ${{ github.event.release.tag_name }} | sed -e 's/v//g')
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        flet pack main.py -i assets/icon.ico  -n kafka-king
+
+    - name: Upload Release Asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./dist/kafka-king.exe
+        asset_name: kafka-king_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.exe # 替换成适当的版本和平台标记
+        asset_content_type: application/octet-stream # 对于.exe文件，可以是application/octet-stream
+
+  build-mac:
     runs-on: macos-latest
 
     # 步骤合集
