@@ -36,8 +36,6 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m venv king
-        .\king\Scripts\activate
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         flet pack main.py -i assets/icon.ico  -n kafka-king
@@ -81,8 +79,6 @@ jobs:
         
     - name: Install dependencies
       run: |
-        python -m venv king
-        source king/bin/activate
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         flet pack main.py -i assets/icon.icns  -n kafka-king
