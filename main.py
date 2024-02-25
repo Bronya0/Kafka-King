@@ -4,7 +4,7 @@ import traceback
 import flet as ft
 from flet_core import TextField
 
-from common import S_Text, prefix, githup_url
+from common import S_Text, prefix, githup_url, TITLE
 from language.translate import lang, i18n
 from service.kafka_service import kafka_service
 from views.init import views_index_map
@@ -43,11 +43,11 @@ class Main:
             label="连接",
             options=[],
             height=35,
-            text_size=14,
+            text_size=16,
             on_change=self.dropdown_changed,
             alignment=ft.alignment.center_left,
             dense=True,
-            content_padding=10,
+            content_padding=5,
             focused_bgcolor='#ff0000',
         )
 
@@ -110,8 +110,7 @@ class Main:
         self.page.appbar = ft.AppBar(
             leading=ft.Image(src="icon.png", ),
             leading_width=40,
-            title=S_Text("Kafka Client"),
-            center_title=False,
+            title=S_Text(TITLE),
             bgcolor=ft.colors.SURFACE_VARIANT,
             actions=[
                 self.connect_dd,
@@ -201,7 +200,7 @@ class Main:
         try:
             kafka_service.set_bootstrap_servers(bootstrap_servers)
             self.refresh_body()
-            self.page.appbar.title = S_Text(key[len(prefix):])
+            self.page.appbar.title = S_Text(self.page.appbar.title.value+" | Connect: "+key[len(prefix):])
         except Exception as e:
             self.body.controls = [S_Text(value=f"连接失败：{str(e)}", size=24)]
         self.page.controls.pop()
@@ -221,7 +220,6 @@ class Main:
 
         # 先加载框架主体
         try:
-            view = view()
             self.body.controls = view.controls
         except Exception as e:
             self.body.controls = [S_Text(value=str(e), size=24)]
@@ -240,6 +238,7 @@ class Main:
         except Exception as e:
             traceback.print_exc()
             self.body.controls = [S_Text(value=str(e), size=24)]
+            view.controls.pop()
             self.page.update()
             return
 
@@ -268,7 +267,7 @@ class Main:
 
 
 def init(page: ft.Page):
-    page.title = "Kafka King"
+    page.title = TITLE
     page.window_min_width = 800
     page.window_min_height = 600
     theme = page.client_storage.get("theme")

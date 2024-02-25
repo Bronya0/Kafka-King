@@ -24,8 +24,8 @@ class Simulate(object):
         self.__kafka_king_group = "__kafka_king_group"
         self.kafka_fetch_timeout = 10
 
-        if not kafka_service.kac:
-            raise Exception("请先选择一个可用的kafka连接！")
+        # if not kafka_service.kac:
+        #     raise Exception("请先选择一个可用的kafka连接！")
 
         # producer tab's topic Dropdown
         self.producer_topic_dd = ft.Dropdown(
@@ -208,9 +208,6 @@ class Simulate(object):
         发送消息
         乘以倍数，and 是否压缩
         """
-        ori = self.producer_send_button.text
-        self.producer_send_button.text = "Sending..."
-        e.page.update()
         try:
             topic = self.producer_topic_dd.value
             msg = self.producer_send_input.value
@@ -221,12 +218,15 @@ class Simulate(object):
             batch_size = int(self.producer_batch_size_input.value.rstrip())
             linger_ms = int(self.producer_linger_ms_input.value.rstrip())
 
-            if acks not in [0, 1, -1] or linger_ms < 0 or batch_size < 0 or msg is None:
+            if acks not in [0, 1, -1] or linger_ms < 0 or batch_size < 0 or msg == "":
                 raise Exception("参数填写不正确")
         except:
-            self.producer_send_button.text = ori
             open_snack_bar(e.page, e.page.snack_bar, "参数填写不正确")
             return
+
+        ori = self.producer_send_button.text
+        self.producer_send_button.text = "Sending..."
+        e.page.update()
 
         st = time.time()
         res = "发送成功"

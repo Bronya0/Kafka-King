@@ -11,6 +11,7 @@ import flet
 # 假设有一个全局的存储连接信息的变量
 prefix = "__kafka_connects__"
 githup_url = "https://github.com/Bronya0/Kafka-King"
+TITLE = "Kafka King"
 
 
 def S_Text(value, **kwargs):
@@ -52,7 +53,7 @@ dd_common_configs = {
     "text_size": 14,
     "alignment": flet.alignment.center_left,
     "dense": True,
-    "content_padding": 10,
+    "content_padding": 5,
     "bgcolor": '#F0F4FA',
 }
 

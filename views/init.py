@@ -9,10 +9,10 @@ from views.topic import Topic
 
 # 侧边栏的id -> 页面组件的映射
 views_index_map = {
-    0: Broker,
-    1: Topic,
-    2: Simulate,
-    3: Monitor,
-    4: Settings,
-    5: Suggest,
+    0: Broker(),
+    1: Topic(),
+    2: Simulate(),
+    3: Monitor(),
+    4: Settings(),
+    5: Suggest(),
 }

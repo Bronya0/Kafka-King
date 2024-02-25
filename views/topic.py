@@ -28,8 +28,8 @@ class Topic(object):
         self.describe_topics = None
         self.topic_table = None
 
-        if not kafka_service.kac:
-            raise Exception("请先选择一个可用的kafka连接！")
+        # if not kafka_service.kac:
+        #     raise Exception("请先选择一个可用的kafka连接！")
 
         # 创建topic输入框
         self.create_topics_multi_text_input = ft.TextField(

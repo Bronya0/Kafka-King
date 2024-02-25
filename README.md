@@ -25,6 +25,9 @@
 - [ ] 配置化（评估中）
 - ……
 
+# 下载
+[下载地址](https://github.com/Bronya0/Kafka-King/releases)，点击Assets，选择自己的平台
+
 # 功能截图
 
 ## 操作topic
