@@ -43,7 +43,7 @@ class Main:
             label="连接",
             options=[],
             height=35,
-            text_size=16,
+            text_size=14,
             on_change=self.dropdown_changed,
             alignment=ft.alignment.center_left,
             dense=True,
@@ -277,6 +277,9 @@ def init(page: ft.Page):
     language = page.client_storage.get("language")
     if language is not None:
         lang.language = language
+
+    page.theme = ft.Theme(font_family="Microsoft Yahei")
+
     Main(page)
 
 
