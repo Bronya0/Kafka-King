@@ -2,7 +2,7 @@
 # -*-coding:utf-8 -*-
 import flet as ft
 
-from common import S_Button, githup_url
+from common import S_Button, GITHUB_URL
 
 
 class Suggest(object):
@@ -27,7 +27,7 @@ class Suggest(object):
                                 value="""
 - suggest us on github: [{})
 - If you like it, you can give it a star
-                                """.format(githup_url),
+                                """.format(GITHUB_URL),
                                 selectable=True,
                                 auto_follow_links=True,
                             ),
@@ -35,7 +35,7 @@ class Suggest(object):
                     ),
                     ft.Row([
                         S_Button(text="Update Kafka-king", icon=ft.icons.UPGRADE,
-                                 url=githup_url,
+                                 url=GITHUB_URL,
                                  bgcolor="#F7E7E6",
                                  color="#DA3A66",
                                  )

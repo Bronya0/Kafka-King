@@ -1,10 +1,15 @@
 import gc
+import os
+import sys
+import threading
+import time
 import traceback
 
 import flet as ft
+import requests
 from flet_core import TextField
 
-from common import S_Text, prefix, githup_url, TITLE
+from common import S_Text, prefix, GITHUB_URL, TITLE, UPDATE_URL, open_snack_bar, S_Button
 from language.translate import lang, i18n
 from service.kafka_service import kafka_service
 from views.init import views_index_map
@@ -117,7 +122,7 @@ class Main:
                 ft.IconButton(ft.icons.ADD, on_click=self.open_dlg_modal, tooltip="添加kafka地址"),  # add link
                 ft.IconButton(ft.icons.WB_SUNNY_OUTLINED, on_click=self.change_theme, tooltip="切换明暗"),  # theme
                 ft.IconButton(ft.icons.TIPS_AND_UPDATES_OUTLINED, tooltip="去github更新或者提出想法",
-                              url=githup_url),
+                              url=GITHUB_URL),
                 # ft.IconButton(ft.icons.STAR_RATE_OUTLINED),
             ],
         )
@@ -266,6 +271,40 @@ class Main:
         self.page.update()
 
 
+def check(page: ft.Page):
+    print("开始检查版本……")
+    last_check_update = page.client_storage.get("last_check_update")
+    if last_check_update:
+        if time.time() - int(last_check_update) < 7 * 24 * 3600:
+            return
+    res = requests.get(UPDATE_URL)
+    if res.status_code != 200:
+        res = requests.get(UPDATE_URL)
+        if res.status_code != 200:
+            res = requests.get(UPDATE_URL)
+            if res.status_code != 200:
+                return
+    latest_version = res.json()['tag_name']
+
+    # 先获取当前运行时临时目录路径
+    basedir = os.path.dirname(__file__)
+    print(basedir)
+    version = open(f'{basedir}/assets/version.txt', 'r', encoding='utf-8').read()
+    if version != latest_version:
+        print("需要更新{}".format(latest_version))
+        page.snack_bar.content = ft.Row([
+                        ft.Text("发现新版本: {}，是否前往更新（推荐）？".format(latest_version), color='white'),
+                        ft.ElevatedButton(text="前往下载", url=GITHUB_URL,  color="#DA3A66", height=30,)
+                    ])
+        page.snack_bar.open = True
+        page.snack_bar.show_close_icon = True
+        page.snack_bar.close_icon_color = "#DA3A66"
+        page.snack_bar.bgcolor = "#DA3A66"
+        page.snack_bar.duration = 600 * 1000
+        page.update()
+        page.client_storage.set("last_check_update", int(time.time()))
+
+
 def init(page: ft.Page):
     page.title = TITLE
     page.window_min_width = 800
@@ -280,6 +319,8 @@ def init(page: ft.Page):
     page.theme = ft.Theme(font_family="Microsoft Yahei")
 
     Main(page)
+    t = threading.Thread(target=check, args=(page,))
+    t.start()
 
 
 ft.app(target=init, assets_dir="assets")

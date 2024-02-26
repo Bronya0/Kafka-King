@@ -36,9 +36,11 @@ jobs:
 
     - name: Install dependencies
       run: |
+        echo ${{ github.event.release.tag_name }} > assets/version.txt
+        
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        flet pack main.py -i assets/icon.ico  -n kafka-king --add-data=assets/icon.png:assets
+        flet pack main.py -i assets/icon.ico -n kafka-king --add-data=assets/*:assets
 
     - name: Upload Release Asset
       id: upload-release-asset
@@ -79,9 +81,11 @@ jobs:
         
     - name: Install dependencies
       run: |
+        echo ${{ github.event.release.tag_name }} > assets/version.txt
+        
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        flet pack main.py -i assets/icon.icns  -n kafka-king --add-data=assets/icon.png:assets
+        flet pack main.py -i assets/icon.icns  -n kafka-king --add-data=assets/*:assets
         ls -al dist/
 
     # 打包.app文件夹为zip或tar.gz以方便传输

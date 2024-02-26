@@ -6,12 +6,18 @@
 @Project : kafka-king
 @Desc    : 
 """
+import os
+
 import flet
 
 # 假设有一个全局的存储连接信息的变量
 prefix = "__kafka_connects__"
-githup_url = "https://github.com/Bronya0/Kafka-King"
-TITLE = "Kafka King"
+GITHUB_URL = "https://github.com/Bronya0/Kafka-King"
+UPDATE_URL = "https://api.github.com/repos/Bronya0/Kafka-King/releases/latest"
+basedir = os.path.dirname(__file__)
+
+c_version = open(f'{basedir}/assets/version.txt', 'r', encoding='utf-8').read()
+TITLE = "Kafka King {}".format(c_version)
 
 
 def S_Text(value, **kwargs):
@@ -35,8 +41,8 @@ def S_Button(**kwargs):
     )
 
 
-def open_snack_bar(page, snack_bar, msg):
-    snack_bar.content = flet.Text(msg)
+def open_snack_bar(page, msg):
+    page.snack_bar.content = flet.Text(msg)
     page.snack_bar.open = True
     page.update()
 

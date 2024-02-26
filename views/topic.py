@@ -363,7 +363,7 @@ class Topic(object):
                 msg = f"创建失败： {str(_e)}"
         self.create_topic_modal.open = False
         self.init()
-        open_snack_bar(e.page, e.page.snack_bar, msg)
+        open_snack_bar(e.page, msg)
 
     def create_partitions(self, e: ControlEvent):
         """
@@ -380,7 +380,7 @@ class Topic(object):
         self.create_partition_modal.open = False
         self.init()
         self._create_partition_table(topic_name_=topic)
-        open_snack_bar(e.page, e.page.snack_bar, msg)
+        open_snack_bar(e.page, msg)
 
     def open_delete_dialog(self, e):
         topic_name = e.control.data
@@ -395,7 +395,7 @@ class Topic(object):
             dlg_modal.open = False
             page.update()
             msg = self.delete_topic(topic_name)
-            open_snack_bar(page, page.snack_bar, msg)
+            open_snack_bar(page, msg)
             self.init()
             page.update()
 

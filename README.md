@@ -75,7 +75,7 @@
 
 pip install -r requirements.txt
 
-flet pack main.py -i assets/icon.ico  -n kafka-king --add-data=assets/icon.png:assets
+flet pack main.py -i assets/icon.ico  -n kafka-king --add-data=assets/*:assets
 
 # License
 Apache-2.0 license

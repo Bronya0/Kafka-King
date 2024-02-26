@@ -59,4 +59,4 @@ class Settings(object):
         language = self.lang_dd.value
         self.lang_dd.page.client_storage.set('language', language)
         lang.language = language
-        open_snack_bar(e.page, e.page.snack_bar, "保存成功")
+        open_snack_bar(e.page, "保存成功")

@@ -221,7 +221,7 @@ class Simulate(object):
             if acks not in [0, 1, -1] or linger_ms < 0 or batch_size < 0 or msg == "":
                 raise Exception("参数填写不正确")
         except:
-            open_snack_bar(e.page, e.page.snack_bar, "参数填写不正确")
+            open_snack_bar(e.page, "参数填写不正确")
             return
 
         ori = self.producer_send_button.text
@@ -247,7 +247,7 @@ class Simulate(object):
         et = time.time() - st
         res += "\n发送耗时{} s".format(et)
         self.producer_send_button.text = ori
-        open_snack_bar(e.page, e.page.snack_bar, res)
+        open_snack_bar(e.page, res)
 
     def click_fetch_msg(self, e: ControlEvent):
         """
@@ -294,4 +294,4 @@ class Simulate(object):
         res += "\n拉取耗时{} s".format(et)
         print(res)
         self.consumer_fetch_msg_button.disabled = False
-        open_snack_bar(e.page, e.page.snack_bar, res)
+        open_snack_bar(e.page, res)
