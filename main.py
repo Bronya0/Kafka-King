@@ -127,6 +127,8 @@ class Main:
             ],
         )
 
+        self.pr = ft.ProgressBar(disabled=False)
+
         # 初始化加载全部连接
         self.refresh_dd_links()
 
@@ -217,6 +219,8 @@ class Main:
         :param e:
         :return:
         """
+        self.pr.disabled = False
+        self.page.update()
 
         selected_index = self.Navigation.selected_index
         view = views_index_map.get(selected_index)
@@ -232,7 +236,7 @@ class Main:
             return
 
         # 进度条 loading
-        view.controls.append(ft.ProgressBar())
+        self.pr.disabled = False
         self.page.update()
 
         # 初始化页面数据
@@ -243,12 +247,11 @@ class Main:
         except Exception as e:
             traceback.print_exc()
             self.body.controls = [S_Text(value=str(e), size=24)]
-            view.controls.pop()
+            self.pr.disabled = True
             self.page.update()
             return
 
         # 去掉进度条
-        view.controls.pop()
         self.page.update()
         gc.collect()
 
