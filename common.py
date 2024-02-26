@@ -16,7 +16,7 @@ GITHUB_URL = "https://github.com/Bronya0/Kafka-King"
 UPDATE_URL = "https://api.github.com/repos/Bronya0/Kafka-King/releases/latest"
 basedir = os.path.dirname(__file__)
 
-c_version = open(f'{basedir}/assets/version.txt', 'r', encoding='utf-8').read()
+c_version = open(f'{basedir}/assets/version.txt', 'r', encoding='utf-8').read().rstrip().replace('\n', '')
 TITLE = "Kafka King {}".format(c_version)
 
 

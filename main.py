@@ -289,7 +289,7 @@ def check(page: ft.Page):
     # 先获取当前运行时临时目录路径
     basedir = os.path.dirname(__file__)
     print(basedir)
-    version = open(f'{basedir}/assets/version.txt', 'r', encoding='utf-8').read()
+    version = open(f'{basedir}/assets/version.txt', 'r', encoding='utf-8').read().rstrip().replace('\n', '')
     if version != latest_version:
         print("需要更新{}".format(latest_version))
         page.snack_bar.content = ft.Row([
