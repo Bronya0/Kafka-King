@@ -265,13 +265,14 @@ class Main:
         try:
             new_theme = change[self.page.theme_mode]
             self.page.theme_mode = new_theme
+            self.page.update()
             self.page.client_storage.set("theme", new_theme)
         except Exception as e:
             traceback.print_exc()
             self.page.theme_mode = ft.ThemeMode.DARK.value
+            self.page.update()
             self.page.client_storage.set("theme", ft.ThemeMode.DARK.value)
 
-        self.page.update()
 
 
 def check(page: ft.Page):
