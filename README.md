@@ -5,11 +5,11 @@
 
 <div align="center">
 
-[![License](https://img.shields.io/github/license/Bronya0/Kafka-King)](https://github.com/tiny-craft/tiny-rdm/blob/main/LICENSE)
-[![GitHub release](https://img.shields.io/github/release/Bronya0/Kafka-King)](https://github.com/tiny-craft/tiny-rdm/releases)
+![License](https://img.shields.io/github/license/Bronya0/Kafka-King)
+![GitHub release](https://img.shields.io/github/release/Bronya0/Kafka-King)
 ![GitHub All Releases](https://img.shields.io/github/downloads/Bronya0/Kafka-King/total)
-[![GitHub stars](https://img.shields.io/github/stars/Bronya0/Kafka-King)](https://github.com/tiny-craft/tiny-rdm/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/Bronya0/Kafka-King)](https://github.com/tiny-craft/tiny-rdm/fork)
+![GitHub stars](https://img.shields.io/github/stars/Bronya0/Kafka-King)
+![GitHub forks](https://img.shields.io/github/forks/Bronya0/Kafka-King)
 
 <strong>A modern, practical Kafka client built using Python flet.</strong>
 </div>

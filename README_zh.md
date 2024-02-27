@@ -2,11 +2,11 @@
 <h1 align="center">Kafka King </h1>
 <div align="center">
 
-[![License](https://img.shields.io/github/license/Bronya0/Kafka-King)](https://github.com/tiny-craft/tiny-rdm/blob/main/LICENSE)
-[![GitHub release](https://img.shields.io/github/release/Bronya0/Kafka-King)](https://github.com/tiny-craft/tiny-rdm/releases)
+![License](https://img.shields.io/github/license/Bronya0/Kafka-King)
+![GitHub release](https://img.shields.io/github/release/Bronya0/Kafka-King)
 ![GitHub All Releases](https://img.shields.io/github/downloads/Bronya0/Kafka-King/total)
-[![GitHub stars](https://img.shields.io/github/stars/Bronya0/Kafka-King)](https://github.com/tiny-craft/tiny-rdm/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/Bronya0/Kafka-King)](https://github.com/tiny-craft/tiny-rdm/fork)
+![GitHub stars](https://img.shields.io/github/stars/Bronya0/Kafka-King)
+![GitHub forks](https://img.shields.io/github/forks/Bronya0/Kafka-King)
 
 <strong>一个现代、实用的kafka客户端，使用python flet构建。</strong>
 </div>
