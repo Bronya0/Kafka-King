@@ -1,7 +1,7 @@
 <div align=center><img src="assets/icon.ico"></div>
 <h1 align="center">Kafka King </h1>
 
-<h4 align="center"><strong>English</strong> | <a href="https://github.com/tiny-craft/tiny-rdm/blob/main/README_zh.md">简体中文</a></h4>
+<h4 align="center"><strong>English</strong> | <a href="https://github.com/Bronya0/Kafka-King/blob/main/README_zh.md">简体中文</a></h4>
 
 <div align="center">
 
