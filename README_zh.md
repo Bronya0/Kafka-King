@@ -8,7 +8,7 @@
 ![GitHub stars](https://img.shields.io/github/stars/Bronya0/Kafka-King)
 ![GitHub forks](https://img.shields.io/github/forks/Bronya0/Kafka-King)
 
-<strong>一个现代、实用的kafka客户端，使用python flet构建。</strong>
+<strong>一个现代、实用的kafka GUI客户端，使用python flet构建。</strong>
 </div>
 
 # 功能清单

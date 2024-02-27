@@ -11,7 +11,7 @@
 ![GitHub stars](https://img.shields.io/github/stars/Bronya0/Kafka-King)
 ![GitHub forks](https://img.shields.io/github/forks/Bronya0/Kafka-King)
 
-<strong>A modern, practical Kafka client built using Python flet.</strong>
+<strong>A modern, practical Kafka GUI client built using Python flet.</strong>
 </div>
 
 # Feature list
