@@ -1,5 +1,8 @@
 <div align=center><img src="assets/icon.ico"></div>
 <h1 align="center">Kafka King </h1>
+
+<h4 align="center"><strong>English</strong> | <a href="https://github.com/tiny-craft/tiny-rdm/blob/main/README_zh.md">简体中文</a></h4>
+
 <div align="center">
 
 [![License](https://img.shields.io/github/license/Bronya0/Kafka-King)](https://github.com/tiny-craft/tiny-rdm/blob/main/LICENSE)
@@ -8,74 +11,75 @@
 [![GitHub stars](https://img.shields.io/github/stars/Bronya0/Kafka-King)](https://github.com/tiny-craft/tiny-rdm/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/Bronya0/Kafka-King)](https://github.com/tiny-craft/tiny-rdm/fork)
 
-<strong>一个漂亮、现代、实用的kafka客户端，使用python flet构建。</strong>
+<strong>A modern, practical Kafka client built using Python flet.</strong>
 </div>
 
-# 功能清单
-- [x] 查看集群节点列表（完成）
-- [x] 创建主题（支持批量）、删除主题、支持根据消费者组统计每个topic的消息积压量（完成）
-- [x] 支持查看topic的分区的详细信息，并为主题添加额外的分区（完成）
-- [x] 支持查看每个分区的消息offset（完成）
-- [x] 支持模拟生产者，批量发送消息，是否开启gzip压缩、acks、batch_size、liner_ms，你可以用来做性能测试（完成）
-- [x] 支持模拟消费者，按照内置的组进行指定size的消费（完成）
-- [x] 光暗主题切换（完成）
-- [ ] 参数说明对照表（评估中）
-- [ ] 监控、告警（评估中）
-- [ ] 多语言支持（开发中）
-- [ ] 配置化（评估中）
+# Feature list
+- [x] View cluster node list (completed)
+- [x] Create topics (support batches), delete topics, and support statistics of the message backlog of each topic based on consumer groups (completed)
+- [x] Support viewing detailed information of topic partitions and adding additional partitions to topics (completed)
+- [x] Support viewing the message offset of each partition (completed)
+- [x] Support simulated producers, send messages in batches, whether to enable gzip compression, acks, batch_size, liner_ms, you can use it for performance testing (completed)
+- [x] Supports simulated consumers, consuming specified sizes according to built-in groups (completed)
+- [x] Light and dark theme switching (completed)
+- [ ] Parameter description comparison table (under evaluation)
+- [ ] Monitoring and alarming (under evaluation)
+- [ ] Multi-language support (under development)
+- [ ] Configuration (under evaluation)
 - ……
 
-# 下载
-[下载地址](https://github.com/Bronya0/Kafka-King/releases)，点击Assets，选择自己的平台
+# download
+[Download address](https://github.com/Bronya0/Kafka-King/releases), click Assets and choose your platform
 
-# 功能截图
+# Function screenshot
 
-## 操作topic
-主题列表，支持删除主题
+## Manipulate topic
+Topic list, supports deleting topics
 
-支持根据消费者组统计每个topic的消息积压量
+Supports statistics of the message backlog of each topic based on consumer groups
 
 ![](docs/snap/p9.png)
 
-创建主题（支持批量）
+Create a theme (supports batch)
 
 ![](docs/snap/p4.png)
 
-## 查看topic的详细配置
+## View the detailed configuration of the topic
 ![](docs/snap/p6.png)
 
-## 自动获取集群broker列表
+## Automatically obtain the cluster broker list
 ![](docs/snap/p2.png)
 
-## 获取broker详细配置
+## Get broker detailed configuration
 ![](docs/snap/p3.png)
 
-## 模拟生产者消费者
-- 支持模拟生产者，批量发送消息，是否开启gzip压缩
-- 支持模拟消费者，按照内置的组进行指定size的消费
+## Simulate producer-consumer
+-Supports simulating producers, sending messages in batches, and whether to enable gzip compression
+- Supports simulated consumers, consuming specified sizes according to built-in groups
 
 ![](docs/snap/p8.png)
 
 
-
-## 分区操作
-- 支持查看topic的分区的详细信息
-- 支持为主题添加额外的分区
-- 支持查看每个分区的消息offset
+## Partition operations
+- Supports viewing detailed information of topic partitions
+- Support adding additional partitions to themes
+-Supports viewing the message offset of each partition
 
 ![](docs/snap/p5.png)
 
 
-# 快速开始
-在右侧release下的Assets选择对应版本下载即可。
-或者点击 https://github.com/Bronya0/Kafka-King/releases
+# Quick start dev
+Select the corresponding version to download under Assets under release on the right.
+Or click https://github.com/Bronya0/Kafka-King/releases
 
 
-# 构建
-
+# Construct
 pip install -r requirements.txt
 
-flet pack main.py -i assets/icon.ico  -n kafka-king --add-data=assets/*:assets
+flet pack main.py -i assets/icon.ico -n kafka-king --add-data=assets/*:assets
 
 # License
 Apache-2.0 license
+
+# grateful
+- flet-dev: https://github.com/flet-dev/flet
