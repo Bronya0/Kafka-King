@@ -33,14 +33,14 @@ class Topic(object):
 
         # 创建topic输入框
         self.create_topics_multi_text_input = ft.TextField(
-            hint_text="such as: \ntopic1,1,1\ntopic2,1,1\ntopic3,1,1",
+            hint_text="such as: \ntopic1,1,1\ntopic2,2,1\ntopic3,3,2",
             multiline=True,
             dense=False,
             keyboard_type=ft.KeyboardType.MULTILINE,
             max_length=1000,
             max_lines=10,
             min_lines=2,
-            helper_text="分区数后续可以增加但是不能减少; 0 < 副本因子 <= broker数（必须）；"
+            helper_text="分区数后续可以增加但是不能减少; 分布式下副本因子建议至少为2；"
         )
         self.create_topic_modal = ft.AlertDialog(
             modal=True,
