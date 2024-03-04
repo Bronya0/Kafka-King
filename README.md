@@ -78,7 +78,7 @@ pip install -r requirements.txt
 
 flet pack main.py -i assets/icon.ico -n kafka-king --add-data=assets/*:assets
 
-# Star星星
+# Star
 [![Stargazers over time](https://starchart.cc/Bronya0/Kafka-King.svg)](https://starchart.cc/Bronya0/Kafka-King)
 
 # License
