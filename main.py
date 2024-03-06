@@ -274,7 +274,6 @@ class Main:
             self.page.client_storage.set("theme", ft.ThemeMode.DARK.value)
 
 
-
 def check(page: ft.Page):
     print("开始检查版本……")
     last_check_update = page.client_storage.get("last_check_update")
@@ -295,14 +294,13 @@ def check(page: ft.Page):
     print(basedir)
     version = open(f'{basedir}/assets/version.txt', 'r', encoding='utf-8').read().rstrip().replace('\n', '')
     if version != latest_version:
-        print("需要更新{}".format(latest_version))
+        print("需要更新{} -> {}".format(version, latest_version))
         page.snack_bar.content = ft.Row([
                         ft.Text("发现新版本: {}，是否前往更新（推荐）？".format(latest_version), color='white'),
-                        ft.ElevatedButton(text="前往下载", url=GITHUB_URL,  color="#DA3A66", height=30,)
+                        ft.ElevatedButton(text="前往下载", url=GITHUB_URL, height=30,)
                     ])
         page.snack_bar.open = True
         page.snack_bar.show_close_icon = True
-        page.snack_bar.close_icon_color = "#DA3A66"
         page.snack_bar.bgcolor = "#DA3A66"
         page.snack_bar.duration = 600 * 1000
         page.update()
