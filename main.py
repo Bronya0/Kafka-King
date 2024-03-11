@@ -99,11 +99,11 @@ class Main:
                     label_content=S_Text("Suggest"),
                 ),
 
-                ft.NavigationRailDestination(
-                    icon_content=ft.Icon(ft.icons.ARTICLE, tooltip="Article"),
-                    selected_icon_content=ft.Icon(ft.icons.ARTICLE),
-                    label_content=S_Text("Article"),
-                ),
+                # ft.NavigationRailDestination(
+                #     icon_content=ft.Icon(ft.icons.ARTICLE, tooltip="Article"),
+                #     selected_icon_content=ft.Icon(ft.icons.ARTICLE),
+                #     label_content=S_Text("Article"),
+                # ),
             ],
             on_change=self.refresh_body,
         )

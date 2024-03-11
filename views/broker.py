@@ -57,7 +57,8 @@ class Broker(object):
 
     def init(self):
         if not kafka_service.kac:
-            return "请先选择一个可用的kafka连接！"
+            return "请先选择一个可用的kafka连接！\nPlease select an available kafka connection first!"
+
         self.meta, self.api_version = kafka_service.get_brokers()
         self.base_info = ft.DataTable(
             columns=[

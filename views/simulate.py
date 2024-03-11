@@ -139,7 +139,7 @@ class Simulate(object):
 
     def init(self):
         if not kafka_service.kac:
-            return "请先选择一个可用的kafka连接！"
+            return "请先选择一个可用的kafka连接！\nPlease select an available kafka connection first!"
 
         self.describe_topics = kafka_service.get_topics()
         self.describe_topics_map = {i['topic']: i for i in self.describe_topics}
