@@ -133,7 +133,7 @@ class Main:
             ],
         )
 
-        self.pr = ft.ProgressBar(disabled=False)
+        self.pr = ft.ProgressBar(visible=False)
 
         # 初始化加载全部连接
         self.refresh_dd_links()
@@ -143,10 +143,12 @@ class Main:
                 [
                     self.Navigation,  # 侧边
                     ft.VerticalDivider(width=1),  # 竖线
-                    self.body  # 内容
+                    self.body,  # 内容
                 ],
                 expand=True,
-            )
+            ),
+
+            self.pr
         )
 
     def test_connect(self, e):
@@ -203,7 +205,7 @@ class Main:
         connect_dd.value实际上就是dropdown.Option里面的key
         """
         # 进度条 loading
-        self.page.controls.append(ft.ProgressBar())
+        self.pr.visible = True
         self.page.update()
 
         key = self.connect_dd.value
@@ -216,7 +218,7 @@ class Main:
             self.page.appbar.title = S_Text(self.page.appbar.title.value+" | Connect: "+key[len(prefix):])
         except Exception as e:
             self.body.controls = [S_Text(value=f"连接失败：{str(e)}", size=24)]
-        self.page.controls.pop()
+        self.pr.visible = False
         self.page.update()
 
     def refresh_body(self, e=None):
@@ -225,7 +227,7 @@ class Main:
         :param e:
         :return:
         """
-        self.pr.disabled = False
+        self.pr.visible = True
         self.page.update()
 
         selected_index = self.Navigation.selected_index
@@ -242,7 +244,7 @@ class Main:
             return
 
         # 进度条 loading
-        self.pr.disabled = False
+        self.pr.visible = False
         self.page.update()
 
         # 初始化页面数据
@@ -253,7 +255,7 @@ class Main:
         except Exception as e:
             traceback.print_exc()
             self.body.controls = [S_Text(value=str(e), size=24)]
-            self.pr.disabled = True
+            self.pr.visible = False
             self.page.update()
             return
 
