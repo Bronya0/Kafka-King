@@ -40,7 +40,8 @@ jobs:
         
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        flet pack main.py -i assets/icon.ico -n kafka-king --add-data=assets/*:assets
+        flet pack main.py -i assets/icon.ico -n kafka-king --add-data=assets/*:assets -D
+        Compress-Archive -Path ./dist/kafka-king -DestinationPath dist.zip -CompressionLevel Optimal
 
     - name: Upload Release Asset
       id: upload-release-asset
@@ -49,8 +50,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./dist/kafka-king.exe
-        asset_name: kafka-king_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.exe # 替换成适当的版本和平台标记
+        asset_path: ./dist.zip
+        asset_name: kafka-king_${{ steps.normalise_version.outputs.version }}_windows.zip # 替换成适当的版本和平台标记
         asset_content_type: application/octet-stream # 对于.exe文件，可以是application/octet-stream
 
   build-mac:
