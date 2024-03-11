@@ -119,7 +119,7 @@ class Main:
 
         # 顶部导航
         self.page.appbar = ft.AppBar(
-            leading=ft.Image(src="icon.png", ),
+            leading=ft.Image(src="icon.png"),
             leading_width=40,
             title=S_Text(TITLE),
             bgcolor=ft.colors.SURFACE_VARIANT,

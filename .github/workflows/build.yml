@@ -40,7 +40,7 @@ jobs:
         
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        flet pack main.py -i assets/icon.ico -n kafka-king --add-data=assets/*:assets -D
+        flet pack main.py -i assets/icon.ico -n kafka-king  --add-data=assets/*:assets
         Compress-Archive -Path ./dist/kafka-king -DestinationPath dist.zip -CompressionLevel Optimal
 
     - name: Upload Release Asset
