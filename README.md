@@ -1,7 +1,6 @@
 <div align=center><img src="assets/icon.ico"></div>
 <h1 align="center">Kafka King </h1>
-
-<h4 align="center"><strong>English</strong> | <a href="https://github.com/Bronya0/Kafka-King/blob/main/README_zh.md">简体中文</a></h4>
+<h4 align="center"><strong>简体中文</strong> | <a href="https://github.com/Bronya0/Kafka-King/blob/main/README_EN.md">English</a></h4>
 
 <div align="center">
 
@@ -11,78 +10,81 @@
 ![GitHub stars](https://img.shields.io/github/stars/Bronya0/Kafka-King)
 ![GitHub forks](https://img.shields.io/github/forks/Bronya0/Kafka-King)
 
-<strong>A modern, practical Kafka GUI client built using Python flet.</strong>
+<strong>一个现代、实用的kafka GUI客户端，使用python flet构建。</strong>
 </div>
 
-# Feature list
-- [x] View cluster node list (completed)
-- [x] Create topics (support batches), delete topics, and support statistics of the message backlog of each topic based on consumer groups (completed)
-- [x] Support viewing detailed information of topic partitions and adding additional partitions to topics (completed)
-- [x] Support viewing the message offset of each partition (completed)
-- [x] Support simulated producers, send messages in batches, whether to enable gzip compression, acks, batch_size, liner_ms, you can use it for performance testing (completed)
-- [x] Supports simulated consumers, consuming specified sizes according to built-in groups (completed)
-- [x] Light and dark theme switching (completed)
-- [ ] Parameter description comparison table (under evaluation)
-- [ ] Monitoring and alarming (under evaluation)
-- [ ] Multi-language support (under development)
-- [ ] Configuration (under evaluation)
+# 功能清单
+- [x] 查看集群节点列表（完成）
+- [x] 创建主题（支持批量）、删除主题、支持根据消费者组统计每个topic的消息积压量（完成）
+- [x] 支持查看topic的分区的详细信息，并为主题添加额外的分区（完成）
+- [x] 支持查看每个分区的消息offset（完成）
+- [x] 支持模拟生产者，批量发送消息，是否开启gzip压缩、acks、batch_size、liner_ms，你可以用来做性能测试（完成）
+- [x] 支持模拟消费者，按照内置的组进行指定size的消费（完成）
+- [x] 光暗主题切换（完成）
+- [ ] 参数说明对照表（评估中）
+- [ ] 监控、告警（评估中）
+- [ ] 多语言支持（开发中）
+- [ ] 配置化（评估中）
 - ……
 
-# download
-[Download address](https://github.com/Bronya0/Kafka-King/releases), click Assets and choose your platform
+# 下载
+[下载地址](https://github.com/Bronya0/Kafka-King/releases)，点击Assets，选择自己的平台
 
-# Function screenshot
+# 功能截图
 
-## Manipulate topic
-Topic list, supports deleting topics
+## 操作topic
+主题列表，支持删除主题
 
-Supports statistics of the message backlog of each topic based on consumer groups
+支持根据消费者组统计每个topic的消息积压量
 
 ![](docs/snap/p9.png)
 
-Create a theme (supports batch)
+创建主题（支持批量）
 
 ![](docs/snap/p4.png)
 
-## View the detailed configuration of the topic
+## 查看topic的详细配置
 ![](docs/snap/p6.png)
 
-## Automatically obtain the cluster broker list
+## 自动获取集群broker列表
 ![](docs/snap/p2.png)
 
-## Get broker detailed configuration
+## 获取broker详细配置
 ![](docs/snap/p3.png)
 
-## Simulate producer-consumer
--Supports simulating producers, sending messages in batches, and whether to enable gzip compression
-- Supports simulated consumers, consuming specified sizes according to built-in groups
+## 模拟生产者消费者
+- 支持模拟生产者，批量发送消息，是否开启gzip压缩
+- 支持模拟消费者，按照内置的组进行指定size的消费
 
 ![](docs/snap/p8.png)
 
 
-## Partition operations
-- Supports viewing detailed information of topic partitions
-- Support adding additional partitions to themes
--Supports viewing the message offset of each partition
+
+## 分区操作
+- 支持查看topic的分区的详细信息
+- 支持为主题添加额外的分区
+- 支持查看每个分区的消息offset
 
 ![](docs/snap/p5.png)
 
 
-# Quick start dev
-Select the corresponding version to download under Assets under release on the right.
-Or click https://github.com/Bronya0/Kafka-King/releases
+# 快速开始
+在右侧release下的Assets选择对应版本下载即可。
+或者点击 https://github.com/Bronya0/Kafka-King/releases
 
 
-# Construct
+# 构建
+
 pip install -r requirements.txt
 
-flet pack main.py -i assets/icon.ico -n kafka-king --add-data=assets/*:assets
+flet pack main.py -i assets/icon.ico  -n kafka-king --add-data=assets/*:assets
 
-# Star
+# Star星星
 [![Stargazers over time](https://starchart.cc/Bronya0/Kafka-King.svg)](https://starchart.cc/Bronya0/Kafka-King)
+
 
 # License
 Apache-2.0 license
 
-# grateful
-- flet-dev: https://github.com/flet-dev/flet
+# 感谢
+- flet-dev：https://github.com/flet-dev/flet
