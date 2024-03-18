@@ -215,7 +215,7 @@ class Main:
         try:
             kafka_service.set_bootstrap_servers(bootstrap_servers)
             self.refresh_body()
-            self.page.appbar.title = S_Text(self.page.appbar.title.value+" | Connect: "+key[len(prefix):])
+            self.page.appbar.title = S_Text(TITLE+" | Connect: "+key[len(prefix):])
         except Exception as e:
             self.body.controls = [S_Text(value=f"连接失败：{str(e)}", size=24)]
         self.pr.visible = False
