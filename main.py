@@ -119,7 +119,7 @@ class Main:
 
         # 顶部导航
         self.page.appbar = ft.AppBar(
-            leading=ft.Image(src="icon.png"),
+            leading=ft.Image(src="icon.png", width=10, height=10),
             leading_width=40,
             title=S_Text(TITLE),
             bgcolor=ft.colors.SURFACE_VARIANT,
@@ -296,7 +296,7 @@ def check(page: ft.Page):
             if res.status_code != 200:
                 return
     latest_version = res.json()['tag_name']
-
+    body = res.json()['body']
     # 先获取当前运行时临时目录路径
     basedir = os.path.dirname(__file__)
     print(basedir)
@@ -305,7 +305,8 @@ def check(page: ft.Page):
         print("需要更新{} -> {}".format(version, latest_version))
         page.snack_bar.content = ft.Row([
                         ft.Text("发现新版本: {}，是否前往更新（推荐）？".format(latest_version), color='white'),
-                        ft.ElevatedButton(text="前往下载", url=GITHUB_URL, height=30,)
+                        ft.ElevatedButton(text="前往下载", url=GITHUB_URL, height=30,),
+                        ft.Text(body, max_lines=2)
                     ])
         page.snack_bar.open = True
         page.snack_bar.show_close_icon = True
