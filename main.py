@@ -21,17 +21,20 @@ class Main:
         self.page = page
 
         # 创建输入表单控件
-        self.conn_name_input = TextField(label="连接名", hint_text="例如：本地环境", height=40)
-        self.kafka_input = TextField(label="Kafka地址", hint_text="例如：127.0.0.1:9092", height=40)
+        self.conn_name_input = TextField(label="连接名", hint_text="例如：本地环境", height=48)
+        self.kafka_input = TextField(label="Kafka地址", hint_text="例如：127.0.0.1:9092", height=48)
         self.connect_input_column = ft.Column([
             self.conn_name_input,
             self.kafka_input,
             ft.Row([
-                ft.TextButton("测试连接", on_click=self.test_connect, on_long_press=True),
-                ft.TextButton("是", on_click=self.add_connect),
-                ft.TextButton("否", on_click=self.close_dlg),
+                ft.TextButton("连接测试", on_click=self.test_connect, on_long_press=True,
+                              style=ft.ButtonStyle(color=ft.colors.RED)),
+                ft.TextButton("确认", on_click=self.add_connect),
+                ft.TextButton("取消", on_click=self.close_dlg),
             ])
-        ])
+        ],
+            width=360
+        )
 
         # 添加kafka link
         self.dlg_modal = ft.AlertDialog(
@@ -41,6 +44,18 @@ class Main:
                 self.connect_input_column,
             ],
             actions_alignment=ft.MainAxisAlignment.CENTER,
+            shape=ft.RoundedRectangleBorder(radius=8)
+
+        )
+
+        self.delete_modal = ft.AlertDialog(
+            modal=True,
+            title=S_Text("删除kafka连接？"),
+            actions=[
+            ],
+            actions_alignment=ft.MainAxisAlignment.CENTER,
+            shape=ft.RoundedRectangleBorder(radius=8),
+
         )
 
         # 链接下拉
@@ -53,7 +68,7 @@ class Main:
             alignment=ft.alignment.center_left,
             dense=True,
             content_padding=5,
-            focused_bgcolor='#ff0000',
+            focused_bgcolor='#ff0000'
         )
 
         # 侧边导航栏 NavigationRail
@@ -126,6 +141,8 @@ class Main:
             actions=[
                 self.connect_dd,
                 ft.IconButton(ft.icons.ADD, on_click=self.open_dlg_modal, tooltip="添加kafka地址"),  # add link
+                ft.IconButton(ft.icons.DELETE_OUTLINE, on_click=self.open_delete_link_modal, tooltip="删除kafka地址"),
+                # add link
                 ft.IconButton(ft.icons.WB_SUNNY_OUTLINED, on_click=self.change_theme, tooltip="切换明暗"),  # theme
                 ft.IconButton(ft.icons.TIPS_AND_UPDATES_OUTLINED, tooltip="去github更新或者提出想法",
                               url=GITHUB_URL),
@@ -179,7 +196,7 @@ class Main:
         self.page.update()
 
     def close_dlg(self, e):
-        self.dlg_modal.open = False
+        self.page.dialog.open = False
         self.page.update()
 
     def open_dlg_modal(self, e):
@@ -187,13 +204,43 @@ class Main:
         self.dlg_modal.open = True
         self.page.update()
 
+    def delete_connect(self, e):
+        self.page.client_storage.remove(self.connect_dd.value)
+        self.page.dialog.open = False
+        self.refresh_dd_links()
+        self.page.update()
+
+    def open_delete_link_modal(self, e):
+        key = self.connect_dd.value
+        if key is None:
+            open_snack_bar(self.page, "请先选择一个链接")
+            return
+
+        self.delete_modal.actions = [
+            ft.Column(
+                controls=[
+                    ft.Row([S_Text(f"连接名：{key[len(prefix):]}")]),
+                    ft.Row([S_Text(f"地址：{self.page.client_storage.get(key)}")]),
+                    ft.Row([
+                        ft.TextButton(text="删除", on_click=self.delete_connect,
+                                      style=ft.ButtonStyle(color=ft.colors.RED)),
+                        ft.TextButton(text="取消", on_click=self.close_dlg),
+                    ])
+                ]
+            )
+        ]
+        self.page.dialog = self.delete_modal
+        self.delete_modal.open = True
+        self.page.update()
+
     def refresh_dd_links(self):
         conns = self.page.client_storage.get_keys(prefix)
+        self.connect_dd.options = []
+
         if not conns:
             self.connect_dd.label = i18n("请添加kafka连接")
         else:
-            self.connect_dd.label = i18n("请选择kafka连接")
-            self.connect_dd.options = []
+            self.connect_dd.label = i18n("请下拉选择kafka连接")
             for i in conns:
                 text = f'{self.page.client_storage.get(i)}'
                 op = ft.dropdown.Option(key=i, text=text)
@@ -212,10 +259,12 @@ class Main:
         self.connect_dd.label = key[len(prefix):]
         bootstrap_servers = self.page.client_storage.get(key)
         print(bootstrap_servers)
+        self.page.appbar.title = S_Text(f"{TITLE} | Connect: {key[len(prefix):]}")
+        self.page.update()
+
         try:
             kafka_service.set_bootstrap_servers(bootstrap_servers)
             self.refresh_body()
-            self.page.appbar.title = S_Text(TITLE+" | Connect: "+key[len(prefix):])
         except Exception as e:
             self.body.controls = [S_Text(value=f"连接失败：{str(e)}", size=24)]
         self.pr.visible = False
