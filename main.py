@@ -1,6 +1,5 @@
 import gc
 import os
-import sys
 import threading
 import time
 import traceback
@@ -9,7 +8,7 @@ import flet as ft
 import requests
 from flet_core import TextField
 
-from common import S_Text, prefix, GITHUB_URL, TITLE, UPDATE_URL, open_snack_bar, S_Button
+from common import S_Text, prefix, GITHUB_URL, TITLE, UPDATE_URL, open_snack_bar, close_dlg
 from language.translate import lang, i18n
 from service.kafka_service import kafka_service
 from views.init import views_index_map
@@ -30,7 +29,7 @@ class Main:
                 ft.TextButton("连接测试", on_click=self.test_connect, on_long_press=True,
                               style=ft.ButtonStyle(color=ft.colors.RED)),
                 ft.TextButton("确认", on_click=self.add_connect),
-                ft.TextButton("取消", on_click=self.close_dlg),
+                ft.TextButton("取消", on_click=close_dlg),
             ])
         ],
             width=360
@@ -68,14 +67,13 @@ class Main:
             alignment=ft.alignment.center_left,
             dense=True,
             content_padding=5,
-            focused_bgcolor='#ff0000'
+            focused_bgcolor='#ff0000',
         )
 
         # 侧边导航栏 NavigationRail
         self.Navigation = ft.NavigationRail(
             selected_index=0,
             label_type=ft.NavigationRailLabelType.ALL,
-            # extended=True,
             min_width=100,
             min_extended_width=400,
             group_alignment=-0.9,
@@ -84,41 +82,35 @@ class Main:
                 ft.NavigationRailDestination(
                     icon_content=ft.Icon(ft.icons.HIVE_OUTLINED, tooltip="查看集群broker节点和配置"),
                     selected_icon_content=ft.Icon(ft.icons.HIVE),
-                    label="Broker",
+                    label=i18n("集群"),
                 ),
                 ft.NavigationRailDestination(
                     icon_content=ft.Icon(ft.icons.LIBRARY_BOOKS_OUTLINED, tooltip="增删改topic及partition"),
                     selected_icon_content=ft.Icon(ft.icons.LIBRARY_BOOKS),
-                    label="Topic",
+                    label=i18n("主题"),
                 ),
                 ft.NavigationRailDestination(
                     icon_content=ft.Icon(ft.icons.SWITCH_ACCESS_SHORTCUT_ADD_OUTLINED,
                                          tooltip="模拟producer及consumer"),
                     selected_icon_content=ft.Icon(ft.icons.SWITCH_ACCESS_SHORTCUT_ADD),
-                    label="Simulate",
+                    label=i18n("模拟"),
                 ),
 
                 ft.NavigationRailDestination(
                     icon_content=ft.Icon(ft.icons.STACKED_BAR_CHART_OUTLINED, tooltip="监控（开发中）"),
                     selected_icon_content=ft.Icon(ft.icons.STACKED_BAR_CHART),
-                    label="Monitor",
+                    label=i18n("监控"),
                 ),
                 ft.NavigationRailDestination(
                     icon_content=ft.Icon(ft.icons.SETTINGS_OUTLINED, tooltip="配置（开发中）"),
                     selected_icon_content=ft.Icon(ft.icons.SETTINGS_SUGGEST_OUTLINED),
-                    label_content=S_Text("Settings"),
+                    label_content=S_Text(i18n("设置")),
                 ),
                 ft.NavigationRailDestination(
                     icon_content=ft.Icon(ft.icons.AUTO_GRAPH_OUTLINED, tooltip="建议我们"),
                     selected_icon_content=ft.Icon(ft.icons.AUTO_GRAPH),
-                    label_content=S_Text("Suggest"),
+                    label_content=S_Text(i18n("建议")),
                 ),
-
-                # ft.NavigationRailDestination(
-                #     icon_content=ft.Icon(ft.icons.ARTICLE, tooltip="Article"),
-                #     selected_icon_content=ft.Icon(ft.icons.ARTICLE),
-                #     label_content=S_Text("Article"),
-                # ),
             ],
             on_change=self.refresh_body,
         )
@@ -134,19 +126,18 @@ class Main:
 
         # 顶部导航
         self.page.appbar = ft.AppBar(
-            leading=ft.Image(src="icon.png", width=10, height=10),
+            leading=ft.Image(src="icon.png"),
             leading_width=40,
             title=S_Text(TITLE),
             bgcolor=ft.colors.SURFACE_VARIANT,
             actions=[
                 self.connect_dd,
-                ft.IconButton(ft.icons.ADD, on_click=self.open_dlg_modal, tooltip="添加kafka地址"),  # add link
+                ft.IconButton(ft.icons.ADD_BOX_OUTLINED, on_click=self.open_dlg_modal, tooltip="添加kafka地址"),  # add link
                 ft.IconButton(ft.icons.DELETE_OUTLINE, on_click=self.open_delete_link_modal, tooltip="删除kafka地址"),
                 # add link
                 ft.IconButton(ft.icons.WB_SUNNY_OUTLINED, on_click=self.change_theme, tooltip="切换明暗"),  # theme
                 ft.IconButton(ft.icons.TIPS_AND_UPDATES_OUTLINED, tooltip="去github更新或者提出想法",
                               url=GITHUB_URL),
-                # ft.IconButton(ft.icons.STAR_RATE_OUTLINED),
             ],
         )
 
@@ -195,10 +186,6 @@ class Main:
         self.conn_name_input.value = None
         self.page.update()
 
-    def close_dlg(self, e):
-        self.page.dialog.open = False
-        self.page.update()
-
     def open_dlg_modal(self, e):
         self.page.dialog = self.dlg_modal
         self.dlg_modal.open = True
@@ -224,7 +211,7 @@ class Main:
                     ft.Row([
                         ft.TextButton(text="删除", on_click=self.delete_connect,
                                       style=ft.ButtonStyle(color=ft.colors.RED)),
-                        ft.TextButton(text="取消", on_click=self.close_dlg),
+                        ft.TextButton(text="取消", on_click=close_dlg),
                     ])
                 ]
             )
@@ -238,7 +225,7 @@ class Main:
         self.connect_dd.options = []
 
         if not conns:
-            self.connect_dd.label = i18n("请添加kafka连接")
+            self.connect_dd.label = i18n("请在右侧添加kafka连接")
         else:
             self.connect_dd.label = i18n("请下拉选择kafka连接")
             for i in conns:
@@ -259,7 +246,7 @@ class Main:
         self.connect_dd.label = key[len(prefix):]
         bootstrap_servers = self.page.client_storage.get(key)
         print(bootstrap_servers)
-        self.page.appbar.title = S_Text(f"{TITLE} | Connect: {key[len(prefix):]}")
+        self.page.appbar.title = S_Text(f"{TITLE} | 当前连接: {key[len(prefix):]}")
         self.page.update()
 
         try:
@@ -332,10 +319,11 @@ class Main:
 
 
 def check(page: ft.Page):
-    print("开始检查版本……")
+    print("开始检查版本……", UPDATE_URL)
     last_check_update = page.client_storage.get("last_check_update")
     if last_check_update:
-        if time.time() - int(last_check_update) < 7 * 24 * 3600:
+        if time.time() - int(last_check_update) < 3 * 24 * 3600:
+            print("已经3天内检查过，跳过")
             return
     res = requests.get(UPDATE_URL)
     if res.status_code != 200:
@@ -352,15 +340,36 @@ def check(page: ft.Page):
     version = open(f'{basedir}/assets/version.txt', 'r', encoding='utf-8').read().rstrip().replace('\n', '')
     if version != latest_version:
         print("需要更新{} -> {}".format(version, latest_version))
-        page.snack_bar.content = ft.Row([
-                        ft.Text("发现新版本: {}，是否前往更新（推荐）？".format(latest_version), color='white'),
-                        ft.ElevatedButton(text="前往下载", url=GITHUB_URL, height=30,),
-                        ft.Text(body, max_lines=2)
-                    ])
-        page.snack_bar.open = True
-        page.snack_bar.show_close_icon = True
-        page.snack_bar.bgcolor = "#DA3A66"
-        page.snack_bar.duration = 600 * 1000
+
+        update_alert = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("🎉🎉发现新版本: {}".format(latest_version)),
+            actions=[
+                ft.Column(
+                    [
+                        ft.Column(
+                            [
+                                ft.Text(body),
+                            ],
+                            scroll=ft.ScrollMode.ALWAYS,
+                            height=120,
+                        ),
+                        ft.Row(
+                            [
+                                ft.TextButton(text="前往下载", url=GITHUB_URL),
+                                ft.TextButton(text="下次再说", on_click=close_dlg, style=ft.ButtonStyle(color=ft.colors.GREY)),
+                            ]
+                        )
+                    ],
+                ),
+            ],
+            actions_alignment=ft.MainAxisAlignment.CENTER,
+            shape=ft.RoundedRectangleBorder(radius=8),
+            open=True,
+        )
+
+        page.dialog = update_alert
+
         page.update()
         page.client_storage.set("last_check_update", int(time.time()))
 

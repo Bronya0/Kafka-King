@@ -148,14 +148,16 @@ class KafkaService:
         """
         拉取消息
         """
-        consumer = KafkaConsumer(topic,
-                                 group_id=group_id,
-                                 enable_auto_commit=False,
-                                 auto_offset_reset="earliest",
-                                 bootstrap_servers=self.bootstrap_servers,
-                                 max_poll_records=size,
-
-                                 )
+        try:
+            consumer = KafkaConsumer(topic,
+                                     group_id=group_id,
+                                     enable_auto_commit=False,
+                                     auto_offset_reset="earliest",
+                                     bootstrap_servers=self.bootstrap_servers,
+                                     max_poll_records=size,
+                                     )
+        except Exception as e:
+            return f"无法连接集群并创建消费者：{e}"
 
         # 计数器
         n = 0
@@ -164,10 +166,9 @@ class KafkaService:
         for message in consumer:
             res += "{}: topic: {}, partition: {}, key: {}, value: {}\n".format(message.offset, message.topic,
                                                                                message.partition,
-
-                                                                               message.key.decode('utf-8'),
-                                                                               message.value.decode(
-                                                                                   'utf-8'))
+                                                                               message.key.decode(
+                                                                                   'utf-8') if message.key is not None else "",
+                                                                               message.value.decode('utf-8'))
             n += 1
 
             if n >= size or time.time() - st >= timeout:

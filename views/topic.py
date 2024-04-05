@@ -7,7 +7,7 @@ from flet_core import ControlEvent
 from kafka import KafkaAdminClient
 from kafka.admin import NewTopic
 
-from common import S_Text, open_snack_bar, S_Button, dd_common_configs
+from common import S_Text, open_snack_bar, S_Button, dd_common_configs, close_dlg
 from service.kafka_service import kafka_service
 
 
@@ -33,7 +33,7 @@ class Topic(object):
 
         # 创建topic输入框
         self.create_topics_multi_text_input = ft.TextField(
-            hint_text="such as: \ntopic1,1,1\ntopic2,2,1\ntopic3,3,2",
+            hint_text="例如: \ntopic1,1,2\ntopic2,2,2\ntopic3,3,2",
             multiline=True,
             dense=False,
             keyboard_type=ft.KeyboardType.MULTILINE,
@@ -44,7 +44,7 @@ class Topic(object):
         )
         self.create_topic_modal = ft.AlertDialog(
             modal=True,
-            title=S_Text("批量创建topic\n每行填写：topic名称,分区数,副本因子，用英文逗号隔开"),
+            title=S_Text("批量创建主题\n每行填写：主题名称,分区数,副本因子(集群建议为2)（英文逗号隔开）"),
             actions=[
                 ft.Column([
                     self.create_topics_multi_text_input,
@@ -64,7 +64,7 @@ class Topic(object):
         )
         self.create_partition_modal = ft.AlertDialog(
             modal=True,
-            title=S_Text("新增分区"),
+            title=S_Text("新增额外分区数量"),
             actions=[
                 ft.Column([
                     self.create_partition_text_input,
@@ -89,28 +89,28 @@ class Topic(object):
 
         # partition tab's topic Dropdown
         self.partition_topic_dd = ft.Dropdown(
-            label="topic",
+            label="当前主题",
             on_change=self.click_partition_topic_dd_onchange,
             **dd_common_configs
         )
 
         # search datatable
-        self.search_text = ft.TextField(label='search', on_submit=self.search_table, width=200,
+        self.search_text = ft.TextField(label='检索', on_submit=self.search_table, width=200,
                                         height=30, text_size=14, content_padding=10)
 
         # topic list tap
         self.topic_tab = ft.Tab(
-            icon=ft.icons.LIST_ALT_OUTLINED, text="List", content=ft.Container()
+            icon=ft.icons.LIST_ALT_OUTLINED, text="列表", content=ft.Container()
         )
 
         # partition list tap
         self.partition_tab = ft.Tab(
-            icon=ft.icons.WAVES_OUTLINED, text="Partition", content=ft.Container()
+            icon=ft.icons.WAVES_OUTLINED, text="分区", content=ft.Container()
         )
 
         # config tap
         self.config_tab = ft.Tab(
-            text='Topic配置', content=ft.Container()
+            text='主题配置', content=ft.Container()
         )
 
         # all in one
@@ -196,8 +196,8 @@ class Topic(object):
                 ft.Row([
                     self.topic_groups_dd,
                     self.search_text,
-                    S_Button(text="Create Topic", on_click=self.open_create_topic_dlg_modal,
-                             tooltip="批量输入要创建的topic及参数，一行一个", ),
+                    S_Button(text="创建主题", on_click=self.open_create_topic_dlg_modal,
+                             tooltip="批量输入要创建的主题及参数，一行一个", ),
                     self.refresh_button
                 ]),
                 self.topic_table,
@@ -258,7 +258,7 @@ class Topic(object):
                 [
                     ft.Row([
                         self.partition_topic_dd,
-                        S_Button(text="Create Partitions", on_click=self.open_create_partition_dlg_modal,
+                        S_Button(text="为主题添加额外的分区", on_click=self.open_create_partition_dlg_modal,  # Create Partitions
                                  tooltip="为当前topic增加额外的分区数", ),
                     ]),
                     self.partition_table
@@ -388,10 +388,6 @@ class Topic(object):
         print(topic_name)
         page = e.page
 
-        def cancel(e_):
-            dlg_modal.open = False
-            page.update()
-
         def ensure(e_):
             dlg_modal.open = False
             page.update()
@@ -406,7 +402,7 @@ class Topic(object):
             content=ft.Text("您真的要删除topic: {}吗？".format(topic_name)),
             actions=[
                 ft.TextButton("删除", on_click=ensure),
-                ft.TextButton("取消", on_click=cancel),
+                ft.TextButton("取消", on_click=close_dlg),
             ],
             actions_alignment=ft.MainAxisAlignment.END,
         )

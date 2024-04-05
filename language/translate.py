@@ -22,7 +22,7 @@ lang_dict = {
     "请先选择一个可用的kafka连接！": {
         "en": ""
     },
-    "请添加kafka连接": {
+    "请在右侧添加kafka连接": {
         "en": "Please add kafka connection"
     },
     "请选择kafka连接": {
@@ -30,6 +30,24 @@ lang_dict = {
     },
     "基础信息": {
         "en": ""
+    },
+    "集群": {
+        "en": "Broker"
+    },
+    "主题": {
+        "en": "Topic"
+    },
+    "监控": {
+        "en": "Simulate"
+    },
+    "设置": {
+        "en": "Settings"
+    },
+    "建议": {
+        "en": "Suggest"
+    },
+    "模拟": {
+        "en": "Simulate"
     },
     "集群节点列表": {
         "en": ""

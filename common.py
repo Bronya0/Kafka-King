@@ -47,9 +47,9 @@ def open_snack_bar(page, msg):
     page.update()
 
 
-def close_dlg(dlg_modal, page):
-    dlg_modal.open = False
-    page.update()
+def close_dlg(e):
+    e.page.dialog.open = False
+    e.page.update()
 
 
 dd_common_configs = {

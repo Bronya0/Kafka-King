@@ -29,7 +29,7 @@ class Simulate(object):
 
         # producer tab's topic Dropdown
         self.producer_topic_dd = ft.Dropdown(
-            label="topic",
+            label="请选择主题",
             # on_change=self.click_partition_topic_dd_onchange,
             **dd_common_configs
         )
@@ -79,7 +79,7 @@ class Simulate(object):
 
         # send button
         self.producer_send_button = S_Button(
-            text="Send Message",
+            text="发送消息",
             on_click=self.click_send_msg,
         )
 
@@ -89,18 +89,18 @@ class Simulate(object):
 
         # producer tap
         self.producer_tab = ft.Tab(
-            icon=ft.icons.TRENDING_UP, text="Producer", content=ft.Container()
+            icon=ft.icons.TRENDING_UP, text="生产者", content=ft.Container()
         )
 
         # consumer tab's topic Dropdown
         self.consumer_topic_dd = ft.Dropdown(
-            label="choose topic",
+            label="选择一个主题",
             **dd_common_configs
         )
 
         # consumer fetch size
         self.consumer_fetch_size_input = ft.TextField(
-            label="fetch size",
+            label="拉取的消息数量",
             value="10",
             keyboard_type=ft.KeyboardType.NUMBER,
             **input_kwargs
@@ -108,7 +108,7 @@ class Simulate(object):
 
         # consumer fetch msg button
         self.consumer_fetch_msg_button = S_Button(
-            text="Fetch Message",
+            text="拉取消息",
             on_click=self.click_fetch_msg,
         )
 
@@ -120,7 +120,7 @@ class Simulate(object):
 
         # consumer tap
         self.consumer_tab = ft.Tab(
-            icon=ft.icons.TOLL, text="Consumer", content=ft.Container()
+            icon=ft.icons.TOLL, text="消费者", content=ft.Container()
         )
 
         # all in one
@@ -193,8 +193,8 @@ class Simulate(object):
                     # self.consumer_groups_dd,
                     # ft.Text(" OR "),
                     # self.consumer_groups_input,
-                    ft.Text(f"Group:  {self.__kafka_king_group}"),
-                    ft.Text(f"FetchTimeout:  {self.kafka_fetch_timeout}")
+                    ft.Text(f"内置消费者组（避免干扰正常业务）:  {self.__kafka_king_group}"),
+                    ft.Text(f"拉取超时时间:  {self.kafka_fetch_timeout}")
                 ]),
                 self.consumer_fetch_msg_button,
                 self.consumer_fetch_msg_body,
@@ -276,7 +276,7 @@ class Simulate(object):
             return
 
         self.consumer_fetch_msg_button.disabled = True
-        self.consumer_fetch_msg_body.value = "fetching..."
+        self.consumer_fetch_msg_body.value = "拉取中，请稍后...\n将从上次拉取位置继续拉取，如无新消息可拉取，则会在10秒后超时返回\n拉取完成将显示在当前页面"
         e.page.update()
 
         print(topic, group, size)
