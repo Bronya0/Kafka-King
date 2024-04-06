@@ -428,19 +428,19 @@ class Topic(object):
         :return:
         """
         group_id = self.topic_groups_dd.value
+        if group_id is not None:
+            self._lag_label = '读取中...'
+            self.topic_offset, self.topic_lag = None, None
+            self.init()
+            e.page.update()
 
-        self._lag_label = 'reading...'
-        self.topic_offset, self.topic_lag = None, None
-        self.init()
-        e.page.update()
-
-        topics = self.table_topics
-        print(topics)
-        # topic_offset[topic][partition] = [last_committed, end_offsets, _lag]
-        # topic_lag[topic] = _lag
-        self.topic_offset, self.topic_lag, = kafka_service.get_topic_offsets(topics, group_id)
-        self.init()
-        e.page.update()
+            topics = self.table_topics
+            self.topic_offset, self.topic_lag, = kafka_service.get_topic_offsets(topics, group_id)
+            self.init()
+            e.page.update()
+        else:
+            self.init()
+            e.page.update()
 
     def search_table(self, e: ControlEvent):
         """

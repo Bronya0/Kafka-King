@@ -29,7 +29,7 @@ class Simulate(object):
 
         # producer tab's topic Dropdown
         self.producer_topic_dd = ft.Dropdown(
-            label="请选择主题",
+            label="请选择主题(必填)",
             # on_change=self.click_partition_topic_dd_onchange,
             **dd_common_configs
         )
@@ -42,7 +42,7 @@ class Simulate(object):
 
         # msg key
         self.producer_msg_key_input = ft.TextField(
-            label="msg key",
+            label="key",
             **input_kwargs
         )
         self.producer_acks_input = ft.TextField(
@@ -228,11 +228,13 @@ class Simulate(object):
             return
 
         ori = self.producer_send_button.text
-        self.producer_send_button.text = "Sending..."
+        self.producer_send_button.text = "发送中..."
+        self.producer_send_button.disabled = True
         e.page.update()
 
         st = time.time()
         res = "发送成功"
+        success=True
         try:
             kafka_service.send_msgs(
                 topic=topic,
@@ -247,10 +249,12 @@ class Simulate(object):
         except Exception as e_:
             traceback.print_exc()
             res = "发送失败：{}".format(e_)
+            success=False
         et = time.time() - st
         res += "\n发送耗时{} s".format(et)
         self.producer_send_button.text = ori
-        open_snack_bar(e.page, res)
+        self.producer_send_button.disabled = False
+        open_snack_bar(e.page, res, success=success)
 
     def click_fetch_msg(self, e: ControlEvent):
         """

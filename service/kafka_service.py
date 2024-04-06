@@ -161,22 +161,25 @@ class KafkaService:
 
         # 计数器
         n = 0
-        res = ""
+        msgs = ""
         st = time.time()
-        for message in consumer:
-            res += "{}: topic: {}, partition: {}, key: {}, value: {}\n".format(message.offset, message.topic,
-                                                                               message.partition,
-                                                                               message.key.decode(
-                                                                                   'utf-8') if message.key is not None else "",
-                                                                               message.value.decode('utf-8'))
-            n += 1
+        while n <= size:
+            # timeout_ms：一直拉不到数据时，最多等待的时间，超时直接返回空字典
+            res: dict = consumer.poll(timeout_ms=3000, max_records=size)
 
-            if n >= size or time.time() - st >= timeout:
+            for tp, records in res.items():
+                for record in records:
+                    msgs += "{}: topic: {}, partition: {}, key: {}, value: {}\n".format(record.offset, record.topic,
+                                                                                        record.partition,
+                                                                                        record.key.decode(
+                                                                                            'utf-8') if record.key is not None else "",
+                                                                                        record.value.decode('utf-8'))
+                    n += 1
+            consumer.commit()
+            if time.time() - st >= timeout:
                 break
 
-        consumer.commit()
-        consumer.close()
-        return res
+        return msgs
 
     def get_configs(self, res_type, name):
         """
