@@ -97,7 +97,7 @@ class Main:
                 ),
 
                 ft.NavigationRailDestination(
-                    icon_content=ft.Icon(ft.icons.STACKED_BAR_CHART_OUTLINED, tooltip="监控（开发中）"),
+                    icon_content=ft.Icon(ft.icons.STACKED_BAR_CHART_ROUNDED, tooltip="监控（开发中）"),
                     selected_icon_content=ft.Icon(ft.icons.STACKED_BAR_CHART),
                     label=i18n("监控"),
                 ),
@@ -227,7 +227,7 @@ class Main:
         if not conns:
             self.connect_dd.label = i18n("请在右侧添加kafka连接")
         else:
-            self.connect_dd.label = i18n("请下拉选择kafka连接")
+            self.connect_dd.label = i18n("请下拉选择")
             for i in conns:
                 text = f'{self.page.client_storage.get(i)}'
                 op = ft.dropdown.Option(key=i, text=text)

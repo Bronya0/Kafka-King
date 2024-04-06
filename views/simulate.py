@@ -19,6 +19,7 @@ from service.kafka_service import kafka_service
 class Simulate(object):
 
     def __init__(self):
+        self.producer_slider_value = None
         self.describe_topics_map = None
         self.describe_topics = None
         self.__kafka_king_group = "__kafka_king_group"
@@ -75,7 +76,7 @@ class Simulate(object):
         )
 
         # 消息倍数
-        self.producer_slider = ft.Slider(min=1, max=10000, divisions=50, label="×{value}", value=1)
+        self.producer_slider = ft.Slider(min=1, max=10000, divisions=50, label="×{value}", value=1, on_change=self.update_text)
 
         # send button
         self.producer_send_button = S_Button(
@@ -137,6 +138,8 @@ class Simulate(object):
             self.tab,
         ]
 
+
+
     def init(self):
         if not kafka_service.kac:
             return "请先选择一个可用的kafka连接！\nPlease select an available kafka connection first!"
@@ -157,6 +160,8 @@ class Simulate(object):
         # 消费组初始化
         # self.consumer_groups_dd.options = [ft.dropdown.Option(text=i) for i in kafka_service.get_groups()]
 
+        self.producer_slider_value = ft.Text(f"消息发送倍数：{self.producer_slider.value} (默认*1)")
+
         # init producer tab
         self.producer_tab.content = ft.Container(
             content=ft.Column([
@@ -173,7 +178,7 @@ class Simulate(object):
                 # enable gzip
                 self.producer_compress_switch,
                 # msg multiplier
-                ft.Text("消息发送倍数：默认*1"),
+                self.producer_slider_value,
                 self.producer_slider,
                 # msg send button
                 self.producer_send_button
@@ -302,3 +307,7 @@ class Simulate(object):
         print(res)
         self.consumer_fetch_msg_button.disabled = False
         open_snack_bar(e.page, res)
+
+    def update_text(self, e):
+        self.producer_slider_value.value = f"消息发送倍数：{int(e.control.value)} (默认*1)"
+        e.page.update()
