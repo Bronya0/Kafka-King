@@ -85,3 +85,4 @@ Apache-2.0 license
 
 # grateful
 - flet-dev: https://github.com/flet-dev/flet
+- kafka-python：https://github.com/dpkp/kafka-python

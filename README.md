@@ -72,7 +72,6 @@
 在右侧release下的Assets选择对应版本下载即可。
 或者点击 https://github.com/Bronya0/Kafka-King/releases
 
-
 # 构建
 
 pip install -r requirements.txt
@@ -88,3 +87,4 @@ Apache-2.0 license
 
 # 感谢
 - flet-dev：https://github.com/flet-dev/flet
+- kafka-python：https://github.com/dpkp/kafka-python
