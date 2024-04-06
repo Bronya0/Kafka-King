@@ -385,7 +385,7 @@ def init(page: ft.Page):
     if language is not None:
         lang.language = language
 
-    page.theme = ft.Theme(font_family="Microsoft Yahei")
+    page.theme = ft.Theme(font_family="Microsoft YaHei")
 
     Main(page)
     t = threading.Thread(target=check, args=(page,))
