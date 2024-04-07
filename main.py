@@ -320,11 +320,7 @@ class Main:
 
 def check(page: ft.Page):
     print("开始检查版本……", UPDATE_URL)
-    last_check_update = page.client_storage.get("last_check_update")
-    if last_check_update:
-        if time.time() - int(last_check_update) < 3 * 24 * 3600:
-            print("已经3天内检查过，跳过")
-            return
+
     res = requests.get(UPDATE_URL)
     if res.status_code != 200:
         res = requests.get(UPDATE_URL)
@@ -339,9 +335,9 @@ def check(page: ft.Page):
     print(basedir)
     version = open(f'{basedir}/assets/version.txt', 'r', encoding='utf-8').read().rstrip().replace('\n', '')
     if version != latest_version:
-        print("需要更新{} -> {}".format(version, latest_version))
+        print("需要更新 {} -> {}".format(version, latest_version))
 
-        update_alert = ft.AlertDialog(
+        page.dialog = ft.AlertDialog(
             modal=True,
             title=ft.Text("🎉🎉发现新版本: {}".format(latest_version)),
             actions=[
@@ -349,10 +345,11 @@ def check(page: ft.Page):
                     [
                         ft.Column(
                             [
+                                ft.Text(f"当前版本：{version}"),
                                 ft.Text(body),
                             ],
                             scroll=ft.ScrollMode.ALWAYS,
-                            height=120,
+                            height=160,
                         ),
                         ft.Row(
                             [
@@ -368,10 +365,7 @@ def check(page: ft.Page):
             open=True,
         )
 
-        page.dialog = update_alert
-
         page.update()
-        page.client_storage.set("last_check_update", int(time.time()))
 
 
 def init(page: ft.Page):
