@@ -31,8 +31,26 @@ class Monitor(object):
             on_click=self.click_save_config,
         )
 
+        data_1 = [
+            ft.LineChartData(
+                data_points=[
+                    ft.LineChartDataPoint(0, 3),
+                    ft.LineChartDataPoint(2.6, 2),
+                    ft.LineChartDataPoint(4.9, 5),
+                    ft.LineChartDataPoint(6.8, 3.1),
+                    ft.LineChartDataPoint(8, 4),
+                    ft.LineChartDataPoint(9.5, 3),
+                    ft.LineChartDataPoint(11, 4),
+                ],
+                stroke_width=5,
+                color=ft.colors.CYAN,
+                curved=True,
+                stroke_cap_round=True,
+            )
+        ]
+
         self.chart = ft.LineChart(
-            data_series=[],
+            data_series=data_1,
             border=ft.border.all(3, ft.colors.with_opacity(0.2, ft.colors.ON_SURFACE)),
             horizontal_grid_lines=ft.ChartGridLines(
                 interval=1, color=ft.colors.with_opacity(0.2, ft.colors.ON_SURFACE), width=1
@@ -119,9 +137,10 @@ class Monitor(object):
 
                         ]
                     ),
-                    self.chart
                 ],
-            )
+            ),
+            self.chart
+
         ]
 
     def init(self):
