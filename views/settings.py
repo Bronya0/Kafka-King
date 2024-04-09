@@ -3,7 +3,7 @@
 import flet as ft
 from flet_core import ControlEvent
 
-from common import S_Button, open_snack_bar
+from service.common import S_Button, open_snack_bar
 from language.translate import lang
 
 

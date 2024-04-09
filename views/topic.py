@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*-coding:utf-8 -*-
-import copy
 from typing import Optional, Dict
 
 import flet as ft
@@ -8,7 +7,7 @@ from flet_core import ControlEvent
 from kafka import KafkaAdminClient
 from kafka.admin import NewTopic
 
-from common import S_Text, open_snack_bar, S_Button, dd_common_configs, close_dlg
+from service.common import S_Text, open_snack_bar, S_Button, dd_common_configs, close_dlg
 from service.kafka_service import kafka_service
 
 

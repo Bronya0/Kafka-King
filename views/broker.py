@@ -4,7 +4,7 @@
 import flet as ft
 from flet_core import ControlEvent
 
-from common import S_Text
+from service.common import S_Text
 from service.kafka_service import kafka_service
 
 

@@ -1,6 +1,6 @@
 <div align=center><img src="assets/icon.ico"></div>
 <h1 align="center">Kafka King </h1>
-<h4 align="center"><strong>简体中文</strong> | <a href="https://github.com/Bronya0/Kafka-King/blob/main/README_EN.md">English</a></h4>
+<h4 align="center"><strong>简体中文</strong> | <a href="https://github.com/Bronya0/Kafka-King/blob/main/docs/README_EN.md">English</a></h4>
 
 <div align="center">
 
@@ -12,6 +12,8 @@
 
 <strong>一个现代、实用的kafka GUI客户端，使用python flet构建。</strong>
 </div>
+
+> 项目完全由python开发，开源免费、简单易懂，右上角点个 **star**，和作者一起学习 python gui开发🥰
 
 # 功能清单
 - [x] 查看集群节点列表（完成）
@@ -30,7 +32,6 @@
 # 下载
 [下载地址](https://github.com/Bronya0/Kafka-King/releases)，点击Assets，选择自己的平台
 
-项目完全由python开发，完全免费、简单易懂，右上角点个 **star**，和作者一起学习 python gui开发🥰
 # 功能截图
 
 ## 操作topic

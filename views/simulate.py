@@ -12,7 +12,7 @@ import traceback
 import flet as ft
 from flet_core import ControlEvent
 
-from common import dd_common_configs, S_Button, open_snack_bar
+from service.common import dd_common_configs, S_Button, open_snack_bar
 from service.kafka_service import kafka_service
 
 

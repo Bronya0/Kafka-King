@@ -37,26 +37,26 @@ Topic list, supports deleting topics
 
 Supports statistics of the message backlog of each topic based on consumer groups
 
-![](docs/snap/p9.png)
+![](snap/p9.png)
 
 Create a theme (supports batch)
 
-![](docs/snap/p4.png)
+![](snap/p4.png)
 
 ## View the detailed configuration of the topic
-![](docs/snap/p6.png)
+![](snap/p6.png)
 
 ## Automatically obtain the cluster broker list
-![](docs/snap/p2.png)
+![](snap/p2.png)
 
 ## Get broker detailed configuration
-![](docs/snap/p3.png)
+![](snap/p3.png)
 
 ## Simulate producer-consumer
 -Supports simulating producers, sending messages in batches, and whether to enable gzip compression
 - Supports simulated consumers, consuming specified sizes according to built-in groups
 
-![](docs/snap/p8.png)
+![](snap/p8.png)
 
 
 ## Partition operations
@@ -64,7 +64,7 @@ Create a theme (supports batch)
 - Support adding additional partitions to themes
 -Supports viewing the message offset of each partition
 
-![](docs/snap/p5.png)
+![](snap/p5.png)
 
 
 # Quick start dev

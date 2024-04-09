@@ -1,14 +1,13 @@
 import gc
 import os
 import threading
-import time
 import traceback
 
 import flet as ft
 import requests
 from flet_core import TextField
 
-from common import S_Text, prefix, GITHUB_URL, TITLE, UPDATE_URL, open_snack_bar, close_dlg
+from service.common import S_Text, prefix, GITHUB_URL, TITLE, UPDATE_URL, open_snack_bar, close_dlg
 from language.translate import lang, i18n
 from service.kafka_service import kafka_service
 from views.init import views_index_map

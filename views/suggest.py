@@ -2,7 +2,7 @@
 # -*-coding:utf-8 -*-
 import flet as ft
 
-from common import S_Button, GITHUB_URL
+from service.common import S_Button, GITHUB_URL
 
 
 class Suggest(object):

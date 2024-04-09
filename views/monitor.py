@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*-coding:utf-8 -*-
-from flet_core import Column, Row, Text, TextStyle
+from flet_core import Column, Row, TextStyle
 import flet as ft
 
-from common import input_kwargs, dd_common_configs, S_Button
+from service.common import dd_common_configs, S_Button
 from service.kafka_service import kafka_service
 
 
