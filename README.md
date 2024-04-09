@@ -30,6 +30,7 @@
 # 下载
 [下载地址](https://github.com/Bronya0/Kafka-King/releases)，点击Assets，选择自己的平台
 
+项目完全由python开发，完全免费、简单易懂，右上角点个 **star**，和作者一起学习 python gui开发🥰
 # 功能截图
 
 ## 操作topic
