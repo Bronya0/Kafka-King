@@ -9,6 +9,7 @@
 import os
 
 import flet
+from flet_core import TextStyle
 
 # 假设有一个全局的存储连接信息的变量
 prefix = "__kafka_connects__"
@@ -59,12 +60,19 @@ def close_dlg(e):
 
 dd_common_configs = {
     "options": [],
-    "height": 30,
+    "height": 36,
     "width": 200,
-    "text_size": 14,
+    "text_size": 16,
     "alignment": flet.alignment.center_left,
     "dense": True,
     "content_padding": 5,
     "bgcolor": '#F0F4FA',
 }
 
+input_kwargs = {
+    "width": 200,
+    "height": 35,
+    "text_size": 16,
+    "label_style": TextStyle(size=12),
+    "content_padding": 10
+}

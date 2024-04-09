@@ -163,17 +163,17 @@ class KafkaService:
         n = 0
         msgs = ""
         st = time.time()
-        while n <= size:
+        while n < size:
             # timeout_ms：一直拉不到数据时，最多等待的时间，超时直接返回空字典
             res: dict = consumer.poll(timeout_ms=3000, max_records=size)
 
             for tp, records in res.items():
                 for record in records:
-                    msgs += "{}: topic: {}, partition: {}, key: {}, value: {}\n".format(record.offset, record.topic,
-                                                                                        record.partition,
-                                                                                        record.key.decode(
-                                                                                            'utf-8') if record.key is not None else "",
-                                                                                        record.value.decode('utf-8'))
+                    msgs += "{}. 偏移量:{}, 分区号:{}, 键:{}, 值:{}\n".format(n, record.offset,
+                                                                              record.partition,
+                                                                              record.key.decode(
+                                                                                  'utf-8') if record.key is not None else "",
+                                                                              record.value.decode('utf-8'))
                     n += 1
             consumer.commit()
             if time.time() - st >= timeout:

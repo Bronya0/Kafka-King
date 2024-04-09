@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*-coding:utf-8 -*-
+import copy
 from typing import Optional, Dict
 
 import flet as ft
@@ -81,6 +82,7 @@ class Topic(object):
         self.refresh_button = ft.IconButton(icon=ft.icons.REFRESH_OUTLINED, on_click=self.topic_page_refresh)
 
         # consumer groups Dropdown
+
         self.topic_groups_dd = ft.Dropdown(
             label="请选择消费组",
             on_change=self.groups_dd_onchange,
@@ -96,7 +98,7 @@ class Topic(object):
 
         # search datatable
         self.search_text = ft.TextField(label='检索', on_submit=self.search_table, width=200,
-                                        height=30, text_size=14, content_padding=10)
+                                        height=38, text_size=14, content_padding=5)
 
         # topic list tap
         self.topic_tab = ft.Tab(

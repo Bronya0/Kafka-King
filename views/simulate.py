@@ -36,7 +36,7 @@ class Simulate(object):
         )
         input_kwargs = {
             "width": 200,
-            "height": 30,
+            "height": 38,
             "text_size": 14,
             "content_padding": 10
         }
@@ -76,7 +76,8 @@ class Simulate(object):
         )
 
         # 消息倍数
-        self.producer_slider = ft.Slider(min=1, max=10000, divisions=50, label="×{value}", value=1, on_change=self.update_text)
+        self.producer_slider = ft.Slider(min=1, max=10000, divisions=50, label="×{value}", value=1,
+                                         on_change=self.update_text)
 
         # send button
         self.producer_send_button = S_Button(
@@ -116,7 +117,6 @@ class Simulate(object):
         # consumer fetch msg text
         self.consumer_fetch_msg_body = ft.Text(
             selectable=True,
-            size=14,
         )
 
         # consumer tap
@@ -137,8 +137,6 @@ class Simulate(object):
         self.controls = [
             self.tab,
         ]
-
-
 
     def init(self):
         if not kafka_service.kac:
@@ -201,15 +199,26 @@ class Simulate(object):
                     ft.Text(f"内置消费者组（避免干扰正常业务）:  {self.__kafka_king_group}"),
                     ft.Text(f"拉取超时时间:  {self.kafka_fetch_timeout}")
                 ]),
-                self.consumer_fetch_msg_button,
+                ft.Row([
+                    self.consumer_fetch_msg_button,
+                    S_Button(
+                        text="清空界面",
+                        on_click=self.clean_msg,
+                    ),
+                ]),
+
                 self.consumer_fetch_msg_body,
             ],
 
                 scroll=ft.ScrollMode.ALWAYS,
             ),
-            alignment=ft.alignment.top_left,
+            # alignment=ft.alignment.top_left,
             padding=10,
         )
+
+    def clean_msg(self, e):
+        self.consumer_fetch_msg_body.value = None
+        e.page.update()
 
     def click_send_msg(self, e: ControlEvent):
         """
@@ -239,7 +248,7 @@ class Simulate(object):
 
         st = time.time()
         res = "发送成功"
-        success=True
+        success = True
         try:
             kafka_service.send_msgs(
                 topic=topic,
@@ -254,7 +263,7 @@ class Simulate(object):
         except Exception as e_:
             traceback.print_exc()
             res = "发送失败：{}".format(e_)
-            success=False
+            success = False
         et = time.time() - st
         res += "\n发送耗时{} s".format(et)
         self.producer_send_button.text = ori
@@ -301,7 +310,6 @@ class Simulate(object):
             traceback.print_exc()
             res = "拉取失败：{}".format(e_)
         self.consumer_fetch_msg_body.value = msgs
-
         et = time.time() - st
         res += "\n拉取耗时{} s".format(et)
         print(res)
