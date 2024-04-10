@@ -10,7 +10,7 @@ class Suggest(object):
     Suggest
     """
 
-    def __init__(self):
+    def __init__(self, page=None):
         self.controls = [
             ft.Column(
                 [

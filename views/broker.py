@@ -55,7 +55,7 @@ class Broker(object):
             self.tab
         ]
 
-    def init(self):
+    def init(self, page=None):
         if not kafka_service.kac:
             return "请先选择一个可用的kafka连接！\nPlease select an available kafka connection first!"
 

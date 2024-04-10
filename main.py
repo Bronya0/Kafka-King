@@ -284,7 +284,7 @@ class Main:
 
         # 初始化页面数据
         try:
-            err = view.init()
+            err = view.init(page=self.page)
             if err:
                 self.body.controls = [S_Text(value=str(err), size=24)]
         except Exception as e:

@@ -48,7 +48,7 @@ class Settings(object):
             )
         ]
 
-    def init(self):
+    def init(self, page=None):
         language = self.lang_dd.page.client_storage.get("language")
         if language is not None:
             self.lang_dd.value = language

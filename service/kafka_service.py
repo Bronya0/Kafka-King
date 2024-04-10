@@ -88,8 +88,9 @@ class KafkaService:
         consumer_groups = [i[0] for i in _consumer_groups]
         return consumer_groups
 
-    def get_topic_offsets(self, topics, group_id):
-        consumer = KafkaConsumer(bootstrap_servers=self.bootstrap_servers, group_id=group_id)
+    def get_topic_offsets(self, topics, group_id, consumer=None):
+        if not consumer:
+            consumer = KafkaConsumer(bootstrap_servers=self.bootstrap_servers, group_id=group_id)
 
         topic_lag = {}
         topic_offset = defaultdict(dict)
