@@ -81,6 +81,8 @@ class Monitor(object):
         ]
 
     def init(self, page: ft.Page = None):
+        if not kafka_service.kac:
+            return "请先选择一个可用的kafka连接！\nPlease select an available kafka connection first!"
 
         self.topic_groups_dd.options = [ft.dropdown.Option(text=i) for i in kafka_service.get_groups()]
         page.update()
