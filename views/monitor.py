@@ -70,6 +70,8 @@ class Monitor(object):
             min_x=0,
             max_x=10,
             expand=True,
+            height=280,
+            width=250
         )
 
         self.controls = [
@@ -85,10 +87,21 @@ class Monitor(object):
 
                         ]
                     ),
-                ],
-            ),
-            self.chart
+                    Row(
+                        [
+                            self.chart,
+                            self.chart,
+                        ]
+                    ),
+                    Row([
+                        self.chart,
 
+                    ])
+
+                ],
+                scroll=ft.ScrollMode.ALWAYS
+
+            ),
         ]
 
     def init(self, page: ft.Page = None):
@@ -109,12 +122,10 @@ class Monitor(object):
         self.current_kafka_connect = page.client_storage.get(CURRENT_KAFKA_CONNECT_KEY)
         self.topic_input.value = page.client_storage.get(self.topic_input_key + self.current_kafka_connect)
         self.topic_groups_dd.value = page.client_storage.get(self.topic_groups_key + self.current_kafka_connect)
-        page.update()
 
-        while True:
-            self.update(page)
-            time.sleep(10)
-            page.update()
+        self.update(page)
+
+        page.update()
 
     def click_save_config(self, e):
         page: ft.Page = e.page
@@ -142,8 +153,10 @@ class Monitor(object):
 
     def update(self, page: ft.Page):
         # _monitor_topic_lag: [ {time: { topic1: lag, topic2: lag} }, {} ]
-
+        print("读取积压offset……")
         if self.topic_input.value is None or self.topic_groups_dd.value is None:
+            time.sleep(3)
+            print("配置不合要求")
             return
 
         _lags = []

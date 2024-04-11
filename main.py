@@ -301,6 +301,7 @@ class Main:
 
         # 初始化页面数据
         try:
+            # 每个页面的init函数会在每次点击后重复执行
             err = view.init(page=self.page)
             if err:
                 self.body.controls = [S_Text(value=str(err), size=24)]
