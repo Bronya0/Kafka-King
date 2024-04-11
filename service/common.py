@@ -19,6 +19,7 @@ basedir = os.path.dirname(os.path.dirname(__file__))
 
 c_version = open(f'{basedir}/assets/version.txt', 'r', encoding='utf-8').read().rstrip().replace('\n', '')
 TITLE = "Kafka King {}".format(c_version)
+CURRENT_KAFKA_CONNECT_KEY = "current_kafka_connect"
 
 
 def S_Text(value, **kwargs):
@@ -62,7 +63,7 @@ dd_common_configs = {
     "options": [],
     "height": 36,
     "width": 200,
-    "text_size": 16,
+    "text_size": 14,
     "alignment": flet.alignment.center_left,
     "dense": True,
     "content_padding": 5,

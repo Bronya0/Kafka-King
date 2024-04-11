@@ -4,11 +4,13 @@ import threading
 import traceback
 
 import flet as ft
+import flet_core.client_storage
 import requests
 from flet_core import TextField
 
-from service.common import S_Text, prefix, GITHUB_URL, TITLE, UPDATE_URL, open_snack_bar, close_dlg
-from language.translate import lang, i18n
+from service.common import S_Text, prefix, GITHUB_URL, TITLE, UPDATE_URL, open_snack_bar, close_dlg, \
+    CURRENT_KAFKA_CONNECT_KEY
+from service.translate import lang, i18n
 from service.kafka_service import kafka_service
 from views.init import views_index_map
 
@@ -179,6 +181,8 @@ class Main:
     def add_connect(self, e):
         # 存储连接：{prefix}{连接名} <-> 链接地址
         self.page.client_storage.set(f"{prefix}{self.conn_name_input.value}", self.kafka_input.value)
+        self.Navigation.selected_index = 0
+
         self.refresh_dd_links()
         self.dlg_modal.open = False
         self.kafka_input.value = None
@@ -191,9 +195,19 @@ class Main:
         self.page.update()
 
     def delete_connect(self, e):
-        self.page.client_storage.remove(self.connect_dd.value)
+        client_storage: flet_core.client_storage.ClientStorage = self.page.client_storage
+
+        # 删掉这个连接以及相关的配置信息
+        connect_configs = client_storage.get_keys(self.connect_dd.value)
+        for config in connect_configs:
+            client_storage.remove(config)
+
+        self.Navigation.selected_index = 0
+
         self.page.dialog.open = False
         self.refresh_dd_links()
+        self.refresh_body()
+
         self.page.update()
 
     def open_delete_link_modal(self, e):
@@ -250,6 +264,9 @@ class Main:
 
         try:
             kafka_service.set_bootstrap_servers(bootstrap_servers)
+            # 存储一下当前连接，给其他视图用
+            self.page.client_storage.set(CURRENT_KAFKA_CONNECT_KEY, self.connect_dd.value)
+            self.Navigation.selected_index = 0
             self.refresh_body()
         except Exception as e:
             self.body.controls = [S_Text(value=f"连接失败：{str(e)}", size=24)]

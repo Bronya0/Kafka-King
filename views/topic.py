@@ -189,7 +189,11 @@ class Topic(object):
         self.table_topics = _topics
 
         # 消费组初始化
-        self.topic_groups_dd.options = [ft.dropdown.Option(text=i) for i in kafka_service.get_groups()]
+        groups = kafka_service.get_groups()
+        if groups:
+            self.topic_groups_dd.options = groups
+        else:
+            self.topic_groups_dd.label = "无消费组"
 
         # init topic tab
         self.topic_tab.content = ft.Container(

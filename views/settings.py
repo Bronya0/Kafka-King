@@ -4,7 +4,7 @@ import flet as ft
 from flet_core import ControlEvent
 
 from service.common import S_Button, open_snack_bar
-from language.translate import lang
+from service.translate import lang
 
 
 class Settings(object):

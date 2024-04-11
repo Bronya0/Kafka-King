@@ -2,11 +2,12 @@
 # -*-coding:utf-8 -*-
 import datetime
 import time
+import traceback
 
 from flet_core import Column, Row, TextStyle
 import flet as ft
 
-from service.common import dd_common_configs, S_Button
+from service.common import dd_common_configs, S_Button, CURRENT_KAFKA_CONNECT_KEY, open_snack_bar
 from service.kafka_service import kafka_service
 
 
@@ -17,8 +18,12 @@ class Monitor(object):
 
     def __init__(self):
         self.key = "_monitor_topic_lag"
+        self.topic_input_key = "_monitor_topic_input"
+        self.topic_groups_key = "_monitor_topic_groups"
+        self.current_kafka_connect = None
+
         self.topic_input = ft.TextField(
-            label="支持通配符匹配，例如 *topicA*",
+            label="输入多个，英文逗号分隔",
             label_style=TextStyle(size=12),
             width=300,
             height=35,
@@ -33,6 +38,11 @@ class Monitor(object):
             text="保存",
             height=38,
             on_click=self.click_save_config,
+        )
+        self.refresh_button = ft.IconButton(
+            ft.icons.REFRESH_OUTLINED,
+            tooltip="刷新图表数据",
+            on_click=self.refresh,
         )
         self.data_1 = []
         self.labels = []
@@ -70,7 +80,8 @@ class Monitor(object):
                             ft.Text("输入要监测的topic: "),
                             self.topic_input,
                             self.topic_groups_dd,
-                            self.save_button
+                            self.save_button,
+                            self.refresh_button
 
                         ]
                     ),
@@ -84,19 +95,50 @@ class Monitor(object):
         if not kafka_service.kac:
             return "请先选择一个可用的kafka连接！\nPlease select an available kafka connection first!"
 
-        self.topic_groups_dd.options = [ft.dropdown.Option(text=i) for i in kafka_service.get_groups()]
+        groups = kafka_service.get_groups()
+        if groups:
+            self.topic_groups_dd.options = groups
+        else:
+            self.topic_groups_dd.label = "无消费组"
+
         page.update()
 
         if not page.client_storage.contains_key(self.key):
             page.client_storage.set(self.key, [])
+
+        self.current_kafka_connect = page.client_storage.get(CURRENT_KAFKA_CONNECT_KEY)
+        self.topic_input.value = page.client_storage.get(self.topic_input_key + self.current_kafka_connect)
+        self.topic_groups_dd.value = page.client_storage.get(self.topic_groups_key + self.current_kafka_connect)
+        page.update()
 
         while True:
             self.update(page)
             time.sleep(10)
             page.update()
 
-    def click_save_config(self):
-        pass
+    def click_save_config(self, e):
+        page: ft.Page = e.page
+        topics = self.topic_input.value
+        if topics is not None:
+            topics = topics.rstrip().replace('，', ',')
+            page.client_storage.set(self.topic_input_key + self.current_kafka_connect, topics)
+        if self.topic_groups_dd.value is not None:
+            page.client_storage.set(self.topic_groups_key + self.current_kafka_connect, self.topic_groups_dd.value)
+
+        open_snack_bar(page, "保存成功", success=True)
+
+    def refresh(self, e):
+        self.refresh_button.disabled = True
+        tooltip = self.refresh_button.tooltip
+        self.refresh_button.tooltip = "刷新中……"
+        e.page.update()
+        try:
+            self.update(e.page)
+        except:
+            traceback.print_exc()
+        self.refresh_button.disabled = False
+        self.refresh_button.tooltip = tooltip
+        e.page.update()
 
     def update(self, page: ft.Page):
         # _monitor_topic_lag: [ {time: { topic1: lag, topic2: lag} }, {} ]
