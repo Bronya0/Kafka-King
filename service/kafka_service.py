@@ -31,7 +31,6 @@ class TopicConfig:
 class KafkaService:
     def __init__(self):
         self.bootstrap_servers = None
-        self.kc: Optional[KafkaClient] = None
         self.kac: Optional[KafkaAdminClient] = None
 
     def set_bootstrap_servers(self, bootstrap_servers):

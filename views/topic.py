@@ -337,6 +337,7 @@ class Topic(object):
         # check
         list_ = []
         names = []
+        success = False
         try:
             _topics_configs = self.create_topics_multi_text_input.value
             lines = _topics_configs.split('\n')
@@ -361,11 +362,12 @@ class Topic(object):
                 res = kafka_service.kac.create_topics(new_topics=list_, validate_only=False, timeout_ms=60 * 1000)
                 msg = "{}个主题创建成功".format(len(lines))
                 self.create_topics_multi_text_input.value = None
+                success = True
             except Exception as _e:
                 msg = f"创建失败： {str(_e)}"
         self.create_topic_modal.open = False
         self.init()
-        open_snack_bar(e.page, msg)
+        open_snack_bar(e.page, msg, success)
 
     def create_partitions(self, e: ControlEvent):
         """
@@ -382,7 +384,7 @@ class Topic(object):
         self.create_partition_modal.open = False
         self.init()
         self._create_partition_table(topic_name_=topic)
-        open_snack_bar(e.page, msg)
+        open_snack_bar(e.page, msg, success=True)
 
     def open_delete_dialog(self, e):
         topic_name = e.control.data
@@ -392,8 +394,8 @@ class Topic(object):
         def ensure(e_):
             dlg_modal.open = False
             page.update()
-            msg = self.delete_topic(topic_name)
-            open_snack_bar(page, msg)
+            msg, success = self.delete_topic(topic_name)
+            open_snack_bar(page, msg, success)
             self.init()
             page.update()
 
@@ -418,9 +420,10 @@ class Topic(object):
             res = kac.delete_topics([topic_name])
             print(res)
             msg = "topic：{}删除成功".format(topic_name)
+            return msg, True
         except Exception as e_:
             msg = "{}删除失败： {}".format(topic_name, str(e_))
-        return msg
+            return msg, False
 
     def groups_dd_onchange(self, e: ControlEvent):
         """
