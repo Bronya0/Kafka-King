@@ -13,7 +13,7 @@ import traceback
 from collections import defaultdict
 from typing import Optional
 
-from kafka import KafkaAdminClient, KafkaClient, KafkaConsumer, TopicPartition, KafkaProducer, OffsetAndMetadata
+from kafka import KafkaAdminClient, KafkaClient, KafkaConsumer, TopicPartition, KafkaProducer
 from kafka.admin import NewPartitions, ConfigResource, ConfigResourceType
 from kafka.protocol.admin import DescribeConfigsResponse_v2
 
@@ -91,11 +91,12 @@ class KafkaService:
         if not consumer:
             consumer = KafkaConsumer(bootstrap_servers=self.bootstrap_servers, group_id=group_id)
 
-        topic_lag = {}
+        topic_lag, topic_end_and_commit_offset = {}, {}
         topic_offset = defaultdict(dict)
         for topic in topics:
             _lag = 0
-            for partition in consumer.partitions_for_topic(topic):
+            partitions = consumer.partitions_for_topic(topic)
+            for partition in partitions:
                 tp = TopicPartition(topic=topic, partition=partition)
                 # 最后一次提交的偏移量
                 last_committed = consumer.committed(tp)

@@ -7,11 +7,13 @@ import flet as ft
 import requests
 from flet_core import TextField
 
+from service.check import version_check
 from service.common import S_Text, prefix, GITHUB_URL, TITLE, UPDATE_URL, open_snack_bar, close_dlg, \
     CURRENT_KAFKA_CONNECT_KEY
 from service.translate import lang, i18n
 from service.kafka_service import kafka_service
 from views.init import views_index_map
+from views.monitor import monitor_instance
 
 
 class Main:
@@ -334,56 +336,6 @@ class Main:
             self.page.client_storage.set("theme", ft.ThemeMode.DARK.value)
 
 
-def check(page: ft.Page):
-    print("开始检查版本……", UPDATE_URL)
-
-    res = requests.get(UPDATE_URL)
-    if res.status_code != 200:
-        res = requests.get(UPDATE_URL)
-        if res.status_code != 200:
-            res = requests.get(UPDATE_URL)
-            if res.status_code != 200:
-                return
-    latest_version = res.json()['tag_name']
-    body = res.json()['body']
-    # 先获取当前运行时临时目录路径
-    basedir = os.path.dirname(__file__)
-    print(basedir)
-    version = open(f'{basedir}/assets/version.txt', 'r', encoding='utf-8').read().rstrip().replace('\n', '')
-    if version != latest_version:
-        print("需要更新 {} -> {}".format(version, latest_version))
-
-        page.dialog = ft.AlertDialog(
-            modal=True,
-            title=ft.Text("🎉🎉发现新版本: {}".format(latest_version)),
-            actions=[
-                ft.Column(
-                    [
-                        ft.Column(
-                            [
-                                ft.Text(f"当前版本：{version}"),
-                                ft.Text(body),
-                            ],
-                            scroll=ft.ScrollMode.ALWAYS,
-                            height=160,
-                        ),
-                        ft.Row(
-                            [
-                                ft.TextButton(text="前往下载", url=GITHUB_URL),
-                                ft.TextButton(text="下次再说", on_click=close_dlg, style=ft.ButtonStyle(color=ft.colors.GREY)),
-                            ]
-                        )
-                    ],
-                ),
-            ],
-            actions_alignment=ft.MainAxisAlignment.CENTER,
-            shape=ft.RoundedRectangleBorder(radius=8),
-            open=True,
-        )
-
-        page.update()
-
-
 def init(page: ft.Page):
     page.title = TITLE
     page.window_min_width = 800
@@ -398,8 +350,13 @@ def init(page: ft.Page):
     page.theme = ft.Theme(font_family="Microsoft YaHei")
 
     Main(page)
-    t = threading.Thread(target=check, args=(page,))
-    t.start()
+    # 线程1：检查新版本
+    t1 = threading.Thread(target=version_check, args=(page,))
+    t1.start()
+
+    # 线程2：抓取积压信息
+    t2 = threading.Thread(target=monitor_instance.fetch_lag, args=(page,))
+    t2.start()
 
 
 ft.app(target=init, assets_dir="assets")

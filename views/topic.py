@@ -163,10 +163,8 @@ class Topic(object):
                 ft.DataRow(
                     cells=[
                         ft.DataCell(S_Text(i)),
-                        ft.DataCell(S_Button(
+                        ft.DataCell(ft.TextButton(
                             text=topic_name_,
-                            bgcolor="#F7E7E6",
-                            color="#DA3A66",
                             on_click=self.click_topic_button,
                         )),
                         ft.DataCell(S_Text(len(topic.get('partitions')))),
@@ -263,7 +261,8 @@ class Topic(object):
                 [
                     ft.Row([
                         self.partition_topic_dd,
-                        S_Button(text="为主题添加额外的分区", on_click=self.open_create_partition_dlg_modal,  # Create Partitions
+                        S_Button(text="为主题添加额外的分区", on_click=self.open_create_partition_dlg_modal,
+                                 # Create Partitions
                                  tooltip="为当前topic增加额外的分区数", ),
                     ]),
                     self.partition_table
@@ -495,3 +494,6 @@ class Topic(object):
         self.tab.selected_index = 2
         e.control.disabled = False
         e.page.update()
+
+
+topic_instance = Topic()

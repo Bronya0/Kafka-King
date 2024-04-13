@@ -60,3 +60,6 @@ class Settings(object):
         self.lang_dd.page.client_storage.set('language', language)
         lang.language = language
         open_snack_bar(e.page, "保存成功", success=True)
+
+
+settings_instance = Settings()

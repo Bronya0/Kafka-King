@@ -17,7 +17,7 @@ class Suggest(object):
                     ft.Row(
                         [
                             ft.Icon(ft.icons.FAVORITE, color='red'),
-                            ft.Text(value="Thanks for using it~", size=24),
+                            ft.Text(value="感谢使用~", size=24),
                         ]
                     ),
 
@@ -25,8 +25,8 @@ class Suggest(object):
                         [
                             ft.Markdown(
                                 value="""
-- suggest us on github: [{})
-- If you like it, you can give it a star
+- 提建议: {}
+- 喜欢的话可以给个star，更新更有动力！
                                 """.format(GITHUB_URL),
                                 selectable=True,
                                 auto_follow_links=True,
@@ -34,7 +34,7 @@ class Suggest(object):
                         ]
                     ),
                     ft.Row([
-                        S_Button(text="Update Kafka-king", icon=ft.icons.UPGRADE,
+                        S_Button(text="更新地址", icon=ft.icons.UPGRADE,
                                  url=GITHUB_URL,
                                  bgcolor="#F7E7E6",
                                  color="#DA3A66",
@@ -50,3 +50,6 @@ class Suggest(object):
 
     def init(self, page=None):
         pass
+
+
+suggest_instance = Suggest()

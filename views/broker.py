@@ -7,7 +7,6 @@ from flet_core import ControlEvent
 from service.common import S_Text
 from service.kafka_service import kafka_service
 
-
 class Broker(object):
     """
     Cluster页的组件
@@ -144,3 +143,6 @@ class Broker(object):
         self.tab.selected_index = 2
         e.control.disabled = False
         e.page.update()
+
+
+broker_instance = Broker()

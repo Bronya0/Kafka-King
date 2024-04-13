@@ -319,3 +319,6 @@ class Simulate(object):
     def update_text(self, e):
         self.producer_slider_value.value = f"消息发送倍数：{int(e.control.value)} (默认*1)"
         e.page.update()
+
+
+simulate_instance = Simulate()

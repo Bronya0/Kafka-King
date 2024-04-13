@@ -15,9 +15,9 @@ from flet_core import TextStyle
 prefix = "__kafka_connects__"
 GITHUB_URL = "https://github.com/Bronya0/Kafka-King"
 UPDATE_URL = "https://api.github.com/repos/Bronya0/Kafka-King/releases/latest"
-basedir = os.path.dirname(os.path.dirname(__file__))
+BASEDIR = os.path.dirname(os.path.dirname(__file__))
 
-c_version = open(f'{basedir}/assets/version.txt', 'r', encoding='utf-8').read().rstrip().replace('\n', '')
+c_version = open(f'{BASEDIR}/assets/version.txt', 'r', encoding='utf-8').read().rstrip().replace('\n', '')
 TITLE = "Kafka King {}".format(c_version)
 CURRENT_KAFKA_CONNECT_KEY = "current_kafka_connect"
 
@@ -43,7 +43,7 @@ def S_Button(**kwargs):
     )
 
 
-def open_snack_bar(page, msg, success=False):
+def open_snack_bar(page: flet.Page, msg, success=False):
     page.snack_bar.content = flet.Text(msg)
     page.snack_bar.open = True
     if success:
