@@ -110,7 +110,8 @@ class Monitor(object):
 
         groups = kafka_service.get_groups()
         if groups:
-            self.topic_groups_dd.options = groups
+            self.topic_groups_dd.options = [ft.dropdown.Option(text=i) for i in groups]
+
         else:
             self.topic_groups_dd.label = "无消费组"
 

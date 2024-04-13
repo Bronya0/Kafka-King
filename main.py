@@ -4,7 +4,6 @@ import threading
 import traceback
 
 import flet as ft
-import flet_core.client_storage
 import requests
 from flet_core import TextField
 
@@ -195,7 +194,7 @@ class Main:
         self.page.update()
 
     def delete_connect(self, e):
-        client_storage: flet_core.client_storage.ClientStorage = self.page.client_storage
+        client_storage = self.page.client_storage
 
         # 删掉这个连接以及相关的配置信息
         connect_configs = client_storage.get_keys(self.connect_dd.value)
