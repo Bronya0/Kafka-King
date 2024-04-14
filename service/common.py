@@ -67,7 +67,6 @@ dd_common_configs = {
     "alignment": flet.alignment.center_left,
     "dense": True,
     "content_padding": 5,
-    "bgcolor": '#F0F4FA',
 }
 
 input_kwargs = {
