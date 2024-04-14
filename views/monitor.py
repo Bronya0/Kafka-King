@@ -30,7 +30,7 @@ class Monitor(object):
             label="输入多个，英文逗号分隔",
             label_style=TextStyle(size=14),
             hint_text="topic1,topic2",
-            width=300,
+            width=600,
             height=35,
             text_size=14,
             content_padding=10
@@ -73,7 +73,7 @@ class Monitor(object):
             ),
             bottom_axis=ft.ChartAxis(
                 labels=[],
-                labels_size=20,
+                labels_size=25,
             ),
             tooltip_bgcolor=ft.colors.WHITE,
             min_y=0,
@@ -101,8 +101,8 @@ class Monitor(object):
                         self.lag_chart,
                     ], adaptive=True),
                     ft.Text(
-                        "注意：横坐标：抓取时刻，纵坐标：消息积压指标；每5分钟抓取一次，可以点刷新按钮手动抓取；离开当前tab页面不影响后台抓取；"
-                        "\n只保留20次数据；修改配置将清空历史数据"),
+                        "横坐标：抓取时刻，纵坐标：消息积压指标；\n注意：每5分钟抓取一次，可以点刷新按钮手动抓取；离开当前tab页面不影响后台抓取；"
+                        "只保留20次数据；修改配置将清空历史数据"),
 
                 ],
                 scroll=ft.ScrollMode.ALWAYS,

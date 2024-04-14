@@ -20,6 +20,11 @@ class Main:
 
     def __init__(self, page):
         self.page = page
+        self.page_width = 1000
+        self.page_height = 800
+        self.window_top = 200
+        self.window_left = 200
+        page.on_window_event = self.on_win_event
 
         # 创建输入表单控件
         self.conn_name_input = TextField(label="连接名", hint_text="例如：本地环境", height=48)
@@ -69,7 +74,7 @@ class Main:
             alignment=ft.alignment.center_left,
             dense=True,
             content_padding=5,
-            focused_bgcolor='#ff0000',
+            # focused_bgcolor='#ff0000',
         )
 
         # 侧边导航栏 NavigationRail
@@ -134,7 +139,8 @@ class Main:
             bgcolor=ft.colors.SURFACE_VARIANT,
             actions=[
                 self.connect_dd,
-                ft.IconButton(ft.icons.ADD_BOX_OUTLINED, on_click=self.open_dlg_modal, tooltip="添加kafka地址"),  # add link
+                ft.IconButton(ft.icons.ADD_BOX_OUTLINED, on_click=self.open_dlg_modal, tooltip="添加kafka地址"),
+                # add link
                 ft.IconButton(ft.icons.DELETE_OUTLINE, on_click=self.open_delete_link_modal, tooltip="删除kafka地址"),
                 # add link
                 ft.IconButton(ft.icons.WB_SUNNY_OUTLINED, on_click=self.change_theme, tooltip="切换明暗"),  # theme
@@ -335,11 +341,26 @@ class Main:
             self.page.update()
             self.page.client_storage.set("theme", ft.ThemeMode.DARK.value)
 
+    def on_win_event(self, e):
+        """
+        修复flet恢复窗口时会导致的无法展开的问题！！
+        """
+        page = e.page
+        if e.data == 'restore':
+            page.window_width = self.page_width
+            page.window_height = self.page_height
+            page.window_top = self.window_top
+            page.window_left = self.window_left
+        else:
+            self.page_width = page.window_width
+            self.page_height = page.window_height
+            self.window_top = page.window_top
+            self.window_left = page.window_left
+        page.update()
+
 
 def init(page: ft.Page):
     page.title = TITLE
-    page.window_min_width = 800
-    page.window_min_height = 600
     theme = page.client_storage.get("theme")
     if theme is not None:
         page.theme_mode = theme

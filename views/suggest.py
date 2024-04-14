@@ -36,8 +36,6 @@ class Suggest(object):
                     ft.Row([
                         S_Button(text="更新地址", icon=ft.icons.UPGRADE,
                                  url=GITHUB_URL,
-                                 bgcolor="#F7E7E6",
-                                 color="#DA3A66",
                                  )
                     ]),
 
