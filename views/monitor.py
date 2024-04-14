@@ -257,5 +257,6 @@ class Monitor(object):
         self.lag_chart.max_y = x[-1] * 1.2
         self.lag_chart.horizontal_grid_lines.interval = x[-1] * 1.2 / 15
 
+        page.update()
 
 monitor_instance = Monitor()
