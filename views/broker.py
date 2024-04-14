@@ -37,7 +37,7 @@ class Broker(object):
         )
 
         self.config_tab = ft.Tab(
-            text='Broker配置', content=ft.Container()
+            text='Broker配置', content=ft.Container(content=ft.Text("请从broker的配置按钮进入", size=20))
         )
 
         self.tab = ft.Tabs(
