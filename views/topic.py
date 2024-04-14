@@ -140,9 +140,9 @@ class Topic(object):
         rows = []
         self.topic_table = ft.DataTable(
             columns=[
-                ft.DataColumn(S_Text("ID")),
-                ft.DataColumn(S_Text("Topic")),
-                ft.DataColumn(S_Text("分区数")),
+                ft.DataColumn(S_Text("编号")),
+                ft.DataColumn(S_Text("主题")),
+                ft.DataColumn(S_Text("分区数及详情")),
                 ft.DataColumn(S_Text("积压量(先选择组)")),
                 ft.DataColumn(S_Text("查看配置")),
                 ft.DataColumn(S_Text("删除")),
@@ -163,11 +163,12 @@ class Topic(object):
                 ft.DataRow(
                     cells=[
                         ft.DataCell(S_Text(i)),
+                        ft.DataCell(S_Text(topic_name_)),
                         ft.DataCell(ft.TextButton(
-                            text=topic_name_,
+                            text=str(len(topic.get('partitions'))),
                             on_click=self.click_topic_button,
+                            data=topic_name_
                         )),
-                        ft.DataCell(S_Text(len(topic.get('partitions')))),
                         ft.DataCell(S_Text(lag, color='#315EFB')),
                         ft.DataCell(
                             ft.IconButton(icon=ft.icons.CONSTRUCTION, data=topic_name_, on_click=self.show_config_tab)),
@@ -276,7 +277,7 @@ class Topic(object):
         点击topic，跳转到分区tab
         :return:
         """
-        topic_name_ = e.control.text
+        topic_name_ = e.control.data
         self.tab.selected_index = 1
         # 切换的时候，把topic带过来，赋给分区页的下拉
         self.partition_topic_dd.value = topic_name_
