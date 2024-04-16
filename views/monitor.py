@@ -29,14 +29,19 @@ class Monitor(object):
             label="输入多个，英文逗号分隔",
             label_style=TextStyle(size=14),
             hint_text="topic1,topic2",
-            width=600,
-            height=35,
+            width=400,
+            height=30,
             text_size=14,
             content_padding=10
         )
         self.topic_groups_dd = ft.Dropdown(
             label="请选择消费组",
-            **dd_common_configs
+            label_style=TextStyle(size=14),
+            width=200,
+            height=30,
+            dense=True,
+            text_size=14,
+            content_padding=5
         )
         self.save_button = S_Button(
             text="保存",
@@ -79,11 +84,10 @@ class Monitor(object):
             max_y=0,
             min_x=0,
             max_x=19,
-            height=500,
+            height=450,
             width=1000,
         )
-        self.controls = [
-            Column(
+        self.view = Column(
                 [
                     Row(
                         [
@@ -94,22 +98,35 @@ class Monitor(object):
                             self.refresh_button,
                             # self.alert_button
 
-                        ], adaptive=True
+                        ]
                     ),
                     Row([
                         self.lag_chart,
-                    ], adaptive=True),
+                    ]),
                     ft.Text(
                         "横坐标：抓取时刻，纵坐标：消息积压指标；\n注意：每5分钟抓取一次，可以点刷新按钮手动抓取；离开当前tab页面不影响后台抓取；"
                         "只保留20次数据；修改配置将清空历史数据"),
 
                 ],
                 scroll=ft.ScrollMode.ALWAYS,
-                height=1200,
-                adaptive=True
+                height=1200
+            )
 
-            ),
+        self.lag_tab = ft.Tab(
 
+            text='消息积压指标', content=ft.Container(content=self.view, padding=10)
+        )
+
+        self.tab = ft.Tabs(
+            animation_duration=300,
+            tabs=[
+                self.lag_tab,
+            ],
+            expand=1,
+        )
+
+        self.controls = [
+            self.tab
         ]
 
     def init(self, page: ft.Page = None):

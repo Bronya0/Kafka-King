@@ -14,15 +14,17 @@ from service.translate import lang, i18n
 from service.kafka_service import kafka_service
 from views.init import get_view_instance
 
+PAGE_WIDTH = 1280
+PAGE_HEIGHT = 720
+WINDOW_TOP = 200
+WINDOW_LEFT = 260
+
 
 class Main:
 
     def __init__(self, page):
         self.page = page
-        self.page_width = 1000
-        self.page_height = 800
-        self.window_top = 200
-        self.window_left = 200
+
         page.on_window_event = self.on_win_event
 
         # 存储当前实例化的页面，用于左侧点击切换
@@ -360,20 +362,18 @@ class Main:
         修复flet恢复窗口时会导致的无法展开的问题！！
         """
         page = e.page
+
         if e.data == 'restore':
-            page.window_width = self.page_width
-            page.window_height = self.page_height
-            page.window_top = self.window_top
-            page.window_left = self.window_left
-        else:
-            self.page_width = page.window_width
-            self.page_height = page.window_height
-            self.window_top = page.window_top
-            self.window_left = page.window_left
+            page.window_width = PAGE_WIDTH
+            page.window_height = PAGE_HEIGHT
+            page.window_top = WINDOW_TOP
+            page.window_left = WINDOW_LEFT
+
         page.update()
 
 
 def init(page: ft.Page):
+
     page.title = TITLE
     theme = page.client_storage.get("theme")
     if theme is not None:
