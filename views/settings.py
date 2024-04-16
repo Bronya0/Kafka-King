@@ -62,4 +62,3 @@ class Settings(object):
         open_snack_bar(e.page, "保存成功", success=True)
 
 
-settings_instance = Settings()

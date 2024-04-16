@@ -59,6 +59,8 @@
 - 支持模拟消费者，按照内置的组进行指定size的消费
 
 ![](docs/snap/p8.png)
+![](docs/snap/p10.png)
+
 
 
 

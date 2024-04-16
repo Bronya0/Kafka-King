@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 # -*-coding:utf-8 -*-
-import os
+import datetime
+import time
+import traceback
 
 import flet as ft
 import requests
 
 from service.common import UPDATE_URL, BASEDIR, GITHUB_URL, close_dlg
+from service.kafka_service import kafka_service
 
 
 def version_check(page: ft.Page):
@@ -53,3 +56,51 @@ def version_check(page: ft.Page):
         )
 
         page.update()
+
+
+def fetch_lag(page: ft.Page, only_one=False):
+    """
+    后台线程定时抓取消息积压量，为了解耦，不刷新页面组件
+    """
+    key = "__monitor_topic_lag__"
+    topic_input_key = "__monitor_topic_input_"
+    topic_groups_key = "__monitor_topic_groups_"
+    while True:
+        print("获取当前连接对应的历史积压数据，并更新")
+        current_kafka_connect = kafka_service.bootstrap_servers
+        if current_kafka_connect is None:
+            time.sleep(60 * 1)
+            continue
+        connect_data_key = key + current_kafka_connect
+        # lags: {topic: [[time1, end_offset, commit, lag], ]}
+        lags = page.client_storage.get(connect_data_key)
+        if not lags:
+            lags = {}
+        topics = page.client_storage.get(topic_input_key + current_kafka_connect)
+        group_id = page.client_storage.get(topic_groups_key + current_kafka_connect)
+        print(f"存储的topics: {topics}, group: {group_id}")
+        if topics is None or group_id is None:
+            time.sleep(60 * 1)
+            continue
+        print("开始查询积压……")
+        try:
+            topics = topics.split(',')
+            topic_offset, topic_lag = kafka_service.get_topic_offsets(topics, group_id)
+        except Exception as e:
+            traceback.print_exc()
+            time.sleep(60 * 1)
+            continue
+
+        print(f"查询完毕，topic_lag： {topic_lag}")
+        # 只保留指定数量的数据
+        for i, v in topic_lag.items():
+            lags.setdefault(i, [])
+            if len(lags[i]) >= 20:
+                lags[i].pop(0)
+            lags[i].append([datetime.datetime.now().strftime("%H:%M"), v])
+        # 更新
+        page.client_storage.set(connect_data_key, lags)
+
+        if only_one:
+            return
+        time.sleep(60 * 3)

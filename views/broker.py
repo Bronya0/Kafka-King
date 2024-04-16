@@ -145,4 +145,3 @@ class Broker(object):
         e.page.update()
 
 
-broker_instance = Broker()

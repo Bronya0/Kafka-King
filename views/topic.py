@@ -497,4 +497,3 @@ class Topic(object):
         e.page.update()
 
 
-topic_instance = Topic()

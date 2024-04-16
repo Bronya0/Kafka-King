@@ -321,4 +321,3 @@ class Simulate(object):
         e.page.update()
 
 
-simulate_instance = Simulate()

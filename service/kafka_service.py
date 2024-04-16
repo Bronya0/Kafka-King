@@ -96,6 +96,9 @@ class KafkaService:
         for topic in topics:
             _lag = 0
             partitions = consumer.partitions_for_topic(topic)
+            print(f"{topic} 对应的分区编号： {partitions}")
+            if partitions is None:
+                continue
             for partition in partitions:
                 tp = TopicPartition(topic=topic, partition=partition)
                 # 最后一次提交的偏移量

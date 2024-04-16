@@ -8,6 +8,7 @@ import traceback
 from flet_core import Column, Row, TextStyle
 import flet as ft
 
+from service.check import fetch_lag
 from service.common import dd_common_configs, S_Button, CURRENT_KAFKA_CONNECT_KEY, open_snack_bar
 from service.kafka_service import kafka_service
 
@@ -19,11 +20,9 @@ class Monitor(object):
 
     def __init__(self):
         self.page = None
-        self.key = "_monitor_topic_lag"
-        self.connect_data_key = None
-        self.topic_input_key = "_monitor_topic_input"
-        self.topic_groups_key = "_monitor_topic_groups"
-        self.current_kafka_connect = None
+        self.key = "__monitor_topic_lag__"
+        self.topic_input_key = "__monitor_topic_input_"
+        self.topic_groups_key = "__monitor_topic_groups_"
         self.topic_color_map = {}
 
         self.topic_input = ft.TextField(
@@ -124,11 +123,10 @@ class Monitor(object):
         else:
             self.topic_groups_dd.label = "无消费组"
 
-        self.current_kafka_connect = page.client_storage.get(CURRENT_KAFKA_CONNECT_KEY)
+        current_kafka_connect = kafka_service.bootstrap_servers
         # 获取每个kafka连接对应的这块的存储的配置值
-        self.topic_input.value = page.client_storage.get(self.topic_input_key + self.current_kafka_connect)
-        self.topic_groups_dd.value = page.client_storage.get(self.topic_groups_key + self.current_kafka_connect)
-        self.connect_data_key = self.key + self.current_kafka_connect
+        self.topic_input.value = page.client_storage.get(self.topic_input_key + current_kafka_connect)
+        self.topic_groups_dd.value = page.client_storage.get(self.topic_groups_key + current_kafka_connect)
 
         self.page.update()
 
@@ -139,71 +137,52 @@ class Monitor(object):
     def click_save_config(self, e):
         page: ft.Page = e.page
         topics = self.topic_input.value
+        topic_groups_dd = self.topic_groups_dd.value
 
-        # 持久化，并和连接关联起来
+        # 持久化，并和连接关联起来；修改配置则覆盖历史数据
+        current_kafka_connect = kafka_service.bootstrap_servers
         if topics is not None:
             topics = topics.rstrip().replace('，', ',')
-            page.client_storage.set(self.topic_input_key + self.current_kafka_connect, topics)
-        if self.topic_groups_dd.value is not None:
-            page.client_storage.set(self.topic_groups_key + self.current_kafka_connect, self.topic_groups_dd.value)
+            page.client_storage.set(self.topic_input_key + current_kafka_connect, topics)
+        if topic_groups_dd is not None:
+            page.client_storage.set(self.topic_groups_key + current_kafka_connect, topic_groups_dd)
 
-        # 修改配置则清空历史数据
-        page.client_storage.remove(self.connect_data_key)
         open_snack_bar(page, "保存成功", success=True)
 
     def refresh(self, e):
+        print("开始刷新offset……")
         self.refresh_button.disabled = True
         tooltip = self.refresh_button.tooltip
         self.refresh_button.tooltip = "刷新中……"
-        e.page.update()
+        self.page.update()
         try:
-            self.update(e.page)
+            fetch_lag(page=self.page, only_one=True)
+            self.update(self.page, First=False)
         except:
             traceback.print_exc()
         self.refresh_button.disabled = False
         self.refresh_button.tooltip = tooltip
-        e.page.update()
-
-    def fetch_lag(self, page: ft.Page):
-        """
-        后台线程定时抓取消息积压量
-        """
-        time.sleep(20)
-        while True:
-            self.update(page)
-            time.sleep(60 * 5)
+        self.page.update()
 
     def update(self, page: ft.Page, First=False):
-        # _monitor_topic_lag: [ {time: { topic1: lag, topic2: lag} }, {} ]
+        """
+        只刷新组件
+        First指首次切到该页面
+        """
         print("读取积压offset……")
-        if self.topic_input.value is None or self.topic_groups_dd.value is None:
-            print("配置不合要求")
-            return
-        lags = page.client_storage.get(self.connect_data_key)
-        if not lags:
-            lags = {}
-        if not First or not lags:
-            topics = self.topic_input.value.split(',')
-            group_id = self.topic_groups_dd.value
-            # lags: {topic: [[time1, end_offset, commit, lag], ]}
-
-            topic_offset, topic_lag = kafka_service.get_topic_offsets(topics, group_id)
-            dt = datetime.datetime.now().strftime("%H:%M")
-            # 只保留指定数量的数据
-            for i, v in topic_lag.items():
-                lags.setdefault(i, [])
-                if len(lags[i]) >= 20:
-                    lags[i].pop(0)
-                lags[i].append([dt, v])
-            page.client_storage.set(self.connect_data_key, lags)
 
         self.lag_chart.data_series.clear()
         self.lag_chart.bottom_axis.labels.clear()
         colors = [ft.colors.RED, ft.colors.ORANGE, ft.colors.YELLOW_900, ft.colors.BLUE, ft.colors.PURPLE, ft.colors.GREEN, ft.colors.PINK]
-        print(lags)
         x = []
         # lags: {topic: [[time1, lag], ]}
-
+        current_kafka_connect = kafka_service.bootstrap_servers
+        connect_data_key = self.key + current_kafka_connect
+        # lags: {topic: [[time1, end_offset, commit, lag], ]}
+        lags = page.client_storage.get(connect_data_key)
+        print(f"lags: {lags}")
+        if not lags:
+            return
         # 为每个topic绘制一条曲线
         for topic, lag_obj in lags.items():
 
@@ -251,6 +230,9 @@ class Monitor(object):
             )
 
         # 取每个topic最大的积压，作为纵坐标label
+        print(f"x坐标：{x}")
+        if not x:
+            return
         x = list(set(x))
         x.sort()
 
@@ -258,4 +240,3 @@ class Monitor(object):
         self.lag_chart.horizontal_grid_lines.interval = x[-1] * 1.2 / 15
 
 
-monitor_instance = Monitor()

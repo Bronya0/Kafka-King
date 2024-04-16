@@ -50,4 +50,3 @@ class Suggest(object):
         pass
 
 
-suggest_instance = Suggest()

@@ -53,10 +53,11 @@ Create a theme (supports batch)
 ![](snap/p3.png)
 
 ## Simulate producer-consumer
--Supports simulating producers, sending messages in batches, and whether to enable gzip compression
+- Supports simulating producers, sending messages in batches, and whether to enable gzip compression
 - Supports simulated consumers, consuming specified sizes according to built-in groups
 
 ![](snap/p8.png)
+![](docs/snap/p10.png)
 
 
 ## Partition operations

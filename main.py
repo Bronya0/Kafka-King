@@ -7,13 +7,12 @@ import flet as ft
 import requests
 from flet_core import TextField
 
-from service.check import version_check
+from service.check import version_check, fetch_lag
 from service.common import S_Text, prefix, GITHUB_URL, TITLE, UPDATE_URL, open_snack_bar, close_dlg, \
     CURRENT_KAFKA_CONNECT_KEY
 from service.translate import lang, i18n
 from service.kafka_service import kafka_service
-from views.init import views_index_map
-from views.monitor import monitor_instance
+from views.init import get_view_instance
 
 
 class Main:
@@ -25,6 +24,9 @@ class Main:
         self.window_top = 200
         self.window_left = 200
         page.on_window_event = self.on_win_event
+
+        # 存储当前实例化的页面，用于左侧点击切换
+        self.view_instance_map = {}
 
         # 创建输入表单控件
         self.conn_name_input = TextField(label="连接名", hint_text="例如：本地环境", height=48)
@@ -119,7 +121,7 @@ class Main:
                     label_content=S_Text(i18n("建议")),
                 ),
             ],
-            on_change=self.refresh_body,
+            on_change=self.refresh_view,
         )
 
         # 每个页面的主体
@@ -271,28 +273,38 @@ class Main:
 
         try:
             kafka_service.set_bootstrap_servers(bootstrap_servers)
-            # 存储一下当前连接，给其他视图用
-            self.page.client_storage.set(CURRENT_KAFKA_CONNECT_KEY, self.connect_dd.value)
             self.Navigation.selected_index = 0
+            # 切换连接时，清空页面缓存
+            self.view_instance_map.clear()
+
             self.refresh_body()
         except Exception as e:
             self.body.controls = [S_Text(value=f"连接失败：{str(e)}", size=24)]
         self.pr.visible = False
         self.page.update()
 
-    def refresh_body(self, e=None):
+    def refresh_view(self, e):
         """
-        点左侧导航，刷新右侧内容（controls）
-        :param e:
-        :return:
+        点左侧导航，获取右侧内容（controls）
+        """
+        selected_index = self.Navigation.selected_index
+        view = self.view_instance_map.get(selected_index)
+        self.refresh_body(view=view)
+        e.page.update()
+
+    def refresh_body(self, view=None):
+        """
+        重新实例化页面
         """
         self.pr.visible = True
         self.page.update()
 
         selected_index = self.Navigation.selected_index
-        view = views_index_map.get(selected_index)
-        if not view:
-            return
+        if view:
+            print(f"读取缓存view: {selected_index}，执行init函数")
+        else:
+            view = get_view_instance(selected_index)
+            print(f"无缓存，初始化view：{selected_index}，执行init函数")
 
         # 先加载框架主体
         try:
@@ -319,6 +331,8 @@ class Main:
             self.page.update()
             return
 
+        # 缓存页面。
+        self.view_instance_map[selected_index] = view
         # 去掉进度条
         self.page.update()
         gc.collect()
@@ -374,9 +388,8 @@ def init(page: ft.Page):
     # 线程1：检查新版本
     t1 = threading.Thread(target=version_check, args=(page,))
     t1.start()
-
     # 线程2：抓取积压信息
-    t2 = threading.Thread(target=monitor_instance.fetch_lag, args=(page,))
+    t2 = threading.Thread(target=fetch_lag, args=(page,))
     t2.start()
 
 
