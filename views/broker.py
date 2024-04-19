@@ -7,6 +7,7 @@ from flet_core import ControlEvent
 from service.common import S_Text
 from service.kafka_service import kafka_service
 
+
 class Broker(object):
     """
     Cluster页的组件
@@ -59,47 +60,59 @@ class Broker(object):
             return "请先选择一个可用的kafka连接！\nPlease select an available kafka connection first!"
 
         self.meta, self.api_version = kafka_service.get_brokers()
-        self.base_info = ft.DataTable(
-            columns=[
-                ft.DataColumn(S_Text(f"{self.throttle_time_ms}")),
-                ft.DataColumn(S_Text(f"{self.cluster_id}")),
-                ft.DataColumn(S_Text(f"{self.controller_id}")),
-                ft.DataColumn(S_Text(f"{self.version}")),
-            ],
-            rows=[
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(S_Text(f"{self.meta[self.throttle_time_ms]}")),
-                        ft.DataCell(S_Text(f"{self.meta[self.cluster_id]}")),
-                        ft.DataCell(S_Text(f"{self.meta[self.controller_id]}")),
-                        ft.DataCell(S_Text(f"{self.api_version}")),
+        self.base_info = ft.Column(
+            [
+                ft.DataTable(
+                    columns=[
+                        ft.DataColumn(S_Text(f"{self.throttle_time_ms}")),
+                        ft.DataColumn(S_Text(f"{self.cluster_id}")),
+                        ft.DataColumn(S_Text(f"{self.controller_id}")),
+                        ft.DataColumn(S_Text(f"{self.version}")),
                     ],
-                )
-            ]
+                    rows=[
+                        ft.DataRow(
+                            cells=[
+                                ft.DataCell(S_Text(f"{self.meta[self.throttle_time_ms]}")),
+                                ft.DataCell(S_Text(f"{self.meta[self.cluster_id]}")),
+                                ft.DataCell(S_Text(f"{self.meta[self.controller_id]}")),
+                                ft.DataCell(S_Text(f"{self.api_version}")),
+                            ],
+                        )
+                    ])
+            ],
+            scroll=ft.ScrollMode.ALWAYS,
+            height=page.window_height,
 
         )
 
-        self.cluster_table = ft.DataTable(
-            columns=[
-                ft.DataColumn(S_Text("broker.id")),
-                ft.DataColumn(S_Text("host")),
-                ft.DataColumn(S_Text("port")),
-                ft.DataColumn(S_Text("机架感知")),
-                ft.DataColumn(S_Text("查看配置")),
-            ],
-            rows=[
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(S_Text(broker['node_id'])),
-                        ft.DataCell(S_Text(broker['host'])),
-                        ft.DataCell(S_Text(broker['port'])),
-                        ft.DataCell(S_Text(broker['rack'])),
-                        ft.DataCell(ft.IconButton(icon=ft.icons.CONSTRUCTION, data=broker['node_id'],
-                                                  on_click=self.show_config_tab)),
+        self.cluster_table = ft.Column(
+            [
+                ft.DataTable(
+                    columns=[
+                        ft.DataColumn(S_Text("broker.id")),
+                        ft.DataColumn(S_Text("host")),
+                        ft.DataColumn(S_Text("port")),
+                        ft.DataColumn(S_Text("机架感知")),
+                        ft.DataColumn(S_Text("查看配置")),
                     ],
+                    rows=[
+                        ft.DataRow(
+                            cells=[
+                                ft.DataCell(S_Text(broker['node_id'])),
+                                ft.DataCell(S_Text(broker['host'])),
+                                ft.DataCell(S_Text(broker['port'])),
+                                ft.DataCell(S_Text(broker['rack'])),
+                                ft.DataCell(ft.IconButton(icon=ft.icons.CONSTRUCTION, data=broker['node_id'],
+                                                          on_click=self.show_config_tab)),
+                            ],
+                        )
+                        for broker in sorted(self.meta['brokers'], key=lambda x: x['node_id'], )
+                    ],
+
                 )
-                for broker in self.meta['brokers']
             ],
+            scroll=ft.ScrollMode.ALWAYS,
+            height=page.window_height,
 
         )
 
@@ -108,7 +121,7 @@ class Broker(object):
         )
 
         self.node_tab.content = ft.Container(
-            self.cluster_table, alignment=ft.alignment.top_left, padding=10
+            self.cluster_table, alignment=ft.alignment.top_left, padding=10, adaptive=True
         )
 
     def show_config_tab(self, e: ControlEvent):
@@ -143,5 +156,3 @@ class Broker(object):
         self.tab.selected_index = 2
         e.control.disabled = False
         e.page.update()
-
-
