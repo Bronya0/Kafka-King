@@ -2,7 +2,7 @@
 # -*-coding:utf-8 -*-
 import flet as ft
 
-from service.common import S_Button, GITHUB_URL
+from service.common import S_Button, GITHUB_URL, ISSUES_URL
 
 
 class Suggest(object):
@@ -36,6 +36,9 @@ class Suggest(object):
                     ft.Row([
                         S_Button(text="更新地址", icon=ft.icons.UPGRADE,
                                  url=GITHUB_URL,
+                                 ),
+                        S_Button(text="BUG反馈",
+                                 url=ISSUES_URL,
                                  )
                     ]),
 
