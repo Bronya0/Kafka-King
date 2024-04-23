@@ -235,10 +235,10 @@ class Simulate(object):
             batch_size = int(self.producer_batch_size_input.value.rstrip())
             linger_ms = int(self.producer_linger_ms_input.value.rstrip())
 
-            if acks not in [0, 1, -1] or linger_ms < 0 or batch_size < 0 or msg == "":
+            if acks not in [0, 1, -1] or linger_ms < 0 or batch_size < 0 or msg == "" or topic is None:
                 raise Exception("参数填写不正确")
         except:
-            open_snack_bar(e.page, "参数填写不正确")
+            open_snack_bar(e.page, "参数漏填、漏选或填写不正确")
             return
 
         ori = self.producer_send_button.text

@@ -103,4 +103,4 @@ def fetch_lag(page: ft.Page, only_one=False):
 
         if only_one:
             return
-        time.sleep(60 * 3)
+        time.sleep(60 * 5)
