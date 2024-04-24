@@ -222,8 +222,7 @@ class Monitor(object):
             height=1200
         )
         self.lag_tab = ft.Tab(
-
-            text='消息积压指标', content=ft.Container(content=self.view, padding=10)
+            text='消息积压指标', content=ft.Container(content=self.view, padding=10), icon=ft.icons.LINE_STYLE
         )
 
         self.tab = ft.Tabs(

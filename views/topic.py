@@ -111,7 +111,7 @@ class Topic(object):
 
         # config tap
         self.config_tab = ft.Tab(
-            text='主题配置', content=ft.Container(content=ft.Text("请从主题的配置按钮进入", size=20))
+            text='主题配置', content=ft.Container(content=ft.Text("请从主题的配置按钮进入", size=20)), icon=ft.icons.CONSTRUCTION_OUTLINED
         )
 
         # all in one

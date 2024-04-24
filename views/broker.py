@@ -30,15 +30,15 @@ class Broker(object):
 
         # 先加载框架
         self.base_info_tab = ft.Tab(
-            text="基础信息", content=ft.Container()
+            text="基础信息", content=ft.Container(), icon=ft.icons.INFO_OUTLINE,
         )
 
         self.node_tab = ft.Tab(
-            text='集群节点列表', content=ft.Container()
+            text='集群节点列表', content=ft.Container(), icon=ft.icons.HIVE_OUTLINED,
         )
 
         self.config_tab = ft.Tab(
-            text='Broker配置', content=ft.Container(content=ft.Text("请从broker的配置按钮进入", size=20))
+            text='Broker配置', content=ft.Container(content=ft.Text("请从broker的配置按钮进入", size=20)), icon=ft.icons.CONSTRUCTION_OUTLINED,
         )
 
         self.tab = ft.Tabs(
