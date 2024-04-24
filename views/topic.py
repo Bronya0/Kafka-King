@@ -142,6 +142,7 @@ class Topic(object):
             columns=[
                 ft.DataColumn(S_Text("编号")),
                 ft.DataColumn(S_Text("主题")),
+                ft.DataColumn(S_Text("副本因子")),
                 ft.DataColumn(S_Text("分区数及详情")),
                 ft.DataColumn(S_Text("积压量(先选择组)")),
                 ft.DataColumn(S_Text("查看配置")),
@@ -159,11 +160,13 @@ class Topic(object):
                 continue
 
             lag = self.topic_lag.get(topic_name_) if self.topic_lag else self._lag_label
+            refactor = len(topic['partitions'][0]['replicas']) if topic['partitions'] else "无分区"
             rows.append(
                 ft.DataRow(
                     cells=[
                         ft.DataCell(S_Text(i)),
                         ft.DataCell(S_Text(topic_name_)),
+                        ft.DataCell(S_Text(refactor)),
                         ft.DataCell(ft.TextButton(
                             text=str(len(topic.get('partitions'))),
                             on_click=self.click_topic_button,
@@ -171,16 +174,30 @@ class Topic(object):
                         )),
                         ft.DataCell(S_Text(lag, color='#315EFB')),
                         ft.DataCell(
-                            ft.IconButton(icon=ft.icons.CONSTRUCTION, data=topic_name_, on_click=self.show_config_tab)),
-                        ft.DataCell(
-                            ft.IconButton(
-                                icon=ft.icons.DELETE_FOREVER_OUTLINED,
-                                on_click=self.open_delete_dialog,
-                                data=topic_name_,
-                                icon_color="#DA3A66",
-                                tooltip=f"删除{topic_name_}",
+                            # ft.IconButton(icon=ft.icons.CONSTRUCTION, data=topic_name_, on_click=self.show_config_tab)
+                            ft.TextButton(
+                                text="配置",
+                                style=ft.ButtonStyle(color=ft.colors.BROWN),
+                                on_click=self.show_config_tab,
+                                data=topic_name_
                             )
-                        ) if not topic.get('is_internal') else ft.DataCell(ft.Text("禁止"))  # not allowed
+                        ),
+
+                        ft.DataCell(
+                            ft.TextButton(
+                                text="删除",
+                                style=ft.ButtonStyle(color=ft.colors.RED),
+                                on_click=self.open_delete_dialog,
+                                data=topic_name_
+                            )
+                            # ft.IconButton(
+                            #     icon=ft.icons.DELETE_FOREVER_OUTLINED,
+                            #     on_click=self.open_delete_dialog,
+                            #     data=topic_name_,
+                            #     icon_color="#DA3A66",
+                            #     tooltip=f"删除{topic_name_}",
+                            # )
+                        ) if not topic.get('is_internal') else ft.DataCell(ft.Text("禁止操作"))  # not allowed
                     ],
                 )
             )

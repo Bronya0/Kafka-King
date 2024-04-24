@@ -28,11 +28,15 @@ class Main:
         self.view_instance_map = {}
 
         # 创建输入表单控件
-        self.conn_name_input = TextField(label="连接名", hint_text="例如：本地环境", height=48)
-        self.kafka_input = TextField(label="Kafka地址", hint_text="例如：127.0.0.1:9092", height=48)
+        self.conn_name_input = TextField(label="连接名", hint_text="例如：本地环境", height=40, content_padding=5)
+        self.kafka_input = TextField(label="Kafka地址", hint_text="例如：127.0.0.1:9092", height=40, content_padding=5)
+        self.sasl_plain_username = TextField(label="SASL PLAIN用户名(简单明文认证)(可选)", hint_text="", height=40, content_padding=5)
+        self.sasl_plain_password = TextField(label="SASL PLAIN密码(简单明文认证)(可选)", hint_text="", height=40, content_padding=5)
         self.connect_input_column = ft.Column([
             self.conn_name_input,
             self.kafka_input,
+            self.sasl_plain_username,
+            self.sasl_plain_password,
             ft.Row([
                 ft.TextButton("连接测试", on_click=self.test_connect, on_long_press=True,
                               style=ft.ButtonStyle(color=ft.colors.RED)),

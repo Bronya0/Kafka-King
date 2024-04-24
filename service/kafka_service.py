@@ -37,7 +37,7 @@ class KafkaService:
         self.bootstrap_servers = bootstrap_servers
         self.kac = KafkaAdminClient(bootstrap_servers=bootstrap_servers)
 
-    def new_client(self, bootstrap_servers: list):
+    def new_client(self, bootstrap_servers: list, ):
 
         # 测试连接
         try:
