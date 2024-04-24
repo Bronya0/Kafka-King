@@ -13,6 +13,7 @@ from flet_core import TextStyle
 
 # 假设有一个全局的存储连接信息的变量
 prefix = "__kafka_connects__"
+KAFKA_KING_GROUP = "__kafka_king_group"
 GITHUB_URL = "https://github.com/Bronya0/Kafka-King"
 UPDATE_URL = "https://api.github.com/repos/Bronya0/Kafka-King/releases/latest"
 ISSUES_URL = "https://github.com/Bronya0/Kafka-King/issues"

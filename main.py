@@ -1,17 +1,14 @@
 import gc
-import os
 import threading
 import traceback
 
 import flet as ft
-import requests
 from flet_core import TextField
 
 from service.check import version_check, fetch_lag
-from service.common import S_Text, prefix, GITHUB_URL, TITLE, UPDATE_URL, open_snack_bar, close_dlg, \
-    CURRENT_KAFKA_CONNECT_KEY
-from service.translate import lang, i18n
+from service.common import S_Text, prefix, GITHUB_URL, TITLE, open_snack_bar, close_dlg
 from service.kafka_service import kafka_service
+from service.translate import lang, i18n
 from views.init import get_view_instance
 
 PAGE_WIDTH = 1280

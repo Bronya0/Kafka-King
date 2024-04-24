@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 # -*-coding:utf-8 -*-
-import datetime
 import random
-import time
 import traceback
 
-from flet_core import Column, Row, TextStyle
 import flet as ft
+from flet_core import Column, Row, TextStyle
 
 from service.check import fetch_lag
-from service.common import dd_common_configs, S_Button, CURRENT_KAFKA_CONNECT_KEY, open_snack_bar
+from service.common import S_Button, open_snack_bar
 from service.kafka_service import kafka_service
 
 
@@ -76,6 +74,8 @@ class Monitor(object):
                 labels_size=100,
             ),
             bottom_axis=ft.ChartAxis(
+                title=ft.Text("积压指标"),
+                title_size=20,
                 labels=[],
                 labels_size=25,
             ),
@@ -83,9 +83,9 @@ class Monitor(object):
             min_y=0,
             max_y=0,
             min_x=0,
-            max_x=19,
-            height=450,
-            width=1000,
+            max_x=20,
+            height=250,
+            width=500,
         )
         self.view = Column(
                 [
@@ -103,15 +103,124 @@ class Monitor(object):
                     Row([
                         self.lag_chart,
                     ]),
-                    ft.Text(
-                        "横坐标：抓取时刻，纵坐标：消息积压指标；\n注意：每5分钟抓取一次，可以点刷新按钮手动抓取；离开当前tab页面不影响后台抓取；"
-                        "只保留20次数据；修改配置将清空历史数据"),
+                    # ft.Text(
+                    #     "横坐标：抓取时刻，纵坐标：消息积压指标；\n注意：每5分钟抓取一次，可以点刷新按钮手动抓取；离开当前tab页面不影响后台抓取；"
+                    #     "只保留20次数据；修改配置将清空历史数据"),
 
                 ],
                 scroll=ft.ScrollMode.ALWAYS,
                 height=1200
             )
 
+        # 生产
+        self.produce_chart = ft.LineChart(
+            data_series=[],
+            border=ft.border.all(1, ft.colors.with_opacity(0.2, ft.colors.ON_SURFACE)),
+            horizontal_grid_lines=ft.ChartGridLines(
+                interval=1000, color=ft.colors.with_opacity(0.2, ft.colors.ON_SURFACE), width=1
+            ),
+            vertical_grid_lines=ft.ChartGridLines(
+                interval=1, color=ft.colors.with_opacity(0.2, ft.colors.ON_SURFACE), width=1
+            ),
+            left_axis=ft.ChartAxis(
+                labels=[],
+                labels_size=100,
+            ),
+            bottom_axis=ft.ChartAxis(
+                title=ft.Text("消息生成速度"),
+                title_size=20,
+                labels=[],
+                labels_size=25,
+            ),
+            tooltip_bgcolor=ft.colors.WHITE,
+            min_y=0,
+            max_y=0,
+            min_x=0,
+            max_x=20,
+            height=250,
+            width=500,
+        )
+        self.view = Column(
+            [
+                Row(
+                    [
+                        ft.Text("输入要监测的topic: "),
+                        self.topic_input,
+                        self.topic_groups_dd,
+                        self.save_button,
+                        self.refresh_button,
+                        # self.alert_button
+
+                    ]
+                ),
+                Row([
+                    self.lag_chart,
+                ]),
+                # ft.Text(
+                #     "横坐标：抓取时刻，纵坐标：消息积压指标；\n注意：每5分钟抓取一次，可以点刷新按钮手动抓取；离开当前tab页面不影响后台抓取；"
+                #     "只保留20次数据；修改配置将清空历史数据"),
+
+            ],
+            scroll=ft.ScrollMode.ALWAYS,
+            height=1200
+        )
+        # 消费
+        self.consumer_chart = ft.LineChart(
+            data_series=[],
+            border=ft.border.all(1, ft.colors.with_opacity(0.2, ft.colors.ON_SURFACE)),
+            horizontal_grid_lines=ft.ChartGridLines(
+                interval=1000, color=ft.colors.with_opacity(0.2, ft.colors.ON_SURFACE), width=1
+            ),
+            vertical_grid_lines=ft.ChartGridLines(
+                interval=1, color=ft.colors.with_opacity(0.2, ft.colors.ON_SURFACE), width=1
+            ),
+            left_axis=ft.ChartAxis(
+                labels=[],
+                labels_size=100,
+            ),
+            bottom_axis=ft.ChartAxis(
+                title=ft.Text("消息消费速度"),
+                title_size=20,
+                labels=[],
+                labels_size=25,
+            ),
+            tooltip_bgcolor=ft.colors.WHITE,
+            min_y=0,
+            max_y=0,
+            min_x=0,
+            max_x=20,
+            height=250,
+            width=500,
+        )
+        self.view = Column(
+            [
+                Row(
+                    [
+                        ft.Text("输入要监测的topic: "),
+                        self.topic_input,
+                        self.topic_groups_dd,
+                        self.save_button,
+                        self.refresh_button,
+                        # self.alert_button
+
+                    ]
+                ),
+                Row([
+                    self.lag_chart,
+                    self.produce_chart,
+                    self.consumer_chart,
+                ]),
+                Row([
+                    self.consumer_chart,
+                ]),
+                # ft.Text(
+                #     "横坐标：抓取时刻，纵坐标：消息积压指标；\n注意：每5分钟抓取一次，可以点刷新按钮手动抓取；离开当前tab页面不影响后台抓取；"
+                #     "只保留20次数据；修改配置将清空历史数据"),
+
+            ],
+            scroll=ft.ScrollMode.ALWAYS,
+            height=1200
+        )
         self.lag_tab = ft.Tab(
 
             text='消息积压指标', content=ft.Container(content=self.view, padding=10)
@@ -240,7 +349,7 @@ class Monitor(object):
                     data_points=data_points,
                     stroke_width=2,  # 线条宽度
                     color=line_color,
-                    curved=True,  # 曲线
+                    curved=False,  # 直线
                     stroke_cap_round=True,  # 绘制圆角线帽
 
                 )

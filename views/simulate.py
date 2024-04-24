@@ -12,7 +12,7 @@ import traceback
 import flet as ft
 from flet_core import ControlEvent
 
-from service.common import dd_common_configs, S_Button, open_snack_bar
+from service.common import dd_common_configs, S_Button, open_snack_bar, KAFKA_KING_GROUP
 from service.kafka_service import kafka_service
 
 
@@ -22,7 +22,6 @@ class Simulate(object):
         self.producer_slider_value = None
         self.describe_topics_map = None
         self.describe_topics = None
-        self.__kafka_king_group = "__kafka_king_group"
         self.kafka_fetch_timeout = 10
 
         # if not kafka_service.kac:
@@ -196,7 +195,7 @@ class Simulate(object):
                     # self.consumer_groups_dd,
                     # ft.Text(" OR "),
                     # self.consumer_groups_input,
-                    ft.Text(f"内置消费者组（避免干扰正常业务）:  {self.__kafka_king_group}"),
+                    ft.Text(f"内置消费者组（避免干扰正常业务）:  {KAFKA_KING_GROUP}"),
                     ft.Text(f"拉取超时时间:  {self.kafka_fetch_timeout}")
                 ]),
                 ft.Row([
@@ -278,7 +277,7 @@ class Simulate(object):
         topic = self.consumer_topic_dd.value
         if topic is None:
             err = "请选择topic"
-        group = self.__kafka_king_group
+        group = KAFKA_KING_GROUP
         size = self.consumer_fetch_size_input.value
         try:
             size = int(size)
