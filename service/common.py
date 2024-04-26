@@ -15,8 +15,11 @@ from flet_core import TextStyle
 prefix = "__kafka_connects__"
 KAFKA_KING_GROUP = "__kafka_king_group"
 GITHUB_URL = "https://github.com/Bronya0/Kafka-King"
+GITHUB_REPOS_URL = "https://api.github.com/repos/Bronya0/Kafka-King"
 UPDATE_URL = "https://api.github.com/repos/Bronya0/Kafka-King/releases/latest"
 ISSUES_URL = "https://github.com/Bronya0/Kafka-King/issues"
+ISSUES_API_URL = "https://api.github.com/repos/Bronya0/Kafka-King/issues?state=open"
+
 BASEDIR = os.path.dirname(os.path.dirname(__file__))
 
 c_version = open(f'{BASEDIR}/assets/version.txt', 'r', encoding='utf-8').read().rstrip().replace('\n', '')

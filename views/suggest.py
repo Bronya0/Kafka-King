@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*-coding:utf-8 -*-
-import flet as ft
+import datetime
 
-from service.common import S_Button, GITHUB_URL, ISSUES_URL
+import flet as ft
+import requests
+
+from service.common import S_Button, GITHUB_URL, ISSUES_URL, ISSUES_API_URL, GITHUB_REPOS_URL
 
 
 class Suggest(object):
@@ -11,15 +14,18 @@ class Suggest(object):
     """
 
     def __init__(self):
+        self.issues = ft.Column(controls=[])
+        self.repo = ft.Text(value="loading", size=16)
+
         self.controls = [
             ft.Column(
                 [
                     ft.Row(
                         [
-                            ft.Icon(ft.icons.FAVORITE, color='red'),
-                            ft.Text(value="感谢使用~", size=24),
+                            ft.Text(value="感谢使用", size=24),
                         ]
                     ),
+                    self.repo,
 
                     ft.Row(
                         [
@@ -33,23 +39,48 @@ class Suggest(object):
                             ),
                         ]
                     ),
-                    ft.Row([
-                        S_Button(text="更新地址", icon=ft.icons.UPGRADE,
-                                 url=GITHUB_URL,
-                                 ),
-                        S_Button(text="BUG反馈",
-                                 url=ISSUES_URL,
-                                 )
-                    ]),
-
-
                 ],
 
 
-            )
+            ),
+            ft.Text("GITHUB ISSUES", size=20),
+            self.issues,
+            ft.Row([
+                S_Button(text="软件主页",
+                         url=GITHUB_URL,
+                         ),
+                S_Button(text="BUG反馈",
+                         url=ISSUES_URL,
+                         )
+            ]),
         ]
 
     def init(self, page=None):
-        pass
+        api_res = requests.get(ISSUES_API_URL, timeout=60).json()
+        api_repo_res = requests.get(GITHUB_REPOS_URL, timeout=60).json()
+        self.repo.value = f"star: {api_repo_res['stargazers_count']}     forks: {api_repo_res['forks_count']}     language: {api_repo_res['language']} "
+        page.update()
+
+        n = 0
+        controls = []
+        for i in api_res:
+            n += 1
+            if n > 20:
+                break
+            time_str = datetime.datetime.fromisoformat(i['created_at'].replace("Z", "+00:00")).strftime("%Y-%m-%d")
+            controls.append(
+                ft.Row(
+                    [
+                        ft.Markdown(
+                            value=f"""- {i['title']} {time_str} [详情]({i['html_url']})""",
+                            selectable=True,
+                            auto_follow_links=True,
+
+                        ),
+                    ]
+                )
+            )
+        self.issues.controls = controls
+
 
 

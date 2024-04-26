@@ -145,8 +145,7 @@ class Topic(object):
                 ft.DataColumn(S_Text("副本因子")),
                 ft.DataColumn(S_Text("分区数及详情")),
                 ft.DataColumn(S_Text("积压量(先选择组)")),
-                ft.DataColumn(S_Text("查看配置")),
-                ft.DataColumn(S_Text("删除")),
+                ft.DataColumn(S_Text("操作"))
             ],
             rows=rows,
         )
@@ -174,30 +173,26 @@ class Topic(object):
                         )),
                         ft.DataCell(S_Text(lag, color='#315EFB')),
                         ft.DataCell(
-                            # ft.IconButton(icon=ft.icons.CONSTRUCTION, data=topic_name_, on_click=self.show_config_tab)
-                            ft.TextButton(
-                                text="配置",
-                                style=ft.ButtonStyle(color=ft.colors.BROWN),
-                                on_click=self.show_config_tab,
-                                data=topic_name_
-                            )
+                            ft.Row([
+                                ft.TextButton(
+                                    text="配置",
+                                    style=ft.ButtonStyle(color=ft.colors.BROWN),
+                                    on_click=self.show_config_tab,
+                                    data=topic_name_
+                                ),
+                                ft.TextButton(
+                                    text="删除",
+                                    style=ft.ButtonStyle(color=ft.colors.RED) if not topic.get('is_internal') else ft.ButtonStyle(color=ft.colors.GREY),
+                                    on_click=self.open_delete_dialog,
+                                    data=topic_name_,
+                                    disabled=False if not topic.get('is_internal') else True
+                                ),
+
+                            ])
+
                         ),
 
-                        ft.DataCell(
-                            ft.TextButton(
-                                text="删除",
-                                style=ft.ButtonStyle(color=ft.colors.RED),
-                                on_click=self.open_delete_dialog,
-                                data=topic_name_
-                            )
-                            # ft.IconButton(
-                            #     icon=ft.icons.DELETE_FOREVER_OUTLINED,
-                            #     on_click=self.open_delete_dialog,
-                            #     data=topic_name_,
-                            #     icon_color="#DA3A66",
-                            #     tooltip=f"删除{topic_name_}",
-                            # )
-                        ) if not topic.get('is_internal') else ft.DataCell(ft.Text("禁止操作"))  # not allowed
+
                     ],
                 )
             )
@@ -225,7 +220,6 @@ class Topic(object):
             ],
                 scroll=ft.ScrollMode.ALWAYS,
             ),
-            alignment=ft.alignment.top_left,
             padding=10,
 
         )
@@ -245,6 +239,7 @@ class Topic(object):
                 ft.DataColumn(S_Text("上次提交")),
                 ft.DataColumn(S_Text("最末偏移量")),
                 ft.DataColumn(S_Text("积压量")),
+
             ],
             rows=rows,
         )
@@ -269,6 +264,7 @@ class Topic(object):
                         ft.DataCell(S_Text(last_committed)),
                         ft.DataCell(S_Text(end_offsets)),
                         ft.DataCell(S_Text(_lag)),
+
                     ],
                 )
             )
