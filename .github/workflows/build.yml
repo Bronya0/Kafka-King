@@ -148,7 +148,7 @@ jobs:
     - name: Package .app folder
       run: |
          cd dist
-         tar -czf kafka-king-linux.tar.gz .
+         tar --warning=no-file-changed -czf kafka-king-linux.tar.gz .
 
     - name: Upload Release Asset
       id: upload-release-asset
