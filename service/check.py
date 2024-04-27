@@ -68,7 +68,7 @@ def fetch_lag(page: ft.Page, only_one=False):
     topic_groups_key = "__monitor_topic_groups_"
     while True:
         print("获取当前连接对应的历史积压数据，并更新")
-        current_kafka_connect = kafka_service.bootstrap_servers
+        current_kafka_connect = kafka_service.connect_name
         if current_kafka_connect is None:
             time.sleep(60 * 1)
             continue

@@ -6,7 +6,7 @@
 @Project : kafka-king
 @Desc    : 
 """
-
+import copy
 import logging
 import time
 import traceback
@@ -30,23 +30,40 @@ class TopicConfig:
 
 class KafkaService:
     def __init__(self):
-        self.bootstrap_servers = None
+        self.connect_name = None
+        self.SASL_PARAM = None
         self.kac: Optional[KafkaAdminClient] = None
 
-    def set_bootstrap_servers(self, bootstrap_servers):
-        self.bootstrap_servers = bootstrap_servers
-        self.kac = KafkaAdminClient(bootstrap_servers=bootstrap_servers)
+    def set_connect(self, connect_name, bootstrap_servers: list, sasl_plain_username, sasl_plain_password):
+        SASL_PARAM = {"bootstrap_servers": bootstrap_servers}
+        if sasl_plain_username and sasl_plain_password:
+            SASL_PARAM.update({
+                "security_protocol": 'SASL_PLAINTEXT',
+                "sasl_mechanism": "PLAIN",
+                "sasl_plain_username": sasl_plain_username,
+                "sasl_plain_password": sasl_plain_password,
+            })
+        self.SASL_PARAM = SASL_PARAM
+        self.connect_name = connect_name
+        self.kac = KafkaAdminClient(**SASL_PARAM)
 
-    def new_client(self, bootstrap_servers: list, ):
-
+    def new_client(self, bootstrap_servers: list, sasl_plain_username, sasl_plain_password):
+        SASL_PARAM = {"bootstrap_servers": bootstrap_servers}
+        if sasl_plain_username and sasl_plain_password:
+            SASL_PARAM.update({
+                "security_protocol": 'SASL_PLAINTEXT',
+                "sasl_mechanism": "PLAIN",
+                "sasl_plain_username": sasl_plain_username,
+                "sasl_plain_password": sasl_plain_password,
+            })
         # 测试连接
         try:
-            admin_client = KafkaAdminClient(bootstrap_servers=bootstrap_servers)
+            admin_client = KafkaAdminClient(**SASL_PARAM)
             topics = admin_client.list_topics()
             admin_client.close()
-            return True
+            return True, None
         except Exception as e:
-            return False
+            return False, str(e)
 
         # 如果只是检查连接，不需要发送消息，可以省略消息发送的部分
 
@@ -68,7 +85,7 @@ class KafkaService:
         """
         cluster_metadata = self.kac.describe_cluster()
         # 尝试猜测 Kafka 代理的版本
-        kc = KafkaClient(bootstrap_servers=self.bootstrap_servers)
+        kc = KafkaClient(**self.SASL_PARAM)
         api_version = kc.check_version()
         kc.close()
         return cluster_metadata, api_version
@@ -89,7 +106,7 @@ class KafkaService:
 
     def get_topic_offsets(self, topics, group_id, consumer=None):
         if not consumer:
-            consumer = KafkaConsumer(bootstrap_servers=self.bootstrap_servers, group_id=group_id)
+            consumer = KafkaConsumer(**self.SASL_PARAM, group_id=group_id)
 
         topic_lag, topic_end_and_commit_offset = {}, {}
         topic_offset = defaultdict(dict)
@@ -125,19 +142,17 @@ class KafkaService:
         topic_partitions = {topic: NewPartitions(total_count=old_num + new_num)}
         try:
             res = self.kac.create_partitions(topic_partitions)
-            return True
-        except Exception as e:
+            return True, None
+        except Exception as err:
             traceback.print_exc()
-        return False
+        return False, str(err)
 
     def send_msgs(self, topic, msg: bytes, enable_gzip=False, msg_multiplier=1, msg_key=None, **kwargs):
         """
         send msgs发送消息
         """
-        config = {
-            "bootstrap_servers": self.bootstrap_servers,
-            **kwargs
-        }
+        config: dict = copy.copy(self.SASL_PARAM)
+        config.update(kwargs)
         if enable_gzip:
             config['compression_type'] = 'gzip'
 
@@ -157,8 +172,8 @@ class KafkaService:
                                      group_id=group_id,
                                      enable_auto_commit=False,
                                      auto_offset_reset="earliest",
-                                     bootstrap_servers=self.bootstrap_servers,
                                      max_poll_records=size,
+                                     **self.SASL_PARAM,
                                      )
         except Exception as e:
             return f"无法连接集群并创建消费者：{e}"

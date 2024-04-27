@@ -7,8 +7,10 @@ from flet_core import ControlEvent
 from kafka import KafkaAdminClient
 from kafka.admin import NewTopic
 
-from service.common import S_Text, open_snack_bar, S_Button, dd_common_configs, close_dlg
+from service.common import S_Text, open_snack_bar, S_Button, dd_common_configs, close_dlg, SIMULATE, Navigation, \
+    view_instance_map, Navigation, body
 from service.kafka_service import kafka_service
+from views.simulate import Simulate
 
 
 class Topic(object):
@@ -111,7 +113,8 @@ class Topic(object):
 
         # config tap
         self.config_tab = ft.Tab(
-            text='主题配置', content=ft.Container(content=ft.Text("请从主题的配置按钮进入", size=20)), icon=ft.icons.CONSTRUCTION_OUTLINED
+            text='主题配置', content=ft.Container(content=ft.Text("请从主题的配置按钮进入", size=20)),
+            icon=ft.icons.CONSTRUCTION_OUTLINED
         )
 
         # all in one
@@ -160,6 +163,8 @@ class Topic(object):
 
             lag = self.topic_lag.get(topic_name_) if self.topic_lag else self._lag_label
             refactor = len(topic['partitions'][0]['replicas']) if topic['partitions'] else "无分区"
+            disabled = False if not topic.get('is_internal') else True
+
             rows.append(
                 ft.DataRow(
                     cells=[
@@ -175,23 +180,36 @@ class Topic(object):
                         ft.DataCell(
                             ft.Row([
                                 ft.TextButton(
+                                    text="生产",
+                                    on_click=self.show_produce_page,
+                                    data=topic_name_,
+                                    disabled=disabled
+
+                                ),
+                                ft.TextButton(
+                                    text="消费",
+                                    on_click=self.show_consumer_page,
+                                    data=topic_name_,
+                                    disabled=disabled
+                                ),
+                                ft.TextButton(
                                     text="配置",
                                     style=ft.ButtonStyle(color=ft.colors.BROWN),
                                     on_click=self.show_config_tab,
-                                    data=topic_name_
+                                    data=topic_name_,
                                 ),
                                 ft.TextButton(
                                     text="删除",
-                                    style=ft.ButtonStyle(color=ft.colors.RED) if not topic.get('is_internal') else ft.ButtonStyle(color=ft.colors.GREY),
+                                    style=ft.ButtonStyle(color=ft.colors.RED) if not topic.get(
+                                        'is_internal') else ft.ButtonStyle(color=ft.colors.GREY),
                                     on_click=self.open_delete_dialog,
                                     data=topic_name_,
-                                    disabled=False if not topic.get('is_internal') else True
+                                    disabled=disabled
                                 ),
 
                             ])
 
                         ),
-
 
                     ],
                 )
@@ -355,6 +373,10 @@ class Topic(object):
         list_ = []
         names = []
         success = False
+        ori = e.control.text
+        e.control.text = "创建中……"
+        e.control.update()
+
         try:
             _topics_configs = self.create_topics_multi_text_input.value
             lines = _topics_configs.split('\n')
@@ -385,23 +407,40 @@ class Topic(object):
         self.create_topic_modal.open = False
         self.init()
         open_snack_bar(e.page, msg, success)
+        e.control.text = ori
+        e.control.update()
 
     def create_partitions(self, e: ControlEvent):
         """
         为topic创建额外分区
         """
+        ori = e.control.text
+        e.control.text = "创建中……"
+        e.control.update()
+
         extra_num = self.create_partition_text_input.value
         extra_num = int(extra_num)
+        if extra_num < 1:
+            e.control.text = ori
+            open_snack_bar(e.page, "额外分区数必须大于1", success=False)
+            return
+
         topic = self.partition_topic_dd.value
         old_partition_num = len(self.describe_topics_map[topic]['partitions'])
-        res = kafka_service.create_partitions(topic, old_partition_num, extra_num)
-        msg = "Topic：{} 成功创建 {} 个分区，当前总共 {} 个".format(topic, extra_num, old_partition_num + extra_num)
+        print("为topic创建额外分区", topic, old_partition_num, extra_num)
+
+        res, err = kafka_service.create_partitions(topic, old_partition_num, extra_num)
         if not res:
-            msg = "分区创建失败，请尝试减小分区数量"
+            msg = f"分区创建失败: {err}"
+        else:
+            msg = "Topic：{} 成功创建 {} 个分区，当前总共 {} 个".format(topic, extra_num, old_partition_num + extra_num)
+        print(msg)
         self.create_partition_modal.open = False
         self.init()
         self._create_partition_table(topic_name_=topic)
         open_snack_bar(e.page, msg, success=True)
+        e.control.text = ori
+        e.control.update()
 
     def open_delete_dialog(self, e):
         topic_name = e.control.data
@@ -477,6 +516,40 @@ class Topic(object):
         self.groups_dd_onchange(e)
         e.page.update()
 
+    def show_produce_page(self, e: ControlEvent):
+        """
+        打开模拟生产者页面
+        """
+        Navigation.selected_index = SIMULATE
+        view: Simulate = view_instance_map.get(SIMULATE)
+        if not view:
+            view = Simulate()
+            view_instance_map[SIMULATE] = view
+        view.tab.selected_index = 0
+        view.producer_topic_dd.value = e.control.data
+        body.controls = view.controls
+        err = view.init()
+        if err:
+            body.controls = [S_Text(value=str(err), size=24)]
+        e.page.update()
+
+    def show_consumer_page(self, e: ControlEvent):
+        """
+        打开模拟消费者页面
+        """
+        Navigation.selected_index = SIMULATE
+        view: Simulate = view_instance_map.get(SIMULATE)
+        if not view:
+            view = Simulate()
+            view_instance_map[SIMULATE] = view
+        view.consumer_topic_dd.value = e.control.data
+        view.tab.selected_index = 1
+        body.controls = view.controls
+        err = view.init()
+        if err:
+            body.controls = [S_Text(value=str(err), size=24)]
+        e.page.update()
+
     def show_config_tab(self, e: ControlEvent):
         """
         打开侧边栏
@@ -508,5 +581,3 @@ class Topic(object):
         self.tab.selected_index = 2
         e.control.disabled = False
         e.page.update()
-
-

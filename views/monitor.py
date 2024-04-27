@@ -30,7 +30,7 @@ class Monitor(object):
             width=400,
             height=30,
             text_size=14,
-            content_padding=10
+            content_padding=1
         )
         self.topic_groups_dd = ft.Dropdown(
             label="请选择消费组",
@@ -39,7 +39,7 @@ class Monitor(object):
             height=30,
             dense=True,
             text_size=14,
-            content_padding=5
+            content_padding=1
         )
         self.save_button = S_Button(
             text="保存",
@@ -248,7 +248,7 @@ class Monitor(object):
         else:
             self.topic_groups_dd.label = "无消费组"
 
-        current_kafka_connect = kafka_service.bootstrap_servers
+        current_kafka_connect = kafka_service.connect_name
         # 获取每个kafka连接对应的这块的存储的配置值
         self.topic_input.value = page.client_storage.get(self.topic_input_key + current_kafka_connect)
         self.topic_groups_dd.value = page.client_storage.get(self.topic_groups_key + current_kafka_connect)
@@ -265,7 +265,7 @@ class Monitor(object):
         topic_groups_dd = self.topic_groups_dd.value
 
         # 持久化，并和连接关联起来；修改配置则覆盖历史数据
-        current_kafka_connect = kafka_service.bootstrap_servers
+        current_kafka_connect = kafka_service.connect_name
         if topics is not None:
             topics = topics.rstrip().replace('，', ',')
             page.client_storage.set(self.topic_input_key + current_kafka_connect, topics)
@@ -301,7 +301,7 @@ class Monitor(object):
         colors = [ft.colors.RED, ft.colors.ORANGE, ft.colors.YELLOW_900, ft.colors.BLUE, ft.colors.PURPLE, ft.colors.GREEN, ft.colors.PINK]
         x = []
         # lags: {topic: [[time1, lag], ]}
-        current_kafka_connect = kafka_service.bootstrap_servers
+        current_kafka_connect = kafka_service.connect_name
         connect_data_key = self.key + current_kafka_connect
         # lags: {topic: [[time1, end_offset, commit, lag], ]}
         lags = page.client_storage.get(connect_data_key)

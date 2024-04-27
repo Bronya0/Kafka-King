@@ -3,18 +3,14 @@ import threading
 import traceback
 
 import flet as ft
-from flet_core import TextField
+from flet_core import TextField, ControlEvent
 
 from service.check import version_check, fetch_lag
-from service.common import S_Text, prefix, GITHUB_URL, TITLE, open_snack_bar, close_dlg
+from service.common import S_Text, prefix, GITHUB_URL, TITLE, open_snack_bar, close_dlg, PAGE_WIDTH, PAGE_HEIGHT, \
+    WINDOW_TOP, WINDOW_LEFT, view_instance_map, Navigation, body
 from service.kafka_service import kafka_service
 from service.translate import lang, i18n
-from views.init import get_view_instance
-
-PAGE_WIDTH = 1280
-PAGE_HEIGHT = 720
-WINDOW_TOP = 200
-WINDOW_LEFT = 260
+from views.all_views import get_view_instance
 
 
 class Main:
@@ -25,39 +21,6 @@ class Main:
         page.on_window_event = self.on_win_event
 
         # 存储当前实例化的页面，用于左侧点击切换
-        self.view_instance_map = {}
-
-        # 创建输入表单控件
-        self.conn_name_input = TextField(label="连接名", hint_text="例如：本地环境", height=40, content_padding=5)
-        self.kafka_input = TextField(label="Kafka地址", hint_text="例如：127.0.0.1:9092", height=40, content_padding=5)
-        self.sasl_plain_username = TextField(label="SASL PLAIN用户名(简单明文认证)(可选)", hint_text="", height=40, content_padding=5)
-        self.sasl_plain_password = TextField(label="SASL PLAIN密码(简单明文认证)(可选)", hint_text="", height=40, content_padding=5)
-        self.connect_input_column = ft.Column([
-            self.conn_name_input,
-            self.kafka_input,
-            self.sasl_plain_username,
-            self.sasl_plain_password,
-            ft.Row([
-                ft.TextButton("连接测试", on_click=self.test_connect, on_long_press=True,
-                              style=ft.ButtonStyle(color=ft.colors.RED)),
-                ft.TextButton("确认", on_click=self.add_connect),
-                ft.TextButton("取消", on_click=close_dlg),
-            ])
-        ],
-            width=360
-        )
-
-        # 添加kafka link
-        self.dlg_modal = ft.AlertDialog(
-            modal=True,
-            title=S_Text("添加kafka连接"),
-            actions=[
-                self.connect_input_column,
-            ],
-            actions_alignment=ft.MainAxisAlignment.CENTER,
-            shape=ft.RoundedRectangleBorder(radius=8)
-
-        )
 
         self.delete_modal = ft.AlertDialog(
             modal=True,
@@ -68,6 +31,23 @@ class Main:
             shape=ft.RoundedRectangleBorder(radius=8),
 
         )
+
+        # 添加连接
+        self.conn_name_input = TextField(label="连接名", hint_text="例如：本地环境", height=40, content_padding=5)
+        self.kafka_input = TextField(label="Kafka地址", hint_text="例如：127.0.0.1:9092", height=40, content_padding=5)
+        self.sasl_plain_username = TextField(label="SASL PLAIN用户名(简单明文认证)(可选)", hint_text="", height=40,
+                                             content_padding=5)
+        self.sasl_plain_password = TextField(label="SASL PLAIN密码(简单明文认证)(可选)", hint_text="", height=40,
+                                             content_padding=5)
+
+        # 编辑连接
+        self.edit_conn_name_input = TextField(label="连接名", hint_text="例如：本地环境", height=40, content_padding=5)
+        self.edit_kafka_input = TextField(label="Kafka地址", hint_text="例如：127.0.0.1:9092", height=40,
+                                          content_padding=5)
+        self.edit_sasl_plain_username = TextField(label="SASL PLAIN用户名(简单明文认证)(可选)", hint_text="", height=40,
+                                                  content_padding=5)
+        self.edit_sasl_plain_password = TextField(label="SASL PLAIN密码(简单明文认证)(可选)", hint_text="", height=40,
+                                                  content_padding=5)
 
         # 链接下拉
         self.connect_dd = ft.Dropdown(
@@ -83,55 +63,11 @@ class Main:
         )
 
         # 侧边导航栏 NavigationRail
-        self.Navigation = ft.NavigationRail(
-            selected_index=0,
-            label_type=ft.NavigationRailLabelType.ALL,
-            min_width=100,
-            min_extended_width=400,
-            group_alignment=-0.9,
-            # 定义在导航栏中排列的按钮项的外观，该值必须是两个或更多NavigationRailDestination实例的列表。
-            destinations=[
-                ft.NavigationRailDestination(
-                    icon_content=ft.Icon(ft.icons.HIVE_OUTLINED, tooltip="查看集群broker节点和配置"),
-                    selected_icon_content=ft.Icon(ft.icons.HIVE),
-                    label=i18n("集群"),
-                ),
-                ft.NavigationRailDestination(
-                    icon_content=ft.Icon(ft.icons.LIBRARY_BOOKS_OUTLINED, tooltip="增删改topic及partition"),
-                    selected_icon_content=ft.Icon(ft.icons.LIBRARY_BOOKS),
-                    label=i18n("主题"),
-                ),
-                ft.NavigationRailDestination(
-                    icon_content=ft.Icon(ft.icons.SWITCH_ACCESS_SHORTCUT_ADD_OUTLINED,
-                                         tooltip="模拟producer及consumer"),
-                    selected_icon_content=ft.Icon(ft.icons.SWITCH_ACCESS_SHORTCUT_ADD),
-                    label=i18n("模拟"),
-                ),
-
-                ft.NavigationRailDestination(
-                    icon_content=ft.Icon(ft.icons.STACKED_BAR_CHART_ROUNDED, tooltip="监控（开发中）"),
-                    selected_icon_content=ft.Icon(ft.icons.STACKED_BAR_CHART),
-                    label=i18n("监控"),
-                ),
-                ft.NavigationRailDestination(
-                    icon_content=ft.Icon(ft.icons.SETTINGS_OUTLINED, tooltip="配置（开发中）"),
-                    selected_icon_content=ft.Icon(ft.icons.SETTINGS_SUGGEST_OUTLINED),
-                    label_content=S_Text(i18n("设置")),
-                ),
-                ft.NavigationRailDestination(
-                    icon_content=ft.Icon(ft.icons.AUTO_GRAPH_OUTLINED, tooltip="建议我们"),
-                    selected_icon_content=ft.Icon(ft.icons.AUTO_GRAPH),
-                    label_content=S_Text(i18n("建议")),
-                ),
-            ],
-            on_change=self.refresh_view,
-        )
+        self.Navigation = Navigation
+        self.Navigation.on_change = self.refresh_view
 
         # 每个页面的主体
-        self.body = ft.Column(
-            controls=[],
-            expand=True
-        )
+        self.body = body
 
         # 底部提示
         self.page.snack_bar = ft.SnackBar(content=ft.Text(""))
@@ -144,9 +80,9 @@ class Main:
             bgcolor=ft.colors.SURFACE_VARIANT,
             actions=[
                 self.connect_dd,
-                ft.IconButton(ft.icons.ADD_BOX_OUTLINED, on_click=self.open_dlg_modal, tooltip="添加kafka地址"),
+                ft.IconButton(ft.icons.ADD_BOX_OUTLINED, on_click=self.add_dlg_modal, tooltip="添加kafka地址"),
                 # add link
-                ft.IconButton(ft.icons.DELETE_OUTLINE, on_click=self.open_delete_link_modal, tooltip="删除kafka地址"),
+                ft.IconButton(ft.icons.EDIT, on_click=self.edit_link_modal, tooltip="编辑、删除kafka地址"),
                 # add link
                 ft.IconButton(ft.icons.WB_SUNNY_OUTLINED, on_click=self.change_theme, tooltip="切换明暗"),  # theme
                 ft.IconButton(ft.icons.TIPS_AND_UPDATES_OUTLINED, tooltip="去github更新或者提出想法",
@@ -172,91 +108,198 @@ class Main:
             self.pr
         )
 
-    def test_connect(self, e):
-        if self.kafka_input.value == "":
+    def test_connect(self, e: ControlEvent):
+        """
+        连接测试
+        """
+        ori = e.control.text
+        e.control.text = "连接中……"
+        e.page.update()
+        conn_name_input, kafka_input, sasl_plain_username, sasl_plain_password = [i.value for i in e.control.data]
+        print("连接测试：", conn_name_input, kafka_input, sasl_plain_username, sasl_plain_password)
+
+        if None in [conn_name_input, kafka_input] or "" in [conn_name_input, kafka_input]:
             msg = "请先填写kafka连接"
             color = "#000000"
+        elif sasl_plain_username and not sasl_plain_password or sasl_plain_password and not sasl_plain_username:
+            msg = "SASL填写不正确（如未开启认证可以不填）"
+            color = "#000000"
         else:
-            res = kafka_service.new_client(bootstrap_servers=self.kafka_input.value.split(','))
+            res, err = kafka_service.new_client(kafka_input.split(','), sasl_plain_username, sasl_plain_password)
             if res:
                 msg = f"连接成功"
                 color = "#00a0b0"
             else:
-                msg = f"连接失败"
+                msg = f"连接失败: {err}"
                 color = "#000000"
 
         self.page.snack_bar.content = ft.Text(msg)
         self.page.snack_bar.bgcolor = color
         self.page.snack_bar.open = True
         self.page.update()
+        e.control.text = ori
+        self.page.update()
 
     def add_connect(self, e):
-        # 存储连接：{prefix}{连接名} <-> 链接地址
-        self.page.client_storage.set(f"{prefix}{self.conn_name_input.value}", self.kafka_input.value)
-        self.Navigation.selected_index = 0
-
-        self.refresh_dd_links()
-        self.dlg_modal.open = False
-        self.kafka_input.value = None
-        self.conn_name_input.value = None
-        self.page.update()
-
-    def open_dlg_modal(self, e):
-        self.page.dialog = self.dlg_modal
-        self.dlg_modal.open = True
-        self.page.update()
-
-    def delete_connect(self, e):
-        client_storage = self.page.client_storage
-
-        # 删掉这个连接以及相关的配置信息
-        connect_configs = client_storage.get_keys(self.connect_dd.value)
-        for config in connect_configs:
-            client_storage.remove(config)
-
-        self.Navigation.selected_index = 0
-
-        self.page.dialog.open = False
-        self.refresh_dd_links()
-        self.refresh_body()
-
-        self.page.update()
-
-    def open_delete_link_modal(self, e):
-        key = self.connect_dd.value
-        if key is None:
-            open_snack_bar(self.page, "请先选择一个链接")
+        """
+        存储连接信息，会覆盖，唯一key是连接名。{prefix: {"name1": [bootstraps, sasl name, sasl pwd]}}
+        """
+        new_connect, kafka_input, sasl_plain_username, sasl_plain_password = [i.value for i in e.control.data]
+        print("添加连接：", e.control.data)
+        if not new_connect or not kafka_input:
+            open_snack_bar(e.page, "请正确填写连接信息", False)
             return
 
-        self.delete_modal.actions = [
-            ft.Column(
-                controls=[
-                    ft.Row([S_Text(f"连接名：{key[len(prefix):]}")]),
-                    ft.Row([S_Text(f"地址：{self.page.client_storage.get(key)}")]),
+        connects = self.page.client_storage.get(prefix)
+        connects = {} if connects is None else connects
+        connects.pop(new_connect, None)
+        connects[new_connect] = [kafka_input, sasl_plain_username, sasl_plain_password]
+        print("保存：", connects)
+
+        self.page.client_storage.set(prefix, connects)
+
+        # 添加连接后，回到首页
+        self.Navigation.selected_index = 0
+        self.refresh_dd_links()
+        close_dlg(e)
+
+        # 清空输入框
+        for i in e.control.data:
+            i.value = None
+        open_snack_bar(e.page, "操作成功", True)
+
+    def add_dlg_modal(self, e):
+        """
+        添加kafka连接 弹框
+        """
+        # 创建输入表单控件
+
+        def cancel(event):
+            close_dlg(event)
+            self.conn_name_input.value = None
+            self.kafka_input.value = None
+            self.sasl_plain_username.value = None
+            self.sasl_plain_password.value = None
+
+        dlg_modal = ft.AlertDialog(
+            modal=True,
+            title=S_Text("添加kafka连接"),
+            actions=[
+                ft.Column([
+                    self.conn_name_input,
+                    self.kafka_input,
+                    self.sasl_plain_username,
+                    self.sasl_plain_password,
                     ft.Row([
-                        ft.TextButton(text="删除", on_click=self.delete_connect,
-                                      style=ft.ButtonStyle(color=ft.colors.RED)),
-                        ft.TextButton(text="取消", on_click=close_dlg),
+                        ft.TextButton("连接测试", on_click=self.test_connect, on_long_press=True,
+                                      style=ft.ButtonStyle(color=ft.colors.RED),
+                                      data=[self.conn_name_input, self.kafka_input,
+                                            self.sasl_plain_username, self.sasl_plain_password],
+                                      ),
+                        ft.TextButton("添加", on_click=self.add_connect,
+                                      data=[self.conn_name_input, self.kafka_input,
+                                            self.sasl_plain_username, self.sasl_plain_password]),
+                        ft.TextButton("取消", on_click=cancel),
                     ])
-                ]
-            )
-        ]
-        self.page.dialog = self.delete_modal
-        self.delete_modal.open = True
-        self.page.update()
+                ],
+                    width=360
+                )
+            ],
+            actions_alignment=ft.MainAxisAlignment.CENTER,
+            shape=ft.RoundedRectangleBorder(radius=8)
+
+        )
+        e.page.dialog = dlg_modal
+        dlg_modal.open = True
+        e.page.update()
+
+    def delete_connect(self, e):
+        key = e.control.data
+        connects = e.page.client_storage.get(prefix)
+        print("删除：", key, connects)
+        connects.pop(key, None)
+        e.page.client_storage.set(prefix, connects)
+        self.refresh_dd_links()
+        close_dlg(e)
+        open_snack_bar(e.page, "删除成功", True)
+
+    def edit_link_modal(self, e: ControlEvent):
+        """
+        编辑、删除连接
+        """
+        def cancel(event):
+            close_dlg(event)
+            self.edit_conn_name_input.value = None
+            self.edit_kafka_input.value = None
+            self.edit_sasl_plain_username.value = None
+            self.edit_sasl_plain_password.value = None
+
+        key = self.connect_dd.value
+        if not key:
+            open_snack_bar(e.page, "请先打开kafka连接", False)
+            return
+        connects = self.page.client_storage.get(prefix).get(key, [None, None, None])
+        self.edit_conn_name_input.value = key
+        self.edit_kafka_input.value, self.edit_sasl_plain_username.value, self.edit_sasl_plain_password.value = connects
+
+        e.page.dialog = ft.AlertDialog(
+            modal=True,
+            open=True,
+            title=S_Text("编辑连接"),
+            actions=[
+                ft.Column([
+                    self.edit_conn_name_input,
+                    self.edit_kafka_input,
+                    self.edit_sasl_plain_username,
+                    self.edit_sasl_plain_password,
+                    ft.Row([
+                        ft.TextButton("连接测试", on_click=self.test_connect, on_long_press=True,
+                                      style=ft.ButtonStyle(color=ft.colors.RED),
+                                      data=[self.edit_conn_name_input,
+                                            self.edit_kafka_input,
+                                            self.edit_sasl_plain_username,
+                                            self.edit_sasl_plain_password, ]
+                                      ),
+                        ft.TextButton("删除", on_click=self.delete_connect,
+                                      style=ft.ButtonStyle(color=ft.colors.RED),
+                                      data=key),
+
+                        ft.TextButton("保存", on_click=self.add_connect,
+                                      data=[self.edit_conn_name_input,
+                                            self.edit_kafka_input,
+                                            self.edit_sasl_plain_username,
+                                            self.edit_sasl_plain_password, ]
+                                      ),
+                        ft.TextButton("取消", on_click=cancel),
+                    ])
+                ],
+                    width=360
+                )
+            ],
+            actions_alignment=ft.MainAxisAlignment.CENTER,
+            shape=ft.RoundedRectangleBorder(radius=8)
+
+        )
+
+        self.refresh_dd_links()
+        e.page.update()
 
     def refresh_dd_links(self):
-        conns = self.page.client_storage.get_keys(prefix)
-        self.connect_dd.options = []
-
+        """
+        更新连接下拉菜单
+        conns = {"name1": [bootstraps, sasl name, sasl pwd]}
+        """
+        conns: dict = self.page.client_storage.get(prefix)
+        options = []
+        print("当前全部连接存储：", conns)
         if not conns:
             self.connect_dd.label = i18n("请在右侧添加kafka连接")
         else:
-            self.connect_dd.label = i18n("请下拉选择")
-            for i in conns:
-                text = f'{self.page.client_storage.get(i)}'
-                op = ft.dropdown.Option(key=i, text=text)
-                self.connect_dd.options.append(op)
+            self.connect_dd.label = i18n("请选择连接")
+            for name, info_lst in conns.items():
+                op = ft.dropdown.Option(key=name, text=info_lst[0])
+                options.append(op)
+        self.connect_dd.options = options
 
     def dropdown_changed(self, e):
         """
@@ -268,17 +311,21 @@ class Main:
         self.page.update()
 
         key = self.connect_dd.value
-        self.connect_dd.label = key[len(prefix):]
-        bootstrap_servers = self.page.client_storage.get(key)
+        self.connect_dd.label = key
+
+        conns: dict = self.page.client_storage.get(prefix)
+
+        info_lst = conns.get(key)
+        bootstrap_servers, SASL_NAME, SASL_PWD = info_lst
         print(bootstrap_servers)
-        self.page.appbar.title = S_Text(f"{TITLE} | 当前连接: {key[len(prefix):]}")
+        self.page.appbar.title = S_Text(f"{TITLE} | 当前连接: {key}")
         self.page.update()
 
         try:
-            kafka_service.set_bootstrap_servers(bootstrap_servers)
+            kafka_service.set_connect(key, bootstrap_servers, SASL_NAME, SASL_PWD)
             self.Navigation.selected_index = 0
             # 切换连接时，清空页面缓存
-            self.view_instance_map.clear()
+            view_instance_map.clear()
 
             self.refresh_body()
         except Exception as e:
@@ -291,7 +338,7 @@ class Main:
         点左侧导航，获取右侧内容（controls）
         """
         selected_index = self.Navigation.selected_index
-        view = self.view_instance_map.get(selected_index)
+        view = view_instance_map.get(selected_index)
         self.refresh_body(view=view)
         e.page.update()
 
@@ -335,7 +382,7 @@ class Main:
             return
 
         # 缓存页面。
-        self.view_instance_map[selected_index] = view
+        view_instance_map[selected_index] = view
         # 去掉进度条
         self.page.update()
         gc.collect()
@@ -374,7 +421,6 @@ class Main:
 
 
 def init(page: ft.Page):
-
     page.title = TITLE
     theme = page.client_storage.get("theme")
     if theme is not None:
