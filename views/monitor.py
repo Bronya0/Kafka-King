@@ -21,8 +21,7 @@ class Monitor(object):
         self.key = "__monitor_topic_lag__"
         self.topic_input_key = "__monitor_topic_input_"
         self.topic_groups_key = "__monitor_topic_groups_"
-        self.topic_color_map = {}
-
+        self.colors = [ft.colors.RED, ft.colors.ORANGE, ft.colors.YELLOW_900, ft.colors.BLUE, ft.colors.PURPLE, ft.colors.GREEN, ft.colors.PINK]
         self.topic_input = ft.TextField(
             label="输入多个，英文逗号分隔",
             label_style=TextStyle(size=14),
@@ -47,7 +46,7 @@ class Monitor(object):
             on_click=self.click_save_config,
         )
         self.refresh_button = S_Button(
-            text="刷新",
+            text="更新",
             tooltip="刷新",
             height=38,
             on_click=self.refresh,
@@ -87,30 +86,6 @@ class Monitor(object):
             height=250,
             width=500,
         )
-        self.view = Column(
-                [
-                    Row(
-                        [
-                            ft.Text("输入要监测的topic: "),
-                            self.topic_input,
-                            self.topic_groups_dd,
-                            self.save_button,
-                            self.refresh_button,
-                            # self.alert_button
-
-                        ]
-                    ),
-                    Row([
-                        self.lag_chart,
-                    ]),
-                    # ft.Text(
-                    #     "横坐标：抓取时刻，纵坐标：消息积压指标；\n注意：每5分钟抓取一次，可以点刷新按钮手动抓取；离开当前tab页面不影响后台抓取；"
-                    #     "只保留20次数据；修改配置将清空历史数据"),
-
-                ],
-                scroll=ft.ScrollMode.ALWAYS,
-                height=1200
-            )
 
         # 生产
         self.produce_chart = ft.LineChart(
@@ -140,30 +115,7 @@ class Monitor(object):
             height=250,
             width=500,
         )
-        self.view = Column(
-            [
-                Row(
-                    [
-                        ft.Text("输入要监测的topic: "),
-                        self.topic_input,
-                        self.topic_groups_dd,
-                        self.save_button,
-                        self.refresh_button,
-                        # self.alert_button
 
-                    ]
-                ),
-                Row([
-                    self.lag_chart,
-                ]),
-                # ft.Text(
-                #     "横坐标：抓取时刻，纵坐标：消息积压指标；\n注意：每5分钟抓取一次，可以点刷新按钮手动抓取；离开当前tab页面不影响后台抓取；"
-                #     "只保留20次数据；修改配置将清空历史数据"),
-
-            ],
-            scroll=ft.ScrollMode.ALWAYS,
-            height=1200
-        )
         # 消费
         self.consumer_chart = ft.LineChart(
             data_series=[],
@@ -206,12 +158,11 @@ class Monitor(object):
                     ]
                 ),
                 Row([
-                    self.lag_chart,
                     self.produce_chart,
                     self.consumer_chart,
                 ]),
                 Row([
-                    self.consumer_chart,
+                    self.lag_chart,
                 ]),
                 # ft.Text(
                 #     "横坐标：抓取时刻，纵坐标：消息积压指标；\n注意：每5分钟抓取一次，可以点刷新按钮手动抓取；离开当前tab页面不影响后台抓取；"
@@ -260,6 +211,9 @@ class Monitor(object):
         self.page.update()
 
     def click_save_config(self, e):
+        """
+        保存配置，同时必须清除历史数据，不然不好兼容
+        """
         page: ft.Page = e.page
         topics = self.topic_input.value
         topic_groups_dd = self.topic_groups_dd.value
@@ -272,13 +226,13 @@ class Monitor(object):
         if topic_groups_dd is not None:
             page.client_storage.set(self.topic_groups_key + current_kafka_connect, topic_groups_dd)
 
+        page.client_storage.set(self.key + current_kafka_connect, {})
         open_snack_bar(page, "保存成功", success=True)
 
     def refresh(self, e):
         print("开始刷新offset……")
         self.refresh_button.disabled = True
-        tooltip = self.refresh_button.tooltip
-        self.refresh_button.tooltip = "刷新中……"
+        self.refresh_button.text = "更新中……"
         self.page.update()
         try:
             fetch_lag(page=self.page, only_one=True)
@@ -286,7 +240,7 @@ class Monitor(object):
         except:
             traceback.print_exc()
         self.refresh_button.disabled = False
-        self.refresh_button.tooltip = tooltip
+        self.refresh_button.text = "更新"
         self.page.update()
 
     def update(self, page: ft.Page, First=False):
@@ -296,10 +250,12 @@ class Monitor(object):
         """
         print("读取积压offset……")
 
-        self.lag_chart.data_series.clear()
-        self.lag_chart.bottom_axis.labels.clear()
-        colors = [ft.colors.RED, ft.colors.ORANGE, ft.colors.YELLOW_900, ft.colors.BLUE, ft.colors.PURPLE, ft.colors.GREEN, ft.colors.PINK]
-        x = []
+        # 清理页面
+        for chart in [self.produce_chart, self.consumer_chart, self.lag_chart]:
+            chart.data_series.clear()
+            chart.bottom_axis.labels.clear()
+
+        lag_x, produce_x = [], []
         # lags: {topic: [[time1, lag], ]}
         current_kafka_connect = kafka_service.connect_name
         connect_data_key = self.key + current_kafka_connect
@@ -309,14 +265,19 @@ class Monitor(object):
         if not lags:
             return
         # 为每个topic绘制一条曲线
+        # topic: [topic_end_offsets, topic_last_committed]
         for topic, lag_obj in lags.items():
 
             data_points = []
-            _max_lag = []
+            produce_data_points = []
+            consumer_data_points = []
+            _max_lag, _max_produce_and_consume_offset = [], []
             for index, time_lag_list in enumerate(lag_obj):
                 time_lag_list: list
                 timestamp = time_lag_list[0]
-                topic_lag = time_lag_list[1]
+                topic_end_offsets = time_lag_list[1]
+                topic_last_committed = time_lag_list[2]
+                topic_lag = topic_end_offsets - topic_last_committed
                 # 一个曲线上的一个点的坐标
                 data_points.append(ft.LineChartDataPoint(x=index, y=topic_lag,
                                                          tooltip=f"{topic}：{topic_lag}",
@@ -324,45 +285,86 @@ class Monitor(object):
                                                          tooltip_style=ft.TextStyle(size=12),
                                                          ))
 
-                if len(self.lag_chart.bottom_axis.labels) < len(lag_obj):
-                    # 横坐标对应label
-                    self.lag_chart.bottom_axis.labels.append(
-                        ft.ChartAxisLabel(
-                            value=index,
-                            label=ft.Text(timestamp, size=12, ),
-                        )
-                    )
+                # 生产速度曲线，减去差值得到速率
+                produce_speed = 0
+                consume_speed = 0
+                if index > 0:
+                    produce_speed = topic_end_offsets - lag_obj[index - 1][1]
+                    consume_speed = topic_last_committed - lag_obj[index - 1][2]
+
+                produce_data_points.append(ft.LineChartDataPoint(x=index, y=produce_speed,
+                                                                 tooltip=f"{topic}：{produce_speed}",
+                                                                 tooltip_align=ft.TextAlign.LEFT,
+                                                                 tooltip_style=ft.TextStyle(size=12),
+                                                                 ))
+
+                # 消费速度曲线
+                consumer_data_points.append(ft.LineChartDataPoint(x=index, y=consume_speed,
+                                                                  tooltip=f"{topic}：{consume_speed}",
+                                                                  tooltip_align=ft.TextAlign.LEFT,
+                                                                  tooltip_style=ft.TextStyle(size=12),
+                                                                  ))
+
+                # 为每个点添加横坐标
+                self.lag_chart.bottom_axis.labels.append(
+                    ft.ChartAxisLabel(value=index, label=ft.Text(timestamp, size=12, )))
+                self.produce_chart.bottom_axis.labels.append(
+                    ft.ChartAxisLabel(value=index, label=ft.Text(timestamp, size=12, )))
+                self.consumer_chart.bottom_axis.labels.append(
+                    ft.ChartAxisLabel(value=index, label=ft.Text(timestamp, size=12, )))
+
                 _max_lag.append(topic_lag)
+                _max_produce_and_consume_offset.extend([produce_speed, consume_speed])
 
             # 取每个topic最大的积压，作为纵坐标label
-            x.append(max(_max_lag))
-            if topic in self.topic_color_map:
-                line_color = self.topic_color_map[topic]
-            else:
-                line_color = random.choice(colors)
-                self.topic_color_map[topic] = line_color
+            lag_x.append(max(_max_lag))
+            produce_x.append(max(_max_produce_and_consume_offset))
+            print("produce_x", produce_x)
 
             # 把一条曲线加进曲线列表里
             self.lag_chart.data_series.append(
                 ft.LineChartData(
                     data_points=data_points,
                     stroke_width=2,  # 线条宽度
-                    color=line_color,
+                    color=random.choice(self.colors),
                     curved=False,  # 直线
                     stroke_cap_round=True,  # 绘制圆角线帽
-
-                )
-            )
+                    prevent_curve_over_shooting=True,  # 避免曲线超出边界
+                ))
+            self.produce_chart.data_series.append(
+                ft.LineChartData(
+                    data_points=produce_data_points,
+                    stroke_width=2,  # 线条宽度
+                    color=random.choice(self.colors),
+                    curved=False,  # 直线
+                    stroke_cap_round=True,  # 绘制圆角线帽
+                    prevent_curve_over_shooting=True,  # 避免曲线超出边界
+                ))
+            self.consumer_chart.data_series.append(
+                ft.LineChartData(
+                    data_points=consumer_data_points,
+                    stroke_width=2,  # 线条宽度
+                    color=random.choice(self.colors),
+                    curved=False,  # 直线
+                    stroke_cap_round=True,  # 绘制圆角线帽
+                    prevent_curve_over_shooting=True,  # 避免曲线超出边界
+                ))
 
         # 取每个topic最大的积压，作为纵坐标label
-        print(f"x坐标：{x}")
-        if not x:
+        print(f"x坐标：{lag_x} {produce_x}")
+        if not lag_x:
             return
-        x = list(set(x))
-        x.sort()
+        lag_x = list(set(lag_x))
+        produce_x = list(set(produce_x))
+        lag_x.sort()
+        produce_x.sort()
 
-        self.lag_chart.max_y = x[-1] * 1.2
-        self.lag_chart.horizontal_grid_lines.interval = x[-1] * 1.2 / 15
+        self.lag_chart.max_y = max(lag_x[-1] * 1.2, 100)
+        self.produce_chart.max_y = max(produce_x[-1] * 1.2, 100)
+        self.consumer_chart.max_y = max(produce_x[-1] * 1.2, 100)
+
+        self.lag_chart.horizontal_grid_lines.interval = max(lag_x[-1] * 1.2 / 15, 10)
+        self.produce_chart.horizontal_grid_lines.interval = max(produce_x[-1] * 1.2 / 15, 10)
+        self.consumer_chart.horizontal_grid_lines.interval = max(produce_x[-1] * 1.2 / 15, 10)
 
         page.update()
-

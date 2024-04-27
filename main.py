@@ -431,6 +431,9 @@ def init(page: ft.Page):
 
     page.theme = ft.Theme(font_family="Microsoft YaHei")
 
+    page.window_width = PAGE_WIDTH
+    page.window_height = PAGE_HEIGHT
+    page.update()
     Main(page)
     # 线程1：检查新版本
     t1 = threading.Thread(target=version_check, args=(page,))

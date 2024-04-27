@@ -116,6 +116,8 @@ class KafkaService:
             print(f"{topic} 对应的分区编号： {partitions}")
             if partitions is None:
                 continue
+            topic_end_offsets = 0
+            topic_last_committed = 0
             for partition in partitions:
                 tp = TopicPartition(topic=topic, partition=partition)
                 # 最后一次提交的偏移量
@@ -124,9 +126,13 @@ class KafkaService:
                     last_committed = 0
                 # 下一个写进日志的消息的偏移量
                 end_offsets = consumer.end_offsets([tp])[tp]
+
+                topic_end_offsets += end_offsets
+                topic_last_committed += last_committed
+
                 _lag += end_offsets - last_committed
                 topic_offset[topic][partition] = [last_committed, end_offsets, end_offsets - last_committed]
-            topic_lag[topic] = _lag
+            topic_lag[topic] = [topic_end_offsets, topic_last_committed]
         return topic_offset, topic_lag
 
     def create_partitions(self, topic, old_num, new_num):

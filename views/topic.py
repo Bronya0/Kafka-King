@@ -108,7 +108,7 @@ class Topic(object):
 
         # partition list tap
         self.partition_tab = ft.Tab(
-            icon=ft.icons.WAVES_OUTLINED, text="分区", content=ft.Container()
+            icon=ft.icons.WAVES_OUTLINED, text="分区", content=ft.Container(content=ft.Text("请从主题列表的分区列点击进入", size=20))
         )
 
         # config tap
@@ -145,9 +145,11 @@ class Topic(object):
             columns=[
                 ft.DataColumn(S_Text("编号")),
                 ft.DataColumn(S_Text("主题")),
-                ft.DataColumn(S_Text("副本因子")),
-                ft.DataColumn(S_Text("分区数及详情")),
-                ft.DataColumn(S_Text("积压量(先选择组)")),
+                ft.DataColumn(S_Text("副本数")),
+                ft.DataColumn(S_Text("分区")),
+                ft.DataColumn(S_Text("消息总量(组)")),
+                ft.DataColumn(S_Text("提交总量(组)")),
+                ft.DataColumn(S_Text("积压量(组)")),
                 ft.DataColumn(S_Text("操作"))
             ],
             rows=rows,
@@ -162,6 +164,13 @@ class Topic(object):
                 continue
 
             lag = self.topic_lag.get(topic_name_) if self.topic_lag else self._lag_label
+            end_offset = lag[0] if isinstance(lag, list) and lag else self._lag_label
+            commit_offset = lag[1] if isinstance(lag, list) and lag else self._lag_label
+            _lag = self._lag_label
+            print("topic_lag: ", self.topic_lag)
+            print("end_offset: ", end_offset, "commit_offset: ", commit_offset)
+            if isinstance(lag, list) and end_offset is not None and commit_offset is not None:
+                _lag = end_offset - commit_offset
             refactor = len(topic['partitions'][0]['replicas']) if topic['partitions'] else "无分区"
             disabled = False if not topic.get('is_internal') else True
 
@@ -176,7 +185,9 @@ class Topic(object):
                             on_click=self.click_topic_button,
                             data=topic_name_
                         )),
-                        ft.DataCell(S_Text(lag, color='#315EFB')),
+                        ft.DataCell(S_Text(end_offset, size=14)),
+                        ft.DataCell(S_Text(commit_offset, size=14)),
+                        ft.DataCell(S_Text(_lag, color='red' if isinstance(lag, list) and int(_lag) > 10000 else None, size=14)),
                         ft.DataCell(
                             ft.Row([
                                 ft.TextButton(
@@ -207,7 +218,9 @@ class Topic(object):
                                     disabled=disabled
                                 ),
 
-                            ])
+                            ],
+                                spacing=0
+                            )
 
                         ),
 
@@ -489,7 +502,7 @@ class Topic(object):
         """
         group_id = self.topic_groups_dd.value
         if group_id is not None:
-            self._lag_label = '读取中...'
+            self._lag_label = 'loading'
             self.topic_offset, self.topic_lag = None, None
             self.init()
             e.page.update()

@@ -81,6 +81,8 @@ def fetch_lag(page: ft.Page, only_one=False):
         group_id = page.client_storage.get(topic_groups_key + current_kafka_connect)
         print(f"存储的topics: {topics}, group: {group_id}")
         if topics is None or group_id is None:
+            if only_one:
+                return
             time.sleep(60 * 1)
             continue
         print("开始查询积压……")
@@ -94,12 +96,16 @@ def fetch_lag(page: ft.Page, only_one=False):
 
         print(f"查询完毕，topic_lag： {topic_lag}")
         # 只保留指定数量的数据
+        # topic: [topic_end_offsets, topic_last_committed]
         for i, v in topic_lag.items():
             lags.setdefault(i, [])
             if len(lags[i]) >= 20:
                 lags[i].pop(0)
-            lags[i].append([datetime.datetime.now().strftime("%H:%M"), v])
+            lags[i].append(
+                [datetime.datetime.now().strftime("%H:%M"), v[0], v[1]]
+            )
         # 更新
+        print("lags: ", lags)
         page.client_storage.set(connect_data_key, lags)
 
         if only_one:
