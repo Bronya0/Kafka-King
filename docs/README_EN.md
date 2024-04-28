@@ -15,22 +15,23 @@
 
 # Feature list
 - [x] View cluster node list (completed)
-- [x] Create topics (support batches), delete topics, and support statistics of the message backlog of each topic based on consumer groups (completed)
-- [x] Support viewing detailed information of topic partitions and adding additional partitions to topics (completed)
-- [x] Support viewing the message offset of each partition (completed)
-- [x] Support simulated producers, send messages in batches, whether to enable gzip compression, acks, batch_size, liner_ms, you can use it for performance testing (completed)
+- [x] Support PLAINTEXT, SASL PLAINTEXT username and password authentication (completed)
+- [x] Create (support batch), delete topics, specify the number of copies and partitions (completed)
+- [x] Support statistics of the total number of messages, total submissions, and backlog of each topic based on consumer groups (completed)
+- [x] Support viewing detailed information of topic partitions (offset), and support adding additional partitions (completed)
+- [x] Support simulated producers, send messages in batches, whether to enable gzip compression, acks, batch_size, liner_ms, which can be used for performance tuning (completed)
 - [x] Supports simulated consumers, consuming specified sizes according to built-in groups (completed)
-- [x] Light and dark theme switching (completed)
-- [ ] Parameter description comparison table (under evaluation)
-- [ ] Monitoring and alarming (under evaluation)
-- [ ] Multi-language support (under development)
-- [ ] Configuration (under evaluation)
+- [x] Support chart monitoring of message production performance, consumption performance, and backlog status of multiple topics (completed)
+- [x] Topic (complete)
 - ……
 
 # download
 [Download address](https://github.com/Bronya0/Kafka-King/releases), click Assets and choose your platform
 
 # Function screenshot
+
+Add kafka connection and support adding SASL PLAINTEXT username and password authentication
+![](docs/snap/p0.png)
 
 ## Manipulate topic
 Topic list, supports deleting topics
