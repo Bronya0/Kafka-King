@@ -7,8 +7,8 @@ from flet_core import ControlEvent
 from kafka import KafkaAdminClient
 from kafka.admin import NewTopic
 
-from service.common import S_Text, open_snack_bar, S_Button, dd_common_configs, close_dlg, SIMULATE, Navigation, \
-    view_instance_map, Navigation, body
+from service.common import S_Text, open_snack_bar, S_Button, dd_common_configs, close_dlg, SIMULATE, view_instance_map, \
+    Navigation, body
 from service.kafka_service import kafka_service
 from views.simulate import Simulate
 
@@ -103,12 +103,13 @@ class Topic(object):
 
         # topic list tap
         self.topic_tab = ft.Tab(
-            icon=ft.icons.LIST_ALT_OUTLINED, text="列表", content=ft.Container()
+            icon=ft.icons.LIST_ALT_OUTLINED, text="列表", content=ft.Row()
         )
 
         # partition list tap
         self.partition_tab = ft.Tab(
-            icon=ft.icons.WAVES_OUTLINED, text="分区", content=ft.Container(content=ft.Text("请从主题列表的分区列点击进入", size=20))
+            icon=ft.icons.WAVES_OUTLINED, text="分区",
+            content=ft.Container(content=ft.Text("请从主题列表的分区列点击进入", size=20))
         )
 
         # config tap
@@ -153,6 +154,7 @@ class Topic(object):
                 ft.DataColumn(S_Text("操作"))
             ],
             rows=rows,
+            column_spacing=20,
         )
         _topics = []
         for i, topic in enumerate(self.describe_topics):
@@ -187,7 +189,8 @@ class Topic(object):
                         )),
                         ft.DataCell(S_Text(end_offset, size=14)),
                         ft.DataCell(S_Text(commit_offset, size=14)),
-                        ft.DataCell(S_Text(_lag, color='red' if isinstance(lag, list) and int(_lag) > 10000 else None, size=14)),
+                        ft.DataCell(S_Text(_lag, color='red' if isinstance(lag, list) and int(_lag) > 10000 else None,
+                                           size=14)),
                         ft.DataCell(
                             ft.Row([
                                 ft.TextButton(
@@ -238,21 +241,27 @@ class Topic(object):
             self.topic_groups_dd.label = "无消费组"
 
         # init topic tab
-        self.topic_tab.content = ft.Container(
-            content=ft.Column([
-                ft.Row([
-                    self.topic_groups_dd,
-                    self.search_text,
-                    S_Button(text="创建主题", on_click=self.open_create_topic_dlg_modal,
-                             tooltip="批量输入要创建的主题及参数，一行一个", ),
-                    self.refresh_button
-                ]),
-                self.topic_table,
+        self.topic_tab.content = ft.Row(
+            wrap=False,  # 禁止换行，以确保内容在一行内展示并出现滚动条
+            scroll=ft.ScrollMode.ALWAYS,  # 设置滚动条始终显示
+            expand=True,  # 让Row填充页面宽度
+            controls=[
+                ft.Container(
+                    ft.Column(
+                        [
+                            ft.Row(
+                                [
+                                    self.topic_groups_dd,
+                                    self.search_text,
+                                    S_Button(text="创建主题", on_click=self.open_create_topic_dlg_modal,
+                                             tooltip="批量输入要创建的主题及参数，一行一个", ),
+                                    self.refresh_button
+                                ]),
+                            self.topic_table,
+                        ],
+                        scroll=ft.ScrollMode.ALWAYS,
+                    ), alignment=ft.alignment.top_left, padding=10, adaptive=True)
             ],
-                scroll=ft.ScrollMode.ALWAYS,
-            ),
-            padding=10,
-
         )
 
         # init partition tab
@@ -273,6 +282,7 @@ class Topic(object):
 
             ],
             rows=rows,
+
         )
         partitions = self.describe_topics_map[topic_name_]['partitions']
         partitions = sorted(partitions, key=lambda d: d['partition'])
@@ -301,20 +311,27 @@ class Topic(object):
             )
 
         # 初始化 partition_tab 页面
-        self.partition_tab.content = ft.Container(
-            ft.Column(
-                [
-                    ft.Row([
-                        self.partition_topic_dd,
-                        S_Button(text="为主题添加额外的分区", on_click=self.open_create_partition_dlg_modal,
-                                 # Create Partitions
-                                 tooltip="为当前topic增加额外的分区数", ),
-                    ]),
-                    self.partition_table
-                ], scroll=ft.ScrollMode.ALWAYS
-            ),
-            padding=10,
-        )
+        self.partition_tab.content = ft.Row(
+            wrap=False,  # 禁止换行，以确保内容在一行内展示并出现滚动条
+            scroll=ft.ScrollMode.ALWAYS,  # 设置滚动条始终显示
+            expand=True,  # 让Row填充页面宽度
+            controls=[
+                ft.Container(
+                    ft.Column(
+                        [
+                            ft.Row([
+                                self.partition_topic_dd,
+                                S_Button(text="为主题添加额外的分区", on_click=self.open_create_partition_dlg_modal,
+                                         # Create Partitions
+                                         tooltip="为当前topic增加额外的分区数", ),
+                            ]),
+                            self.partition_table
+                        ],
+                        scroll=ft.ScrollMode.ALWAYS
+                    ),
+                    alignment=ft.alignment.top_left, padding=10, adaptive=True,
+                    width=1120
+                )])
 
     def click_topic_button(self, e: ControlEvent):
         """

@@ -71,12 +71,14 @@ class Simulate(object):
             min_lines=8,
             max_lines=8,
             text_size=14,
-            hint_text="支持字符串，可以输入String、Json等消息。"
+            width=1000,
+            hint_text="支持字符串，可以输入String、Json等消息。",
+            adaptive=True
         )
 
         # 消息倍数
         self.producer_slider = ft.Slider(min=1, max=10000, divisions=50, label="×{value}", value=1,
-                                         on_change=self.update_text)
+                                         on_change=self.update_text, adaptive=True, width=1000)
 
         # send button
         self.producer_send_button = S_Button(
@@ -160,60 +162,72 @@ class Simulate(object):
         self.producer_slider_value = ft.Text(f"消息发送倍数：{self.producer_slider.value} (默认*1)")
 
         # init producer tab
-        self.producer_tab.content = ft.Container(
-            content=ft.Column([
-                ft.Row([
-                    self.producer_topic_dd,
-                    self.producer_msg_key_input,
-                    self.producer_acks_input,
-                    self.producer_batch_size_input,
-                    self.producer_linger_ms_input
-                ]),
-                ft.Markdown(value="""# 输入单条消息内容"""),
-                # msg input
-                self.producer_send_input,
-                # enable gzip
-                self.producer_compress_switch,
-                # msg multiplier
-                self.producer_slider_value,
-                self.producer_slider,
-                # msg send button
-                self.producer_send_button
-            ],
-                scroll=ft.ScrollMode.ALWAYS,
-            ),
-            alignment=ft.alignment.top_left,
-            padding=10,
-        )
+        self.producer_tab.content = ft.Row(
+            wrap=False,  # 禁止换行，以确保内容在一行内展示并出现滚动条
+            scroll=ft.ScrollMode.ALWAYS,  # 设置滚动条始终显示
+            expand=True,  # 让Row填充页面宽度
+            controls=[
+                ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.Row([
+                                self.producer_topic_dd,
+                                self.producer_msg_key_input,
+                                self.producer_acks_input,
+                                self.producer_batch_size_input,
+                                self.producer_linger_ms_input
+                            ]),
+                            ft.Markdown(value="""# 输入单条消息内容"""),
+                            # msg input
+                            self.producer_send_input,
+                            # enable gzip
+                            self.producer_compress_switch,
+                            # msg multiplier
+                            self.producer_slider_value,
+                            self.producer_slider,
+                            # msg send button
+                            self.producer_send_button
+                        ],
+                        scroll=ft.ScrollMode.ALWAYS,
+                        adaptive=True
+                    ),
+                    alignment=ft.alignment.top_left,
+                    padding=10,
+                    adaptive=True
+                )])
 
         # init consumer tab
-        self.consumer_tab.content = ft.Container(
-            content=ft.Column([
-                ft.Row([
-                    self.consumer_topic_dd,
-                    self.consumer_fetch_size_input,
-                    # self.consumer_groups_dd,
-                    # ft.Text(" OR "),
-                    # self.consumer_groups_input,
-                    ft.Text(f"内置消费者组（避免干扰正常业务）:  {KAFKA_KING_GROUP}"),
-                    ft.Text(f"拉取超时时间:  {self.kafka_fetch_timeout}")
-                ]),
-                ft.Row([
-                    self.consumer_fetch_msg_button,
-                    S_Button(
-                        text="清空界面",
-                        on_click=self.clean_msg,
-                    ),
-                ]),
+        self.consumer_tab.content = ft.Row(
+            wrap=False,  # 禁止换行，以确保内容在一行内展示并出现滚动条
+            scroll=ft.ScrollMode.ALWAYS,  # 设置滚动条始终显示
+            expand=True,  # 让Row填充页面宽度
+            controls=[
+                ft.Container(
+                content=ft.Column([
+                    ft.Row([
+                        self.consumer_topic_dd,
+                        self.consumer_fetch_size_input,
+                        # self.consumer_groups_dd,
+                        # ft.Text(" OR "),
+                        # self.consumer_groups_input,
+                        ft.Text(f"内置消费者组（避免干扰正常业务）:  {KAFKA_KING_GROUP}"),
+                        ft.Text(f"拉取超时时间:  {self.kafka_fetch_timeout}")
+                    ]),
+                    ft.Row([
+                        self.consumer_fetch_msg_button,
+                        S_Button(
+                            text="清空界面",
+                            on_click=self.clean_msg,
+                        ),
+                    ]),
 
-                self.consumer_fetch_msg_body,
-            ],
+                    self.consumer_fetch_msg_body,
+                ],
 
-                scroll=ft.ScrollMode.ALWAYS,
-            ),
-            # alignment=ft.alignment.top_left,
-            padding=10,
-        )
+                    scroll=ft.ScrollMode.ALWAYS,
+                ),
+                    alignment=ft.alignment.top_left, padding=10, adaptive=True
+            )])
 
     def clean_msg(self, e):
         self.consumer_fetch_msg_body.value = None
@@ -318,5 +332,3 @@ class Simulate(object):
     def update_text(self, e):
         self.producer_slider_value.value = f"消息发送倍数：{int(e.control.value)} (默认*1)"
         e.page.update()
-
-

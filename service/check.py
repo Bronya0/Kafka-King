@@ -31,25 +31,32 @@ def version_check(page: ft.Page):
             modal=True,
             title=ft.Text("🎉🎉发现新版本: {}".format(latest_version)),
             actions=[
-                ft.Column(
-                    [
+                ft.Row(
+                    controls=[
                         ft.Column(
                             [
-                                ft.Text(f"当前版本：{version}"),
-                                ft.Text(body),
+                                ft.Column(
+                                    [
+                                        ft.Text(f"当前版本：{version}"),
+                                        ft.Text(body),
+                                    ],
+                                    scroll=ft.ScrollMode.ALWAYS,
+                                    height=160,
+                                    width=600
+                                ),
+                                ft.Row(
+                                    [
+                                        ft.TextButton(text="前往下载", url=GITHUB_URL),
+                                        ft.TextButton(text="下次再说", on_click=close_dlg,
+                                                      style=ft.ButtonStyle(color=ft.colors.GREY)),
+                                    ]
+                                )
                             ],
                             scroll=ft.ScrollMode.ALWAYS,
-                            height=160,
-                            width=600
-                        ),
-                        ft.Row(
-                            [
-                                ft.TextButton(text="前往下载", url=GITHUB_URL),
-                                ft.TextButton(text="下次再说", on_click=close_dlg, style=ft.ButtonStyle(color=ft.colors.GREY)),
-                            ]
-                        )
-                    ],
-                ),
+                        )],
+                    scroll=ft.ScrollMode.ALWAYS,
+
+                )
             ],
             actions_alignment=ft.MainAxisAlignment.CENTER,
             shape=ft.RoundedRectangleBorder(radius=8),

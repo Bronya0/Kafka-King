@@ -21,7 +21,8 @@ class Monitor(object):
         self.key = "__monitor_topic_lag__"
         self.topic_input_key = "__monitor_topic_input_"
         self.topic_groups_key = "__monitor_topic_groups_"
-        self.colors = [ft.colors.RED, ft.colors.ORANGE, ft.colors.YELLOW_900, ft.colors.BLUE, ft.colors.PURPLE, ft.colors.GREEN, ft.colors.PINK]
+        self.colors = [ft.colors.RED, ft.colors.ORANGE, ft.colors.YELLOW_900, ft.colors.BLUE, ft.colors.PURPLE,
+                       ft.colors.GREEN, ft.colors.PINK]
         self.topic_input = ft.TextField(
             label="输入多个，英文逗号分隔",
             label_style=TextStyle(size=14),
@@ -160,7 +161,7 @@ class Monitor(object):
                 Row([
                     self.produce_chart,
                     self.consumer_chart,
-                ]),
+                ], spacing=0),
                 Row([
                     self.lag_chart,
                 ]),
@@ -170,10 +171,20 @@ class Monitor(object):
 
             ],
             scroll=ft.ScrollMode.ALWAYS,
-            height=1200
+            width=1100
         )
         self.lag_tab = ft.Tab(
-            text='消息积压指标', content=ft.Container(content=self.view, padding=10), icon=ft.icons.LINE_STYLE
+            text='消息积压指标', content=ft.Row(
+                wrap=False,  # 禁止换行，以确保内容在一行内展示并出现滚动条
+                scroll=ft.ScrollMode.ALWAYS,  # 设置滚动条始终显示
+                expand=True,  # 让Row填充页面宽度
+                controls=[
+                    ft.Container(
+                        content=self.view,
+                        alignment=ft.alignment.top_left, padding=10, adaptive=True
+                    )
+                ]),
+            icon=ft.icons.LINE_STYLE
         )
 
         self.tab = ft.Tabs(

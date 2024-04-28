@@ -38,7 +38,8 @@ class Broker(object):
         )
 
         self.config_tab = ft.Tab(
-            text='Broker配置', content=ft.Container(content=ft.Text("请从broker的配置按钮进入", size=20)), icon=ft.icons.CONSTRUCTION_OUTLINED,
+            text='Broker配置', content=ft.Container(content=ft.Text("请从broker的配置按钮进入", size=20)),
+            icon=ft.icons.CONSTRUCTION_OUTLINED,
         )
 
         self.tab = ft.Tabs(
@@ -78,7 +79,10 @@ class Broker(object):
                                 ft.DataCell(S_Text(f"{self.api_version}")),
                             ],
                         )
-                    ])
+                    ],
+                    column_spacing=20,
+
+                )
             ],
             scroll=ft.ScrollMode.ALWAYS,
             height=page.window_height,
@@ -108,7 +112,7 @@ class Broker(object):
                         )
                         for broker in sorted(self.meta['brokers'], key=lambda x: x['node_id'], )
                     ],
-
+                    column_spacing=20,
                 )
             ],
             scroll=ft.ScrollMode.ALWAYS,
@@ -116,13 +120,22 @@ class Broker(object):
 
         )
 
-        self.base_info_tab.content = ft.Container(
-            content=self.base_info, alignment=ft.alignment.top_left, padding=10
-        )
+        self.base_info_tab.content = ft.Row(
+            wrap=False,  # 禁止换行，以确保内容在一行内展示并出现滚动条
+            scroll=ft.ScrollMode.ALWAYS,  # 设置滚动条始终显示
+            expand=True,  # 让Row填充页面宽度
+            controls=[
+                ft.Container(
+                    content=self.base_info, alignment=ft.alignment.top_left, padding=10
+                )])
 
-        self.node_tab.content = ft.Container(
-            self.cluster_table, alignment=ft.alignment.top_left, padding=10, adaptive=True
-        )
+        self.node_tab.content = ft.Row(
+            wrap=False,  # 禁止换行，以确保内容在一行内展示并出现滚动条
+            scroll=ft.ScrollMode.ALWAYS,  # 设置滚动条始终显示
+            expand=True,  # 让Row填充页面宽度
+            controls=[ft.Container(
+                self.cluster_table, alignment=ft.alignment.top_left, padding=10, adaptive=True
+            )])
 
     def show_config_tab(self, e: ControlEvent):
         """
