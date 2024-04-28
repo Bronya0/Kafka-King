@@ -33,6 +33,7 @@
 # 功能截图
 
 添加kafka连接，支持添加SASL PLAINTEXT用户名密码认证
+
 ![](docs/snap/p0.png)
 
 
