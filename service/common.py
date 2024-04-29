@@ -16,6 +16,7 @@ from service.translate import i18n
 # 假设有一个全局的存储连接信息的变量
 prefix = "__kafka_connects__"
 KAFKA_KING_GROUP = "__kafka_king_group"
+CONFIG_KEY = "__config"
 GITHUB_URL = "https://github.com/Bronya0/Kafka-King"
 GITHUB_REPOS_URL = "https://api.github.com/repos/Bronya0/Kafka-King"
 UPDATE_URL = "https://api.github.com/repos/Bronya0/Kafka-King/releases/latest"
@@ -41,6 +42,8 @@ PAGE_WIDTH = 1280
 PAGE_HEIGHT = 720
 WINDOW_TOP = 200
 WINDOW_LEFT = 260
+PAGE_MIN_WIDTH = 1140
+PAGE_MIN_HEIGHT = 720
 
 
 def S_Text(value, **kwargs):

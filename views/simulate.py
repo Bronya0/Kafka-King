@@ -203,31 +203,28 @@ class Simulate(object):
             expand=True,  # 让Row填充页面宽度
             controls=[
                 ft.Container(
-                content=ft.Column([
-                    ft.Row([
-                        self.consumer_topic_dd,
-                        self.consumer_fetch_size_input,
-                        # self.consumer_groups_dd,
-                        # ft.Text(" OR "),
-                        # self.consumer_groups_input,
-                        ft.Text(f"内置消费者组（避免干扰正常业务）:  {KAFKA_KING_GROUP}"),
-                        ft.Text(f"拉取超时时间:  {self.kafka_fetch_timeout}")
-                    ]),
-                    ft.Row([
-                        self.consumer_fetch_msg_button,
-                        S_Button(
-                            text="清空界面",
-                            on_click=self.clean_msg,
-                        ),
-                    ]),
+                    content=ft.Column([
+                        ft.Row([
+                            self.consumer_topic_dd,
+                            self.consumer_fetch_size_input,
+                            ft.Text(f"内置消费者组（避免干扰正常业务）:  {KAFKA_KING_GROUP}"),
+                            ft.Text(f"拉取超时时间:  {self.kafka_fetch_timeout}")
+                        ]),
+                        ft.Row([
+                            self.consumer_fetch_msg_button,
+                            S_Button(
+                                text="清空界面",
+                                on_click=self.clean_msg,
+                            ),
+                        ]),
 
-                    self.consumer_fetch_msg_body,
-                ],
+                        self.consumer_fetch_msg_body,
+                    ],
 
-                    scroll=ft.ScrollMode.ALWAYS,
-                ),
+                        scroll=ft.ScrollMode.ALWAYS,
+                    ),
                     alignment=ft.alignment.top_left, padding=10, adaptive=True
-            )])
+                )])
 
     def clean_msg(self, e):
         self.consumer_fetch_msg_body.value = None

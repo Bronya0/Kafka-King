@@ -272,7 +272,6 @@ class Monitor(object):
         connect_data_key = self.key + current_kafka_connect
         # lags: {topic: [[time1, end_offset, commit, lag], ]}
         lags = page.client_storage.get(connect_data_key)
-        print(f"lags: {lags}")
         if not lags:
             return
         # 为每个topic绘制一条曲线
@@ -330,7 +329,6 @@ class Monitor(object):
             # 取每个topic最大的积压，作为纵坐标label
             lag_x.append(max(_max_lag))
             produce_x.append(max(_max_produce_and_consume_offset))
-            print("produce_x", produce_x)
 
             # 把一条曲线加进曲线列表里
             self.lag_chart.data_series.append(
@@ -362,7 +360,6 @@ class Monitor(object):
                 ))
 
         # 取每个topic最大的积压，作为纵坐标label
-        print(f"x坐标：{lag_x} {produce_x}")
         if not lag_x:
             return
         lag_x = list(set(lag_x))

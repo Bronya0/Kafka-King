@@ -126,7 +126,7 @@ class Topic(object):
                 self.partition_tab,
                 self.config_tab,
             ],
-            expand=1,
+            expand=True,
         )
 
         self.controls = [

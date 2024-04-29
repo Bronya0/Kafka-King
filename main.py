@@ -2,11 +2,13 @@ import gc
 import traceback
 
 import flet as ft
+import flet_core.types
 from flet_core import TextField, ControlEvent
 
 from service.check import version_check
 from service.common import S_Text, prefix, GITHUB_URL, TITLE, open_snack_bar, close_dlg, PAGE_WIDTH, PAGE_HEIGHT, \
-    WINDOW_TOP, WINDOW_LEFT, view_instance_map, Navigation, body, progress_bar
+    WINDOW_TOP, WINDOW_LEFT, view_instance_map, Navigation, body, progress_bar, CONFIG_KEY, PAGE_MIN_WIDTH, \
+    PAGE_MIN_HEIGHT
 from service.kafka_service import kafka_service
 from service.translate import lang, i18n
 from views.all_views import get_view_instance
@@ -18,6 +20,11 @@ class Main:
         self.page = page
 
         page.on_window_event = self.on_win_event
+
+        self.page_width = PAGE_WIDTH
+        self.page_height = PAGE_HEIGHT
+        self.window_top = WINDOW_TOP
+        self.window_left = WINDOW_LEFT
 
         # 存储当前实例化的页面，用于左侧点击切换
 
@@ -99,11 +106,12 @@ class Main:
                     self.Navigation,  # 侧边
                     ft.VerticalDivider(width=1),  # 竖线
                     self.body,  # 内容
-                ],
-                expand=True,
-            ),
 
+                ],
+                height=600,
+            ),
             self.pr
+
         )
 
     def test_connect(self, e: ControlEvent):
@@ -363,9 +371,6 @@ class Main:
             self.page.update()
             return
 
-        # 进度条 loading
-        self.pr.visible = False
-        self.pr.update()
         self.body.update()
 
         # 初始化页面数据
@@ -377,10 +382,14 @@ class Main:
         except Exception as e:
             traceback.print_exc()
             self.body.controls = [S_Text(value=str(e), size=24)]
+            self.pr.visible = False
             self.page.update()
             return
 
+        # 进度条 loading
+        self.pr.visible = False
         self.body.update()
+        self.pr.update()
 
         # 缓存页面。
         view_instance_map[selected_index] = view
@@ -409,30 +418,49 @@ class Main:
         修复flet恢复窗口时会导致的无法展开的问题！！
         """
         page = e.page
-
+        print(e.data, page.window_width, page.window_height)
         if e.data == 'restore':
-            page.window_width = PAGE_WIDTH
-            page.window_height = PAGE_HEIGHT
-            page.window_top = WINDOW_TOP
-            page.window_left = WINDOW_LEFT
+            page.window_width = self.page_width
+            page.window_height = self.page_height
+            page.window_top = self.window_top
+            page.window_left = self.window_left
+
+        elif e.data == "resized":
+            self.page_width = page.window_width
+            self.page_height = page.window_height
+            self.window_top = page.window_top
+            self.window_left = page.window_left
+
+        elif e.data == "moved":
+            self.window_top = page.window_top
+            self.window_left = page.window_left
 
         page.update()
 
 
 def init(page: ft.Page):
     page.title = TITLE
+    page.adaptive = True
     theme = page.client_storage.get("theme")
     if theme is not None:
         page.theme_mode = theme
-    language = page.client_storage.get("language")
+
+    config = page.client_storage.get(CONFIG_KEY)
+    config = config if config else {}
+
+    language = config.get('language')
     if language is not None:
         lang.language = language
 
     page.theme = ft.Theme(font_family="Microsoft YaHei")
 
-    page.window_width = PAGE_WIDTH
-    page.window_height = PAGE_HEIGHT
+    page.window_width = config['default_width'] if 'default_width' in config else PAGE_WIDTH
+    page.window_height = config['default_height'] if 'default_height' in config else PAGE_HEIGHT
+    page.window_min_width = PAGE_MIN_WIDTH
+    page.window_min_height = PAGE_MIN_HEIGHT
+
     page.update()
+
     Main(page)
     page.update()
     # 版本检查
