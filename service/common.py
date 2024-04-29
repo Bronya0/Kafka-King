@@ -145,3 +145,6 @@ body = flet.Column(
     controls=[],
     expand=True
 )
+
+# 全局进度条
+progress_bar = flet.ProgressBar(visible=False)

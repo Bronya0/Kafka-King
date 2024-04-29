@@ -7,7 +7,7 @@ from flet_core import TextField, ControlEvent
 
 from service.check import version_check, fetch_lag
 from service.common import S_Text, prefix, GITHUB_URL, TITLE, open_snack_bar, close_dlg, PAGE_WIDTH, PAGE_HEIGHT, \
-    WINDOW_TOP, WINDOW_LEFT, view_instance_map, Navigation, body
+    WINDOW_TOP, WINDOW_LEFT, view_instance_map, Navigation, body, progress_bar
 from service.kafka_service import kafka_service
 from service.translate import lang, i18n
 from views.all_views import get_view_instance
@@ -90,8 +90,7 @@ class Main:
             ],
         )
 
-        self.pr = ft.ProgressBar(visible=False)
-
+        self.pr = progress_bar
         # 初始化加载全部连接
         self.refresh_dd_links()
 
@@ -172,6 +171,7 @@ class Main:
         """
         添加kafka连接 弹框
         """
+
         # 创建输入表单控件
 
         def cancel(event):
@@ -227,6 +227,7 @@ class Main:
         """
         编辑、删除连接
         """
+
         def cancel(event):
             close_dlg(event)
             self.edit_conn_name_input.value = None
@@ -340,14 +341,13 @@ class Main:
         selected_index = self.Navigation.selected_index
         view = view_instance_map.get(selected_index)
         self.refresh_body(view=view)
-        e.page.update()
 
     def refresh_body(self, view=None):
         """
         重新实例化页面
         """
         self.pr.visible = True
-        self.page.update()
+        self.pr.update()
 
         selected_index = self.Navigation.selected_index
         if view:
@@ -366,7 +366,8 @@ class Main:
 
         # 进度条 loading
         self.pr.visible = False
-        self.page.update()
+        self.pr.update()
+        self.body.update()
 
         # 初始化页面数据
         try:
@@ -377,14 +378,13 @@ class Main:
         except Exception as e:
             traceback.print_exc()
             self.body.controls = [S_Text(value=str(e), size=24)]
-            self.pr.visible = False
             self.page.update()
             return
 
+        self.body.update()
+
         # 缓存页面。
         view_instance_map[selected_index] = view
-        # 去掉进度条
-        self.page.update()
         gc.collect()
 
     def change_theme(self, e):
