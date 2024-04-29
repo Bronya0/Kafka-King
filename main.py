@@ -1,11 +1,10 @@
 import gc
-import threading
 import traceback
 
 import flet as ft
 from flet_core import TextField, ControlEvent
 
-from service.check import version_check, fetch_lag
+from service.check import version_check
 from service.common import S_Text, prefix, GITHUB_URL, TITLE, open_snack_bar, close_dlg, PAGE_WIDTH, PAGE_HEIGHT, \
     WINDOW_TOP, WINDOW_LEFT, view_instance_map, Navigation, body, progress_bar
 from service.kafka_service import kafka_service
@@ -435,12 +434,9 @@ def init(page: ft.Page):
     page.window_height = PAGE_HEIGHT
     page.update()
     Main(page)
-    # 线程1：检查新版本
-    t1 = threading.Thread(target=version_check, args=(page,))
-    t1.start()
-    # 线程2：抓取积压信息
-    t2 = threading.Thread(target=fetch_lag, args=(page,))
-    t2.start()
+    page.update()
+    # 版本检查
+    version_check(page)
 
 
 ft.app(target=init, assets_dir="assets")
