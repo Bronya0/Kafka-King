@@ -150,7 +150,7 @@ jobs:
       run: |
         cp -r dist temp_dist
         cd temp_dist
-        tar -czf ../kafka-king-linux.tar.gz .
+        tar -czf kafka-king-linux.tar.gz kafka-king
 
     - name: Upload Release Asset
       id: upload-release-asset
