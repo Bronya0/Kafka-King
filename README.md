@@ -13,7 +13,7 @@
 <strong>一个现代、实用的kafka GUI客户端，使用python flet构建。</strong>
 </div>
 
-> 项目完全由python开发，开源免费、简单易懂，右上角点个 **star**，和作者一起学习 python gui开发🥰
+> 项目完全由python开发，开源免费、简单易懂，右上角点个 **star**，和作者一起学习 python gui开发🥰 qq交流群: 964440643
 
 # 功能清单
 - [x] 查看集群节点列表（完成）
