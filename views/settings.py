@@ -51,10 +51,10 @@ class Settings(object):
             ft.Column(
                 [
                     ft.Row(
-                       [
-                           ft.Text("语言："),
-                           self.lang_dd,
-                       ]
+                        [
+                            ft.Text("语言："),
+                            self.lang_dd,
+                        ]
                     ),
 
                     ft.Row(
@@ -108,6 +108,3 @@ class Settings(object):
             e.page.window_height = height
 
         open_snack_bar(e.page, "保存成功", success=True)
-
-
-

@@ -438,6 +438,19 @@ class Main:
         page.update()
 
 
+def init_config(page):
+    config = page.client_storage.get(CONFIG_KEY)
+
+    if not config:
+        config = {
+            "language": "简体中文",
+            "default_width": PAGE_WIDTH,
+            "default_height": PAGE_HEIGHT,
+        }
+        page.client_storage.set(CONFIG_KEY, config)
+    return config
+
+
 def init(page: ft.Page):
     page.title = TITLE
     page.adaptive = True
@@ -445,26 +458,26 @@ def init(page: ft.Page):
     if theme is not None:
         page.theme_mode = theme
 
-    config = page.client_storage.get(CONFIG_KEY)
-    config = config if config else {}
+    config = init_config(page)
 
     language = config.get('language')
     if language is not None:
         lang.language = language
 
-    page.theme = ft.Theme(font_family="Microsoft YaHei")
+    # 主题
+    page.theme = ft.Theme(font_family="微软雅黑")
 
+    # 窗口大小
     page.window_width = config['default_width'] if 'default_width' in config else PAGE_WIDTH
     page.window_height = config['default_height'] if 'default_height' in config else PAGE_HEIGHT
     page.window_min_width = PAGE_MIN_WIDTH
     page.window_min_height = PAGE_MIN_HEIGHT
 
-    page.update()
-
     Main(page)
-    page.update()
+
     # 版本检查
     version_check(page)
 
 
-ft.app(target=init, assets_dir="assets")
+if __name__ == '__main__':
+    ft.app(target=init, assets_dir="assets")
