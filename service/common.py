@@ -37,6 +37,7 @@ SIMULATE = 2
 MONITOR = 3
 SETTINGS = 4
 SUGGEST = 5
+HELP = 6
 
 PAGE_WIDTH = 1280
 PAGE_HEIGHT = 720
@@ -140,6 +141,11 @@ Navigation = flet.NavigationRail(
             icon_content=flet.Icon(flet.icons.AUTO_GRAPH_OUTLINED, tooltip="建议我们"),
             selected_icon_content=flet.Icon(flet.icons.AUTO_GRAPH),
             label_content=S_Text(i18n("建议")),
+        ),
+        flet.NavigationRailDestination(
+            icon_content=flet.Icon(flet.icons.HELP_OUTLINE, tooltip="使用帮助"),
+            selected_icon_content=flet.Icon(flet.icons.HELP),
+            label_content=S_Text(i18n("帮助")),
         ),
     ],
 )

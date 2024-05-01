@@ -40,7 +40,7 @@ jobs:
         
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        flet pack main.py -i assets/icon.ico -n kafka-king --distpath dist/Kafka-King --add-data=assets/*:assets
+        flet pack main.py -i assets/icon.ico -n kafka-king --distpath dist/Kafka-King --add-data=assets/*:assets --product-name kafka-king
         
         copy README.md dist/Kafka-King/
         copy LICENSE dist/Kafka-King/
@@ -89,7 +89,7 @@ jobs:
         
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        flet pack main.py -i assets/icon.icns  -n kafka-king --add-data=assets/*:assets
+        flet pack main.py -i assets/icon.icns  -n kafka-king --add-data=assets/*:assets --product-name kafka-king
         ls -al dist/
 
     # 打包.app文件夹为zip或tar.gz以方便传输
@@ -141,14 +141,16 @@ jobs:
         
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        flet pack main.py -i assets/icon.ico  -n kafka-king --add-data=assets/*:assets
+        flet pack main.py -i assets/icon.ico  -n kafka-king --add-data=assets/*:assets --product-name kafka-king
         ls -al dist/
 
     # 打包.app文件夹为zip或tar.gz以方便传输
+    # 为啥linux的要cp，因为我测试老是文件变动无法压缩
     - name: Package .app folder
       run: |
-         cd dist
-         tar --warning=no-file-changed -czf kafka-king-linux.tar.gz .
+        cp -r dist temp_dist
+        cd temp_dist
+        tar -czf ../kafka-king-linux.tar.gz .
 
     - name: Upload Release Asset
       id: upload-release-asset
@@ -157,6 +159,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./dist/kafka-king-linux.tar.gz
+        asset_path: ./temp_dist/kafka-king-linux.tar.gz
         asset_name: kafka-king_v${{ steps.normalise_version.outputs.version }}_linux.tar.gz
         asset_content_type: application/octet-stream

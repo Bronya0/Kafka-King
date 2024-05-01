@@ -2,7 +2,6 @@ import gc
 import traceback
 
 import flet as ft
-import flet_core.types
 from flet_core import TextField, ControlEvent
 
 from service.check import version_check
@@ -418,7 +417,6 @@ class Main:
         修复flet恢复窗口时会导致的无法展开的问题！！
         """
         page = e.page
-        print(e.data, page.window_width, page.window_height)
         if e.data == 'restore':
             page.window_width = self.page_width
             page.window_height = self.page_height
@@ -452,6 +450,7 @@ def init_config(page):
 
 
 def init(page: ft.Page):
+
     page.title = TITLE
     page.adaptive = True
     theme = page.client_storage.get("theme")

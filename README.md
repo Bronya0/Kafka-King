@@ -66,7 +66,6 @@
 
 
 
-
 ## 分区操作
 - 支持查看topic的分区的详细信息
 - 支持为主题添加额外的分区
@@ -84,6 +83,12 @@
 pip install -r requirements.txt
 
 flet pack main.py -i assets/icon.ico  -n kafka-king --add-data=assets/*:assets --product-name kafka-king
+
+## QQ交流群
+<a target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=pDqlVFyLMYEEw8DPJlRSBN27lF8qHV2v&jump_from=webapi&authKey=Wle/K0ARM1YQWlpn6vvfiZuMedy2tT9BI73mUvXVvCuktvi0fNfmNR19Jhyrf2Nz">KingTool研发技术交流群：964440643</a>
+
+![](assets/qq.jpg)
+
 
 # Star星星
 [![Stargazers over time](https://starchart.cc/Bronya0/Kafka-King.svg)](https://starchart.cc/Bronya0/Kafka-King)

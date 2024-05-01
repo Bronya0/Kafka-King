@@ -259,7 +259,7 @@ class Monitor(object):
         只刷新组件
         First指首次切到该页面
         """
-        print("读取积压offset……")
+        print("更新积压页面")
 
         # 清理页面
         for chart in [self.produce_chart, self.consumer_chart, self.lag_chart]:

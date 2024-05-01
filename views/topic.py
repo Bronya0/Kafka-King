@@ -169,8 +169,6 @@ class Topic(object):
             end_offset = lag[0] if isinstance(lag, list) and lag else self._lag_label
             commit_offset = lag[1] if isinstance(lag, list) and lag else self._lag_label
             _lag = self._lag_label
-            print("topic_lag: ", self.topic_lag)
-            print("end_offset: ", end_offset, "commit_offset: ", commit_offset)
             if isinstance(lag, list) and end_offset is not None and commit_offset is not None:
                 _lag = end_offset - commit_offset
             refactor = len(topic['partitions'][0]['replicas']) if topic['partitions'] else "无分区"

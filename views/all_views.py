@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*-coding:utf-8 -*-
-from service.common import BROKER, TOPIC, MONITOR, SETTINGS, SIMULATE, SUGGEST
+from service.common import BROKER, TOPIC, MONITOR, SETTINGS, SIMULATE, SUGGEST, HELP
 from views.broker import Broker
+from views.help import Help
 from views.monitor import Monitor
 from views.settings import Settings
 from views.simulate import Simulate
@@ -20,5 +21,6 @@ def get_view_instance(selected_index):
         MONITOR: Monitor(),
         SETTINGS: Settings(),
         SUGGEST: Suggest(),
+        HELP: Help(),
     }[selected_index]
 
