@@ -30,7 +30,7 @@
 - ……
 
 # 下载
-[下载地址](https://github.com/Bronya0/Kafka-King/releases)，点击Assets，选择自己的平台
+[下载地址](https://github.com/Bronya0/Kafka-King/releases)，点击【Assets】，选择自己的平台下载，支持windows、macos、linux
 
 # 功能截图
 
