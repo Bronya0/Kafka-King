@@ -64,7 +64,7 @@ class Main:
             alignment=ft.alignment.center_left,
             dense=True,
             content_padding=5,
-            # focused_bgcolor='#ff0000',
+            width=250,
         )
 
         # 侧边导航栏 NavigationRail
@@ -453,6 +453,9 @@ def init(page: ft.Page):
 
     page.title = TITLE
     page.adaptive = True
+
+    # page.window_title_bar_hidden = True
+
     theme = page.client_storage.get("theme")
     if theme is not None:
         page.theme_mode = theme
@@ -475,7 +478,7 @@ def init(page: ft.Page):
     Main(page)
 
     # 版本检查
-    version_check(page)
+    # version_check(page)
 
 
 if __name__ == '__main__':
