@@ -8,6 +8,7 @@ from service.check import version_check
 from service.common import S_Text, prefix, GITHUB_URL, TITLE, open_snack_bar, close_dlg, PAGE_WIDTH, PAGE_HEIGHT, \
     WINDOW_TOP, WINDOW_LEFT, view_instance_map, Navigation, body, progress_bar, CONFIG_KEY, PAGE_MIN_WIDTH, \
     PAGE_MIN_HEIGHT
+from service.font import get_default_font, get_os_platform
 from service.kafka_service import kafka_service
 from service.translate import lang, i18n
 from views.all_views import get_view_instance
@@ -454,8 +455,6 @@ def init(page: ft.Page):
     page.title = TITLE
     page.adaptive = True
 
-    # page.window_title_bar_hidden = True
-
     theme = page.client_storage.get("theme")
     if theme is not None:
         page.theme_mode = theme
@@ -467,7 +466,7 @@ def init(page: ft.Page):
         lang.language = language
 
     # 主题
-    page.theme = ft.Theme(font_family="微软雅黑")
+    page.theme = ft.Theme(font_family=get_default_font(get_os_platform()))
 
     # 窗口大小
     page.window_width = config['default_width'] if 'default_width' in config else PAGE_WIDTH

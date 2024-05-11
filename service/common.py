@@ -48,6 +48,7 @@ PAGE_MIN_HEIGHT = 720
 
 
 def S_Text(value, **kwargs):
+
     return flet.Text(
         selectable=True,
         value=value,

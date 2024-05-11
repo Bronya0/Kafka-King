@@ -6,6 +6,7 @@ import flet as ft
 from flet_core import ControlEvent
 from kafka import KafkaAdminClient
 from kafka.admin import NewTopic
+from kafka.errors import for_code
 
 from service.common import S_Text, open_snack_bar, S_Button, dd_common_configs, close_dlg, SIMULATE, view_instance_map, \
     Navigation, body
@@ -28,7 +29,10 @@ class Topic(object):
         self.describe_topics_map: Optional[Dict] = None
         self.partition_table = None
         self.describe_topics = None
+        self.describe_topics_tmp = []
         self.topic_table = None
+        self.page_num = 1
+        self.page_size = 10
 
         # if not kafka_service.kac:
         #     raise Exception("请先选择一个可用的kafka连接！")
@@ -137,14 +141,28 @@ class Topic(object):
         if not kafka_service.kac:
             return "请先选择一个可用的kafka连接！\nPlease select an available kafka connection first!"
 
+        # 数据初始化
         self.describe_topics = kafka_service.get_topics()
         self.describe_topics_map = {i['topic']: i for i in self.describe_topics}
+        self.describe_topics_tmp = self.describe_topics[:self.page_size]
+
+        # 消费组初始化
+        groups = kafka_service.get_groups()
+        if groups:
+            self.topic_groups_dd.options = [ft.dropdown.Option(text=i) for i in groups]
+        else:
+            self.topic_groups_dd.label = "无消费组"
+
+        self.init_table()
+
+    def init_table(self):
 
         # init topic table data
         rows = []
         self.topic_table = ft.DataTable(
             columns=[
                 ft.DataColumn(S_Text("编号")),
+                ft.DataColumn(S_Text("健康状态")),
                 ft.DataColumn(S_Text("主题")),
                 ft.DataColumn(S_Text("副本数")),
                 ft.DataColumn(S_Text("分区")),
@@ -157,13 +175,10 @@ class Topic(object):
             column_spacing=20,
         )
         _topics = []
-        for i, topic in enumerate(self.describe_topics):
+        # 根据self.describe_topics、self.page_num、self.page_size实现分页
+        offset = (self.page_num - 1) * self.page_size
+        for i, topic in enumerate(self.describe_topics_tmp):
             topic_name_ = topic.get('topic')
-
-            # search filter
-            search_text_value = self.search_text.value
-            if search_text_value is not None and search_text_value not in topic_name_:
-                continue
 
             lag = self.topic_lag.get(topic_name_) if self.topic_lag else self._lag_label
             end_offset = lag[0] if isinstance(lag, list) and lag else self._lag_label
@@ -174,21 +189,25 @@ class Topic(object):
             refactor = len(topic['partitions'][0]['replicas']) if topic['partitions'] else "无分区"
             disabled = False if not topic.get('is_internal') else True
 
+            err_desc = for_code(topic.get('error_code')).description
+            err_color = 'green' if topic.get('error_code') == 0 else 'red'
+
             rows.append(
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(S_Text(i)),
-                        ft.DataCell(S_Text(topic_name_)),
+                        ft.DataCell(S_Text(offset+i+1)),
+                        ft.DataCell(ft.Icon(ft.icons.CIRCLE, color=err_color, size=16, tooltip=err_desc)),
+                        ft.DataCell(S_Text(topic_name_, size=13)),
                         ft.DataCell(S_Text(refactor)),
                         ft.DataCell(ft.TextButton(
                             text=str(len(topic.get('partitions'))),
                             on_click=self.click_topic_button,
                             data=topic_name_
                         )),
-                        ft.DataCell(S_Text(end_offset, size=14)),
-                        ft.DataCell(S_Text(commit_offset, size=14)),
+                        ft.DataCell(S_Text(end_offset, size=13)),
+                        ft.DataCell(S_Text(commit_offset, size=13)),
                         ft.DataCell(S_Text(_lag, color='red' if isinstance(lag, list) and int(_lag) > 10000 else None,
-                                           size=14)),
+                                           size=13)),
                         ft.DataCell(
                             ft.Row([
                                 ft.TextButton(
@@ -231,13 +250,6 @@ class Topic(object):
             _topics.append(topic_name_)
         self.table_topics = _topics
 
-        # 消费组初始化
-        groups = kafka_service.get_groups()
-        if groups:
-            self.topic_groups_dd.options = [ft.dropdown.Option(text=i) for i in groups]
-        else:
-            self.topic_groups_dd.label = "无消费组"
-
         # init topic tab
         self.topic_tab.content = ft.Row(
             wrap=False,  # 禁止换行，以确保内容在一行内展示并出现滚动条
@@ -256,6 +268,25 @@ class Topic(object):
                                     self.refresh_button
                                 ]),
                             self.topic_table,
+                            ft.Row(
+                                [
+                                    # 翻页图标和当前页显示
+                                    ft.IconButton(
+                                        icon=ft.icons.ARROW_BACK,
+                                        icon_size=20,
+                                        on_click=self.page_prev,
+                                        tooltip="上一页",
+                                    ),
+                                    ft.Text(f"{self.page_num}"),
+                                    ft.IconButton(
+                                        icon=ft.icons.ARROW_FORWARD,
+                                        icon_size=20,
+                                        on_click=self.page_next,
+                                        tooltip="下一页",
+                                    ),
+
+                                ]
+                            )
                         ],
                         scroll=ft.ScrollMode.ALWAYS,
                     ), alignment=ft.alignment.top_left, padding=10, adaptive=True)
@@ -265,11 +296,28 @@ class Topic(object):
         # init partition tab
         self.partition_topic_dd.options = [ft.dropdown.Option(text=i) for i in self.describe_topics_map.keys()]
 
+    def page_next(self, e):
+        self.page_num += 1
+        offset = (self.page_num - 1) * self.page_size
+        self.describe_topics_tmp = self.describe_topics[offset:offset + self.page_size]
+        self.init_table()
+        e.page.update()
+
+    def page_prev(self, e):
+        if self.page_num == 1:
+            return
+        self.page_num -= 1
+        offset = (self.page_num - 1) * self.page_size
+        self.describe_topics_tmp = self.describe_topics[offset:offset + self.page_size]
+        self.init_table()
+        e.page.update()
+
     def _create_partition_table(self, topic_name_):
         rows = []
         self.partition_table = ft.DataTable(
             columns=[
                 ft.DataColumn(S_Text("分区编号")),
+                ft.DataColumn(S_Text("健康状态")),
                 ft.DataColumn(S_Text("Leader分布")),
                 ft.DataColumn(S_Text("Replicas分布")),
                 ft.DataColumn(S_Text("ISR分布")),
@@ -277,29 +325,32 @@ class Topic(object):
                 ft.DataColumn(S_Text("上次提交")),
                 ft.DataColumn(S_Text("最末偏移量")),
                 ft.DataColumn(S_Text("积压量")),
-
             ],
             rows=rows,
 
         )
         partitions = self.describe_topics_map[topic_name_]['partitions']
         partitions = sorted(partitions, key=lambda d: d['partition'])
-        for i, partitions in enumerate(partitions):
-            p_id = partitions.get('partition')
+        for i, partition in enumerate(partitions):
+            p_id = partition.get('partition')
 
             # topic_offset[topic][partition] = [last_committed, end_offsets, _lag]
             last_committed, end_offsets, _lag = None, None, None
             if self.topic_offset:
                 last_committed, end_offsets, _lag = self.topic_offset[topic_name_][p_id]
 
+            err_desc = for_code(partition.get('error_code')).description
+            err_color = 'green' if partition.get('error_code') == 0 else 'red'
+
             rows.append(
                 ft.DataRow(
                     cells=[
                         ft.DataCell(S_Text(p_id)),
-                        ft.DataCell(S_Text(partitions.get('leader'))),
-                        ft.DataCell(S_Text(partitions.get('replicas'))),
-                        ft.DataCell(S_Text(partitions.get('isr'))),
-                        ft.DataCell(S_Text(partitions.get('offline_replicas'))),
+                        ft.DataCell(ft.Icon(ft.icons.CIRCLE, color=err_color, size=16, tooltip=err_desc)),
+                        ft.DataCell(S_Text(partition.get('leader'))),
+                        ft.DataCell(S_Text(partition.get('replicas'))),
+                        ft.DataCell(S_Text(partition.get('isr'))),
+                        ft.DataCell(S_Text(partition.get('offline_replicas'))),
                         ft.DataCell(S_Text(last_committed)),
                         ft.DataCell(S_Text(end_offsets)),
                         ft.DataCell(S_Text(_lag)),
@@ -472,7 +523,6 @@ class Topic(object):
 
     def open_delete_dialog(self, e):
         topic_name = e.control.data
-        print(topic_name)
         page = e.page
 
         def ensure(e_):
@@ -536,7 +586,16 @@ class Topic(object):
         :param e:
         :return:
         """
-        self.init()
+        search_text_value = self.search_text.value
+        if search_text_value is not None:
+            self.describe_topics_tmp.clear()
+            self.page_num = 1
+            for i in self.describe_topics:
+                topic_name_ = i.get('topic')
+                if search_text_value in topic_name_:
+                    self.describe_topics_tmp.append(i)
+
+        self.init_table()
         e.page.update()
 
     def topic_page_refresh(self, e):
