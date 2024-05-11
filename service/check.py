@@ -38,10 +38,10 @@ def version_check(page: ft.Page):
                                 ft.Column(
                                     [
                                         ft.Text(f"当前版本：{version}"),
-                                        ft.Text(body),
+                                        ft.Text(body, selectable=True),
                                     ],
                                     scroll=ft.ScrollMode.ALWAYS,
-                                    height=160,
+                                    height=200,
                                     width=600
                                 ),
                                 ft.Row(
