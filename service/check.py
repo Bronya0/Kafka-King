@@ -47,7 +47,7 @@ def version_check(page: ft.Page):
                                 ft.Row(
                                     [
                                         ft.TextButton(text="前往下载", url=GITHUB_URL),
-                                        ft.TextButton(text="下次再说", on_click=close_dlg,
+                                        ft.TextButton(text="下次再说", on_click=close_dlg, tooltip="长期未更新可能会导致故障累积",
                                                       style=ft.ButtonStyle(color=ft.colors.GREY)),
                                     ]
                                 )
