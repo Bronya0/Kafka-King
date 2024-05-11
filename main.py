@@ -2,7 +2,7 @@ import gc
 import traceback
 
 import flet as ft
-from flet_core import TextField, ControlEvent
+from flet_core import TextField, ControlEvent, TextTheme
 
 from service.check import version_check
 from service.common import S_Text, prefix, GITHUB_URL, TITLE, open_snack_bar, close_dlg, PAGE_WIDTH, PAGE_HEIGHT, \
@@ -478,7 +478,7 @@ def init(page: ft.Page):
     Main(page)
 
     # 版本检查
-    # version_check(page)
+    version_check(page)
 
 
 if __name__ == '__main__':
