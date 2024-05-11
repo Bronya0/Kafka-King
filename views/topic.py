@@ -21,6 +21,7 @@ class Topic(object):
 
     def __init__(self):
         # _lag_label: when select consumer groups, use it, that is 'loading...'
+        self.page = None
         self.table_topics = []
         self._lag_label = None
         self.topic_offset = None
@@ -32,7 +33,7 @@ class Topic(object):
         self.describe_topics_tmp = []
         self.topic_table = None
         self.page_num = 1
-        self.page_size = 10
+        self.page_size = 8
 
         # if not kafka_service.kac:
         #     raise Exception("请先选择一个可用的kafka连接！")
@@ -140,7 +141,7 @@ class Topic(object):
     def init(self, page=None):
         if not kafka_service.kac:
             return "请先选择一个可用的kafka连接！\nPlease select an available kafka connection first!"
-
+        self.page = page
         # 数据初始化
         self.describe_topics = kafka_service.get_topics()
         self.describe_topics_map = {i['topic']: i for i in self.describe_topics}
@@ -162,7 +163,7 @@ class Topic(object):
         self.topic_table = ft.DataTable(
             columns=[
                 ft.DataColumn(S_Text("编号")),
-                ft.DataColumn(S_Text("健康状态")),
+                ft.DataColumn(S_Text("健康")),
                 ft.DataColumn(S_Text("主题")),
                 ft.DataColumn(S_Text("副本数")),
                 ft.DataColumn(S_Text("分区")),
@@ -189,8 +190,13 @@ class Topic(object):
             refactor = len(topic['partitions'][0]['replicas']) if topic['partitions'] else "无分区"
             disabled = False if not topic.get('is_internal') else True
 
-            err_desc = for_code(topic.get('error_code')).description
-            err_color = 'green' if topic.get('error_code') == 0 else 'red'
+            err_color = 'green'
+            err_desc = None
+            for _p in topic['partitions']:
+                if _p['error_code'] != 0:
+                    err_color = 'red'
+                    err_desc = for_code(_p['error_code']).description
+                    break
 
             rows.append(
                 ft.DataRow(
@@ -201,8 +207,9 @@ class Topic(object):
                         ft.DataCell(S_Text(refactor)),
                         ft.DataCell(ft.TextButton(
                             text=str(len(topic.get('partitions'))),
+                            style=ft.ButtonStyle(color=err_color),
                             on_click=self.click_topic_button,
-                            data=topic_name_
+                            data=topic_name_,
                         )),
                         ft.DataCell(S_Text(end_offset, size=13)),
                         ft.DataCell(S_Text(commit_offset, size=13)),
@@ -214,8 +221,7 @@ class Topic(object):
                                     text="生产",
                                     on_click=self.show_produce_page,
                                     data=topic_name_,
-                                    disabled=disabled
-
+                                    disabled=disabled,
                                 ),
                                 ft.TextButton(
                                     text="消费",
@@ -277,7 +283,7 @@ class Topic(object):
                                         on_click=self.page_prev,
                                         tooltip="上一页",
                                     ),
-                                    ft.Text(f"{self.page_num}"),
+                                    ft.Text(f"{self.page_num}/{int(len(self.describe_topics) / self.page_size)+1}"),
                                     ft.IconButton(
                                         icon=ft.icons.ARROW_FORWARD,
                                         icon_size=20,
@@ -289,6 +295,8 @@ class Topic(object):
                             )
                         ],
                         scroll=ft.ScrollMode.ALWAYS,
+                        width=self.page.window_width * 0.86,
+                        height=self.page.window_height * 0.86,
                     ), alignment=ft.alignment.top_left, padding=10, adaptive=True)
             ],
         )
@@ -296,19 +304,25 @@ class Topic(object):
         # init partition tab
         self.partition_topic_dd.options = [ft.dropdown.Option(text=i) for i in self.describe_topics_map.keys()]
 
-    def page_next(self, e):
-        self.page_num += 1
-        offset = (self.page_num - 1) * self.page_size
-        self.describe_topics_tmp = self.describe_topics[offset:offset + self.page_size]
-        self.init_table()
-        e.page.update()
-
     def page_prev(self, e):
         if self.page_num == 1:
             return
         self.page_num -= 1
+
         offset = (self.page_num - 1) * self.page_size
         self.describe_topics_tmp = self.describe_topics[offset:offset + self.page_size]
+
+        self.init_table()
+        e.page.update()
+
+    def page_next(self, e):
+        # 最后一页则return
+        if self.page_num * self.page_size >= len(self.describe_topics):
+            return
+        self.page_num += 1
+        offset = (self.page_num - 1) * self.page_size
+        self.describe_topics_tmp = self.describe_topics[offset:offset + self.page_size]
+
         self.init_table()
         e.page.update()
 
@@ -316,8 +330,8 @@ class Topic(object):
         rows = []
         self.partition_table = ft.DataTable(
             columns=[
-                ft.DataColumn(S_Text("分区编号")),
-                ft.DataColumn(S_Text("健康状态")),
+                ft.DataColumn(S_Text("编号")),
+                ft.DataColumn(S_Text("健康")),
                 ft.DataColumn(S_Text("Leader分布")),
                 ft.DataColumn(S_Text("Replicas分布")),
                 ft.DataColumn(S_Text("ISR分布")),
@@ -513,7 +527,6 @@ class Topic(object):
             msg = f"分区创建失败: {err}"
         else:
             msg = "Topic：{} 成功创建 {} 个分区，当前总共 {} 个".format(topic, extra_num, old_partition_num + extra_num)
-        print(msg)
         self.create_partition_modal.open = False
         self.init()
         self._create_partition_table(topic_name_=topic)
@@ -552,7 +565,6 @@ class Topic(object):
         try:
             kac: KafkaAdminClient = kafka_service.kac
             res = kac.delete_topics([topic_name])
-            print(res)
             msg = "topic：{}删除成功".format(topic_name)
             return msg, True
         except Exception as e_:
@@ -582,19 +594,23 @@ class Topic(object):
 
     def search_table(self, e: ControlEvent):
         """
-        search table
+        搜索，配合分页
         :param e:
         :return:
         """
         search_text_value = self.search_text.value
+        _lst = []
+        all_topics = kafka_service.get_topics()
         if search_text_value is not None:
-            self.describe_topics_tmp.clear()
-            self.page_num = 1
-            for i in self.describe_topics:
+            for i in all_topics:
                 topic_name_ = i.get('topic')
-                if search_text_value in topic_name_:
-                    self.describe_topics_tmp.append(i)
-
+                if str(search_text_value) in topic_name_:
+                    _lst.append(i)
+        else:
+            _lst = all_topics
+        self.page_num = 1
+        self.describe_topics = _lst
+        self.describe_topics_tmp = _lst[:self.page_size]
         self.init_table()
         e.page.update()
 

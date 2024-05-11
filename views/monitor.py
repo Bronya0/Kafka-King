@@ -241,7 +241,11 @@ class Monitor(object):
         open_snack_bar(page, "保存成功", success=True)
 
     def refresh(self, e):
-        print("开始刷新offset……")
+        print("开始刷新offset……", self.topic_input.value, self.topic_groups_dd.value)
+        if self.topic_input.value is None or self.topic_groups_dd.value is None:
+            open_snack_bar(self.page, "请先选择topic和消费组")
+            return
+
         self.refresh_button.disabled = True
         self.refresh_button.text = "更新中……"
         self.page.update()
