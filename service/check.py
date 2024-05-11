@@ -41,7 +41,7 @@ def version_check(page: ft.Page):
                                         ft.Text(body, selectable=True),
                                     ],
                                     scroll=ft.ScrollMode.ALWAYS,
-                                    height=200,
+                                    height=180,
                                     width=600
                                 ),
                                 ft.Row(
