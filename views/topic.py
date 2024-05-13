@@ -579,17 +579,17 @@ class Topic(object):
         """
         group_id = self.topic_groups_dd.value
         if group_id is not None:
-            self._lag_label = 'loading'
+            self._lag_label = 'loading...'
             self.topic_offset, self.topic_lag = None, None
-            self.init()
+            self.init_table()
             e.page.update()
 
             topics = self.table_topics
             self.topic_offset, self.topic_lag, = kafka_service.get_topic_offsets(topics, group_id)
-            self.init()
+            self.init_table()
             e.page.update()
         else:
-            self.init()
+            self.init_table()
             e.page.update()
 
     def search_table(self, e: ControlEvent):
