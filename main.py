@@ -7,7 +7,7 @@ from flet_core import TextField, ControlEvent, TextTheme
 from service.check import version_check
 from service.common import S_Text, prefix, GITHUB_URL, TITLE, open_snack_bar, close_dlg, PAGE_WIDTH, PAGE_HEIGHT, \
     WINDOW_TOP, WINDOW_LEFT, view_instance_map, Navigation, body, progress_bar, CONFIG_KEY, PAGE_MIN_WIDTH, \
-    PAGE_MIN_HEIGHT
+    PAGE_MIN_HEIGHT, common_page
 from service.font import get_default_font, get_os_platform
 from service.kafka_service import kafka_service
 from service.translate import lang, i18n
@@ -454,6 +454,8 @@ def init(page: ft.Page):
 
     page.title = TITLE
     page.adaptive = True
+
+    common_page.set_page(page)
 
     theme = page.client_storage.get("theme")
     if theme is not None:

@@ -9,7 +9,7 @@ from kafka.admin import NewTopic
 from kafka.errors import for_code
 
 from service.common import S_Text, open_snack_bar, S_Button, dd_common_configs, close_dlg, SIMULATE, view_instance_map, \
-    Navigation, body
+    Navigation, body, progress_bar, common_page
 from service.kafka_service import kafka_service
 from views.simulate import Simulate
 
@@ -22,6 +22,7 @@ class Topic(object):
     def __init__(self):
         # _lag_label: when select consumer groups, use it, that is 'loading...'
         self.page = None
+        self.pr = progress_bar
         self.table_topics = []
         self._lag_label = None
         self.topic_offset = None
@@ -141,7 +142,6 @@ class Topic(object):
     def init(self, page=None):
         if not kafka_service.kac:
             return "请先选择一个可用的kafka连接！\nPlease select an available kafka connection first!"
-        self.page = page
         # 数据初始化
         self.describe_topics = kafka_service.get_topics()
         self.describe_topics_map = {i['topic']: i for i in self.describe_topics}
@@ -185,6 +185,7 @@ class Topic(object):
             end_offset = lag[0] if isinstance(lag, list) and lag else self._lag_label
             commit_offset = lag[1] if isinstance(lag, list) and lag else self._lag_label
             _lag = self._lag_label
+            print(lag, end_offset, commit_offset, _lag)
             if isinstance(lag, list) and end_offset is not None and commit_offset is not None:
                 _lag = end_offset - commit_offset
             refactor = len(topic['partitions'][0]['replicas']) if topic['partitions'] else "无分区"
@@ -295,8 +296,8 @@ class Topic(object):
                             )
                         ],
                         scroll=ft.ScrollMode.ALWAYS,
-                        width=self.page.window_width * 0.86,
-                        height=self.page.window_height * 0.86,
+                        width=common_page.page.window_width * 0.86,
+                        height=common_page.page.window_height * 0.86,
                     ), alignment=ft.alignment.top_left, padding=10, adaptive=True)
             ],
         )
@@ -578,19 +579,18 @@ class Topic(object):
         :return:
         """
         group_id = self.topic_groups_dd.value
-        if group_id is not None:
-            self._lag_label = 'loading...'
-            self.topic_offset, self.topic_lag = None, None
-            self.init_table()
-            e.page.update()
+        self.pr.visible = True
+        self.pr.update()
 
+        if group_id is not None:
+            open_snack_bar(e.page, "正在获取消费组offset信息，请稍后……", success=True)
+
+            self.topic_offset, self.topic_lag = None, None
             topics = self.table_topics
             self.topic_offset, self.topic_lag, = kafka_service.get_topic_offsets(topics, group_id)
-            self.init_table()
-            e.page.update()
-        else:
-            self.init_table()
-            e.page.update()
+        self.init_table()
+        self.pr.visible = False
+        e.page.update()
 
     def search_table(self, e: ControlEvent):
         """

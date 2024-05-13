@@ -9,6 +9,7 @@
 import os
 
 import flet
+import flet_core
 from flet_core import TextStyle
 
 from service.translate import i18n
@@ -48,7 +49,6 @@ PAGE_MIN_HEIGHT = 720
 
 
 def S_Text(value, **kwargs):
-
     return flet.Text(
         selectable=True,
         value=value,
@@ -158,3 +158,18 @@ body = flet.Column(
 
 # 全局进度条
 progress_bar = flet.ProgressBar(visible=False)
+
+
+class page_info:
+    """
+    存储通用page对象
+    """
+
+    def __init__(self):
+        self.page = None
+
+    def set_page(self, page):
+        self.page = page
+
+
+common_page = page_info()
