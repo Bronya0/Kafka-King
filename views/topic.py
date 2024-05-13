@@ -92,7 +92,6 @@ class Topic(object):
 
         self.topic_groups_dd = ft.Dropdown(
             label="请选择消费组",
-            on_change=self.groups_dd_onchange,
             **dd_common_configs
         )
 
@@ -145,7 +144,7 @@ class Topic(object):
         # 数据初始化
         self.describe_topics = kafka_service.get_topics()
         self.describe_topics_map = {i['topic']: i for i in self.describe_topics}
-        self.describe_topics_tmp = self.describe_topics[:self.page_size]
+        self.search_table_handle(self.describe_topics)
 
         # 消费组初始化
         groups = kafka_service.get_groups()
@@ -185,7 +184,6 @@ class Topic(object):
             end_offset = lag[0] if isinstance(lag, list) and lag else self._lag_label
             commit_offset = lag[1] if isinstance(lag, list) and lag else self._lag_label
             _lag = self._lag_label
-            print(lag, end_offset, commit_offset, _lag)
             if isinstance(lag, list) and end_offset is not None and commit_offset is not None:
                 _lag = end_offset - commit_offset
             refactor = len(topic['partitions'][0]['replicas']) if topic['partitions'] else "无分区"
@@ -272,6 +270,7 @@ class Topic(object):
                                     self.search_text,
                                     S_Button(text="创建主题", on_click=self.open_create_topic_dlg_modal,
                                              tooltip="批量输入要创建的主题及参数，一行一个", ),
+                                    S_Button(text="刷新offset", on_click=self.groups_dd_onchange),
                                     self.refresh_button
                                 ]),
                             self.topic_table,
@@ -352,7 +351,7 @@ class Topic(object):
             # topic_offset[topic][partition] = [last_committed, end_offsets, _lag]
             last_committed, end_offsets, _lag = None, None, None
             if self.topic_offset:
-                last_committed, end_offsets, _lag = self.topic_offset[topic_name_][p_id]
+                last_committed, end_offsets, _lag = self.topic_offset.get(topic_name_, {}).get(p_id, (None, None, None))
 
             err_desc = for_code(partition.get('error_code')).description
             err_color = 'green' if partition.get('error_code') == 0 else 'red'
@@ -579,18 +578,24 @@ class Topic(object):
         :return:
         """
         group_id = self.topic_groups_dd.value
+        topics = self.table_topics
+        if group_id is None:
+            open_snack_bar(e.page, "请先选择消费组", success=False)
+            return
+
         self.pr.visible = True
         self.pr.update()
 
-        if group_id is not None:
-            open_snack_bar(e.page, "正在获取消费组offset信息，请稍后……", success=True)
+        open_snack_bar(e.page, "正在获取消费组offset信息，请稍后……", success=True)
 
-            self.topic_offset, self.topic_lag = None, None
-            topics = self.table_topics
-            self.topic_offset, self.topic_lag, = kafka_service.get_topic_offsets(topics, group_id)
+        self.topic_offset, self.topic_lag = None, None
+        self.get_offset_handle(topics, group_id)
         self.init_table()
         self.pr.visible = False
         e.page.update()
+
+    def get_offset_handle(self, topics, group_id):
+        self.topic_offset, self.topic_lag, = kafka_service.get_topic_offsets(topics, group_id)
 
     def search_table(self, e: ControlEvent):
         """
@@ -598,9 +603,13 @@ class Topic(object):
         :param e:
         :return:
         """
+        all_topics = kafka_service.get_topics()
+        self.search_table_handle(all_topics)
+        e.page.update()
+
+    def search_table_handle(self, all_topics):
         search_text_value = self.search_text.value
         _lst = []
-        all_topics = kafka_service.get_topics()
         if search_text_value is not None:
             for i in all_topics:
                 topic_name_ = i.get('topic')
@@ -612,7 +621,6 @@ class Topic(object):
         self.describe_topics = _lst
         self.describe_topics_tmp = _lst[:self.page_size]
         self.init_table()
-        e.page.update()
 
     def topic_page_refresh(self, e):
         self.init()
