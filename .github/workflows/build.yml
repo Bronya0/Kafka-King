@@ -106,7 +106,7 @@ jobs:
       with:
         upload_url: ${{ github.event.release.upload_url }}
         asset_path: ./dist/kafka-king-macos.tar.gz
-        asset_name: kafka-king_v${{ steps.normalise_version.outputs.version }}_macos.tar.gz
+        asset_name: kafka-king_v${{ steps.normalise_version.outputs.version }}_macos-14.tar.gz
         asset_content_type: application/octet-stream
 
   build-linux:
