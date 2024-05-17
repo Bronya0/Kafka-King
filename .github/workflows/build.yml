@@ -1,11 +1,12 @@
-name: mac
+# https://docs.github.com/zh/actions/using-jobs/choosing-the-runner-for-a-job
+name: build-xxx
 
 on:
   release:
     types: [ created ]
 
 jobs:
-  build-win:
+  build-win2022:
     runs-on: windows-2022
     strategy:
       matrix:
@@ -57,7 +58,7 @@ jobs:
         asset_name: kafka-king_v${{ steps.normalise_version.outputs.version }}_windows-2022.zip # 替换成适当的版本和平台标记
         asset_content_type: application/octet-stream # 对于.exe文件，可以是application/octet-stream
 
-  build-mac:
+  build-mac14:
     runs-on: macos-14
 
     # 步骤合集
@@ -109,7 +110,60 @@ jobs:
         asset_name: kafka-king_v${{ steps.normalise_version.outputs.version }}_macos-14.tar.gz
         asset_content_type: application/octet-stream
 
-  build-linux:
+
+  build-mac13:
+    runs-on: macos-13
+
+    # 步骤合集
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Normalise platform tag
+      id: normalise_platform
+      shell: bash
+      run: |
+        tag=$(echo ${{ matrix.platform }} | sed -e 's/\//_/g' -e 's/darwin/mac/g' -e 's/amd64/intel/g')
+        echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+    - name: Normalise version tag
+      id: normalise_version
+      shell: bash
+      run: |
+        version=$(echo ${{ github.event.release.tag_name }} | sed -e 's/v//g')
+        echo "version=$version" >> "$GITHUB_OUTPUT"
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        echo -n ${{ github.event.release.tag_name }} > assets/version.txt
+        
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        flet pack main.py -i assets/icon.icns  -n kafka-king --add-data=assets/*:assets --product-name kafka-king
+        ls -al dist/
+
+    # 打包.app文件夹为zip或tar.gz以方便传输
+    - name: Package .app folder
+      run: |
+         cd dist
+         tar -czf kafka-king-macos.tar.gz kafka-king.app
+
+    - name: Upload Release Asset
+      id: upload-release-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./dist/kafka-king-macos.tar.gz
+        asset_name: kafka-king_v${{ steps.normalise_version.outputs.version }}_macos-13.tar.gz
+        asset_content_type: application/octet-stream
+
+  build-ubuntu-22.04:
     runs-on: ubuntu-22.04
 
     # 步骤合集
