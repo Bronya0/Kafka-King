@@ -36,9 +36,6 @@ class Topic(object):
         self.page_num = 1
         self.page_size = 8
 
-        # if not kafka_service.kac:
-        #     raise Exception("请先选择一个可用的kafka连接！")
-
         # 创建topic输入框
         self.create_topics_multi_text_input = ft.TextField(
             hint_text="例如: \ntopic1,1,2\ntopic2,2,2\ntopic3,3,2",

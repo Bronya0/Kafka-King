@@ -45,7 +45,12 @@ class KafkaService:
             })
         self.SASL_PARAM = SASL_PARAM
         self.connect_name = connect_name
-        self.kac = KafkaAdminClient(**SASL_PARAM)
+        # 此处异常要重置kac，否则会复用之前的历史连接
+        try:
+            self.kac = KafkaAdminClient(**SASL_PARAM)
+        except Exception as e:
+            self.kac = None
+            raise e
 
     def new_client(self, bootstrap_servers: list, sasl_plain_username, sasl_plain_password):
         SASL_PARAM = {"bootstrap_servers": bootstrap_servers}

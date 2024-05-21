@@ -2,7 +2,7 @@ import gc
 import traceback
 
 import flet as ft
-from flet_core import TextField, ControlEvent, TextTheme
+from flet_core import TextField, ControlEvent
 
 from service.check import version_check
 from service.common import S_Text, prefix, GITHUB_URL, TITLE, open_snack_bar, close_dlg, PAGE_WIDTH, PAGE_HEIGHT, \
@@ -86,7 +86,8 @@ class Main:
             bgcolor=ft.colors.SURFACE_VARIANT,
             actions=[
                 self.connect_dd,
-                ft.IconButton(ft.icons.ADD_BOX_OUTLINED, on_click=self.add_dlg_modal, tooltip="添加kafka地址"),
+                # ft.IconButton(ft.icons.ADD_BOX_OUTLINED, on_click=self.add_dlg_modal, tooltip="添加kafka地址"),
+                ft.TextButton("添加", on_click=self.add_dlg_modal, icon=ft.icons.ADD_BOX_OUTLINED, tooltip="添加kafka地址"),
                 # add link
                 ft.IconButton(ft.icons.EDIT, on_click=self.edit_link_modal, tooltip="编辑、删除kafka地址"),
                 # add link
@@ -178,7 +179,6 @@ class Main:
         """
         添加kafka连接 弹框
         """
-
         # 创建输入表单控件
 
         def cancel(event):
@@ -327,14 +327,14 @@ class Main:
         bootstrap_servers, SASL_NAME, SASL_PWD = info_lst
         print(bootstrap_servers)
         self.page.appbar.title = S_Text(f"{TITLE} | 当前连接: {key}")
+        self.Navigation.selected_index = 0
+        print("切换连接时，清空页面缓存")
+        view_instance_map.clear()
+        self.body.controls = []
         self.page.update()
 
         try:
             kafka_service.set_connect(key, bootstrap_servers, SASL_NAME, SASL_PWD)
-            self.Navigation.selected_index = 0
-            # 切换连接时，清空页面缓存
-            view_instance_map.clear()
-
             self.refresh_body()
         except Exception as e:
             self.body.controls = [S_Text(value=f"连接失败：{str(e)}", size=24)]
@@ -360,8 +360,8 @@ class Main:
         if view:
             print(f"读取缓存view: {selected_index}，执行init函数")
         else:
-            view = get_view_instance(selected_index)
-            print(f"无缓存，初始化view：{selected_index}，执行init函数")
+            view = get_view_instance(selected_index)()
+            print(f"无缓存，初始化view：{selected_index}，并执行init函数")
 
         # 先加载框架主体
         try:

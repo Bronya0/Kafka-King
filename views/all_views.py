@@ -15,12 +15,12 @@ def get_view_instance(selected_index):
     切连接的时候，返回重新new的对象，否则只返回单例对象
     """
     return {
-        BROKER: Broker(),
-        TOPIC: Topic(),
-        SIMULATE: Simulate(),
-        MONITOR: Monitor(),
-        SETTINGS: Settings(),
-        SUGGEST: Suggest(),
-        HELP: Help(),
+        BROKER: Broker,
+        TOPIC: Topic,
+        SIMULATE: Simulate,
+        MONITOR: Monitor,
+        SETTINGS: Settings,
+        SUGGEST: Suggest,
+        HELP: Help,
     }[selected_index]
 
