@@ -6,7 +6,7 @@ on:
     types: [ created ]
 
 jobs:
-  build-windows-latest:
+  build-windows:
     runs-on: windows-latest
     strategy:
       matrix:
@@ -117,7 +117,7 @@ jobs:
         asset_name: kafka-king_v${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.tar.gz
         asset_content_type: application/octet-stream
 
-  build-ubuntu-22.04:
+  build-ubuntu:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
