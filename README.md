@@ -30,7 +30,9 @@
 - ……
 
 # 下载
-[下载地址](https://github.com/Bronya0/Kafka-King/releases)，点击【Assets】，选择自己的平台下载，支持windows、macos、linux
+[下载地址](https://github.com/Bronya0/Kafka-King/releases)，点击【Assets】，选择自己的平台下载，支持windows、macos、linux。
+（mac m1/m2芯片请下载arm64版本）
+（windows用户通常下载amd64版本即可）
 
 # 功能截图
 
