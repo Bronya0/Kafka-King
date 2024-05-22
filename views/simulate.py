@@ -228,6 +228,7 @@ class Simulate(object):
 
     def clean_msg(self, e):
         self.consumer_fetch_msg_body.value = None
+        self.consumer_fetch_msg_button.disabled = False
         e.page.update()
 
     def click_send_msg(self, e: ControlEvent):

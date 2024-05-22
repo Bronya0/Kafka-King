@@ -145,26 +145,16 @@ class Broker(object):
         broker_id = e.control.data
         configs = kafka_service.get_configs(res_type='broker', name=broker_id)
 
-        md_text = """
-        | 配置项 | 配置值 | 是否只读 |\n|-|-|-|\n"""
+        _col = ft.ListView(expand=True, spacing=10, padding=10)
+
         for config in configs:
-            config_names = f"**{config['config_names']}**"
+            config_names = f"{config['config_names']}"
             config_value = f"{config['config_value']}" if config['config_value'] is not None else ""
-            read_only = True if config['read_only'] is True else ""
-            md_text += f"| {config_names} | {config_value} | {read_only} |\n"
-        self.config_tab.content = ft.Container(
-            ft.Column(
-                [
-                    ft.Markdown(
-                        value=f"""{md_text}""",
-                        extension_set=ft.MarkdownExtensionSet.GITHUB_FLAVORED,
-                        selectable=True
-                    ),
-                ],
-                scroll=ft.ScrollMode.ALWAYS
-            ),
-            padding=10
-        )
+            _col.controls.append(ft.Row([
+                ft.Text(f" • {config_names}", style=ft.TextStyle(weight=ft.FontWeight.BOLD), ),
+                ft.Text(f"    值：{config_value}"),
+            ]))
+        self.config_tab.content = _col
 
         self.tab.selected_index = 2
         e.control.disabled = False
