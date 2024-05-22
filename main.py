@@ -83,17 +83,18 @@ class Main:
             leading=ft.Image(src="icon.png"),
             leading_width=40,
             title=S_Text(TITLE),
+            adaptive=True,
             bgcolor=ft.colors.SURFACE_VARIANT,
             actions=[
                 self.connect_dd,
-                # ft.IconButton(ft.icons.ADD_BOX_OUTLINED, on_click=self.add_dlg_modal, tooltip="添加kafka地址"),
-                ft.TextButton("添加", on_click=self.add_dlg_modal, icon=ft.icons.ADD_BOX_OUTLINED, tooltip="添加kafka地址"),
-                # add link
-                ft.IconButton(ft.icons.EDIT, on_click=self.edit_link_modal, tooltip="编辑、删除kafka地址"),
-                # add link
-                ft.IconButton(ft.icons.WB_SUNNY_OUTLINED, on_click=self.change_theme, tooltip="切换明暗"),  # theme
-                ft.IconButton(ft.icons.TIPS_AND_UPDATES_OUTLINED, tooltip="去github更新或者提出想法",
-                              url=GITHUB_URL),
+                ft.TextButton("添加", on_click=self.add_dlg_modal, icon=ft.icons.ADD_BOX_OUTLINED, tooltip="添加kafka地址", width=90,
+                              style=ft.ButtonStyle(color=ft.colors.SECONDARY,shape=ft.RoundedRectangleBorder(radius=8))),
+                ft.TextButton("编辑", on_click=self.edit_link_modal, icon=ft.icons.EDIT, tooltip="编辑kafka地址", width=90,
+                              style=ft.ButtonStyle(color=ft.colors.SECONDARY,shape=ft.RoundedRectangleBorder(radius=8))),
+                ft.TextButton("主题", on_click=self.change_theme, icon=ft.icons.WB_SUNNY_OUTLINED, tooltip="切换明暗", width=90,
+                              style=ft.ButtonStyle(color=ft.colors.SECONDARY,shape=ft.RoundedRectangleBorder(radius=8))),
+                ft.TextButton("更新", on_click=self.change_theme, icon=ft.icons.UPGRADE_OUTLINED, tooltip="去github更新或者提出想法", width=90,
+                              style=ft.ButtonStyle(color=ft.colors.SECONDARY,shape=ft.RoundedRectangleBorder(radius=8)), url=GITHUB_URL),
             ],
         )
 
@@ -101,17 +102,22 @@ class Main:
         # 初始化加载全部连接
         self.refresh_dd_links()
 
+        # 页面主体框架
         self.page.add(
             ft.Row(
-                [
-                    self.Navigation,  # 侧边
-                    ft.VerticalDivider(width=1),  # 竖线
-                    self.body,  # 内容
-
-                ],
-                height=600,
+            [
+                self.Navigation,  # 侧边
+                ft.VerticalDivider(width=1),  # 竖线
+                self.body,  # 内容
+            ],
+                expand=True
             ),
-            self.pr
+            ft.Column(
+                [
+                    self.pr
+                ],
+                height=8
+            )
 
         )
 
