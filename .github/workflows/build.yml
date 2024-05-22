@@ -13,7 +13,7 @@ jobs:
         platform:
           - windows/amd64
           - windows/arm64
-          -
+
     # 步骤合集
     steps:
     - uses: actions/checkout@v3
