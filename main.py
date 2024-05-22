@@ -88,7 +88,7 @@ class Main:
             actions=[
                 self.connect_dd,
                 ft.TextButton("添加", on_click=self.add_dlg_modal, icon=ft.icons.ADD_BOX_OUTLINED, tooltip="添加kafka地址", width=90,
-                              style=ft.ButtonStyle(color=ft.colors.SECONDARY,shape=ft.RoundedRectangleBorder(radius=8))),
+                              style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))),
                 ft.TextButton("编辑", on_click=self.edit_link_modal, icon=ft.icons.EDIT, tooltip="编辑kafka地址", width=90,
                               style=ft.ButtonStyle(color=ft.colors.SECONDARY,shape=ft.RoundedRectangleBorder(radius=8))),
                 ft.TextButton("主题", on_click=self.change_theme, icon=ft.icons.WB_SUNNY_OUTLINED, tooltip="切换明暗", width=90,
@@ -461,8 +461,10 @@ def init(page: ft.Page):
     page.title = TITLE
     page.adaptive = True
 
+    # 存储page引用
     common_page.set_page(page)
 
+    # 主题
     theme = page.client_storage.get("theme")
     if theme is not None:
         page.theme_mode = theme
