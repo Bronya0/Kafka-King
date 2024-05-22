@@ -43,7 +43,7 @@ jobs:
         
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        flet pack main.py -i assets/icon.ico -n kafka-king --distpath dist/Kafka-King --add-data=assets/*:assets --product-name kafka-king
+        flet pack main.py -i assets/icon.ico -n kafka-king_v${{ steps.normalise_version.outputs.version }} --distpath dist/Kafka-King --add-data=assets/*:assets --product-name kafka-king
         
         copy README.md dist/Kafka-King/
         copy LICENSE dist/Kafka-King/
@@ -97,7 +97,7 @@ jobs:
         
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        flet pack main.py -i assets/icon.icns  -n kafka-king --add-data=assets/*:assets --product-name kafka-king
+        flet pack main.py -i assets/icon.icns  -n kafka-king_v${{ steps.normalise_version.outputs.version }} --add-data=assets/*:assets --product-name kafka-king
         ls -al dist/
 
     # 打包.app文件夹为zip或tar.gz以方便传输
@@ -153,7 +153,7 @@ jobs:
         
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        flet pack main.py -i assets/icon.ico  -n kafka-king --add-data=assets/*:assets --product-name kafka-king
+        flet pack main.py -i assets/icon.ico  -n kafka-king_v${{ steps.normalise_version.outputs.version }} --add-data=assets/*:assets --product-name kafka-king
         ls -al dist/
 
     # 打包.app文件夹为zip或tar.gz以方便传输
