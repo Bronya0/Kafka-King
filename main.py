@@ -72,8 +72,23 @@ class Main:
         self.Navigation = Navigation
         self.Navigation.on_change = self.refresh_view
 
+        # 工具按钮
+        self.tools = [
+            ft.TextButton("添加kafka连接", on_click=self.add_dlg_modal, icon=ft.icons.ADD_BOX_OUTLINED,
+                          tooltip="添加kafka地址",
+                          style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))),
+            ft.TextButton("编辑当前kafka连接", on_click=self.edit_link_modal, icon=ft.icons.EDIT,
+                          tooltip="编辑kafka地址",
+                          style=ft.ButtonStyle(color=ft.colors.SECONDARY, shape=ft.RoundedRectangleBorder(radius=8))),
+            ft.TextButton("切换主题", on_click=self.change_theme, icon=ft.icons.WB_SUNNY_OUTLINED, tooltip="切换明暗",
+                          style=ft.ButtonStyle(color=ft.colors.SECONDARY, shape=ft.RoundedRectangleBorder(radius=8))),
+            ft.TextButton("更新", on_click=self.change_theme, icon=ft.icons.UPGRADE_OUTLINED,
+                          tooltip="去github更新或者提出想法",
+                          style=ft.ButtonStyle(color=ft.colors.SECONDARY, shape=ft.RoundedRectangleBorder(radius=8)),
+                          url=GITHUB_URL), ]
         # 每个页面的主体
         self.body = body
+        self.body.controls = self.tools
 
         # 底部提示
         self.page.snack_bar = ft.SnackBar(content=ft.Text(""))
@@ -87,14 +102,14 @@ class Main:
             bgcolor=ft.colors.SURFACE_VARIANT,
             actions=[
                 self.connect_dd,
-                ft.TextButton("添加", on_click=self.add_dlg_modal, icon=ft.icons.ADD_BOX_OUTLINED, tooltip="添加kafka地址", width=90,
-                              style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))),
-                ft.TextButton("编辑", on_click=self.edit_link_modal, icon=ft.icons.EDIT, tooltip="编辑kafka地址", width=90,
-                              style=ft.ButtonStyle(color=ft.colors.SECONDARY,shape=ft.RoundedRectangleBorder(radius=8))),
-                ft.TextButton("主题", on_click=self.change_theme, icon=ft.icons.WB_SUNNY_OUTLINED, tooltip="切换明暗", width=90,
-                              style=ft.ButtonStyle(color=ft.colors.SECONDARY,shape=ft.RoundedRectangleBorder(radius=8))),
-                ft.TextButton("更新", on_click=self.change_theme, icon=ft.icons.UPGRADE_OUTLINED, tooltip="去github更新或者提出想法", width=90,
-                              style=ft.ButtonStyle(color=ft.colors.SECONDARY,shape=ft.RoundedRectangleBorder(radius=8)), url=GITHUB_URL),
+                ft.IconButton(on_click=self.add_dlg_modal, icon=ft.icons.ADD_BOX_OUTLINED,
+                              tooltip="添加kafka地址",),
+                ft.IconButton(on_click=self.edit_link_modal, icon=ft.icons.EDIT, tooltip="编辑kafka地址",
+                              style=ft.ButtonStyle(color=ft.colors.SECONDARY,
+                                                   shape=ft.RoundedRectangleBorder(radius=8))),
+                ft.IconButton(on_click=self.change_theme, icon=ft.icons.WB_SUNNY_OUTLINED, tooltip="切换明暗",),
+                ft.IconButton(on_click=self.change_theme, icon=ft.icons.UPGRADE_OUTLINED,
+                              tooltip="去github更新或者提出想法", url=GITHUB_URL),
             ],
         )
 
@@ -105,11 +120,11 @@ class Main:
         # 页面主体框架
         self.page.add(
             ft.Row(
-            [
-                self.Navigation,  # 侧边
-                ft.VerticalDivider(width=1),  # 竖线
-                self.body,  # 内容
-            ],
+                [
+                    self.Navigation,  # 侧边
+                    ft.VerticalDivider(width=1),  # 竖线
+                    self.body,  # 内容
+                ],
                 expand=True
             ),
             ft.Column(
@@ -185,6 +200,7 @@ class Main:
         """
         添加kafka连接 弹框
         """
+
         # 创建输入表单控件
 
         def cancel(event):
@@ -307,7 +323,7 @@ class Main:
         options = []
         print("当前全部连接存储：", conns)
         if not conns:
-            self.connect_dd.label = i18n("请在右侧添加kafka连接")
+            self.connect_dd.label = i18n("请添加kafka连接")
         else:
             self.connect_dd.label = i18n("请选择连接")
             for name, info_lst in conns.items():
@@ -343,7 +359,7 @@ class Main:
             kafka_service.set_connect(key, bootstrap_servers, SASL_NAME, SASL_PWD)
             self.refresh_body()
         except Exception as e:
-            self.body.controls = [S_Text(value=f"连接失败：{str(e)}", size=24)]
+            self.body.controls = [S_Text(value=f"连接失败：{str(e)}", size=24)] + self.tools
         self.pr.visible = False
         self.page.update()
 
@@ -373,7 +389,7 @@ class Main:
         try:
             self.body.controls = view.controls
         except Exception as e:
-            self.body.controls = [S_Text(value=str(e), size=24)]
+            self.body.controls = [S_Text(value=str(e), size=24)] + self.tools
             self.page.update()
             return
 
@@ -387,7 +403,7 @@ class Main:
                 self.body.controls = [S_Text(value=str(err), size=24)]
         except Exception as e:
             traceback.print_exc()
-            self.body.controls = [S_Text(value=str(e), size=24)]
+            self.body.controls = [S_Text(value=str(e), size=24)] + self.tools
             self.pr.visible = False
             self.page.update()
             return
@@ -457,7 +473,6 @@ def init_config(page):
 
 
 def init(page: ft.Page):
-
     page.title = TITLE
     page.adaptive = True
 
