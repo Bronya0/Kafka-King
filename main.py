@@ -501,8 +501,11 @@ def init(page: ft.Page):
 
     Main(page)
 
-    # 版本检查
-    version_check(page)
+    # 版本检查, 务必要包异常，内网无法连接会报错
+    try:
+        version_check(page)
+    except:
+        traceback.print_exc()
 
 
 if __name__ == '__main__':
