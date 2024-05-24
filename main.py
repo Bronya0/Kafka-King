@@ -77,7 +77,7 @@ class Main:
             ft.TextButton("添加kafka连接", on_click=self.add_dlg_modal, icon=ft.icons.ADD_BOX_OUTLINED,
                           tooltip="添加kafka地址",
                           style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))),
-            ft.TextButton("编辑当前kafka连接", on_click=self.edit_link_modal, icon=ft.icons.EDIT,
+            ft.TextButton("编辑/删除当前kafka连接", on_click=self.edit_link_modal, icon=ft.icons.EDIT,
                           tooltip="编辑kafka地址",
                           style=ft.ButtonStyle(color=ft.colors.SECONDARY, shape=ft.RoundedRectangleBorder(radius=8))),
             ft.TextButton("切换主题", on_click=self.change_theme, icon=ft.icons.WB_SUNNY_OUTLINED, tooltip="切换明暗",
@@ -94,16 +94,16 @@ class Main:
         self.page.snack_bar = ft.SnackBar(content=ft.Text(""))
 
         # 顶部导航
+        # 如果 AppBar.adaptive=True 且应用程序在 iOS 或 macOS 设备上打开，则仅使用此列表的第一个元素!!!!!!
         self.page.appbar = ft.AppBar(
             leading=ft.Image(src="icon.png"),
             leading_width=40,
             title=S_Text(TITLE),
-            adaptive=True,
             bgcolor=ft.colors.SURFACE_VARIANT,
             actions=[
                 self.connect_dd,
-                ft.IconButton(on_click=self.add_dlg_modal, icon=ft.icons.ADD_BOX_OUTLINED,
-                              tooltip="添加kafka地址",),
+                ft.TextButton("添加", on_click=self.add_dlg_modal, icon=ft.icons.ADD_BOX_OUTLINED,
+                              tooltip="添加kafka地址",style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))),
                 ft.IconButton(on_click=self.edit_link_modal, icon=ft.icons.EDIT, tooltip="编辑kafka地址",
                               style=ft.ButtonStyle(color=ft.colors.SECONDARY,
                                                    shape=ft.RoundedRectangleBorder(radius=8))),
