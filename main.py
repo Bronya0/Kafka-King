@@ -474,7 +474,6 @@ def init_config(page):
 
 def init(page: ft.Page):
     page.title = TITLE
-    page.adaptive = True
 
     # 存储page引用
     common_page.set_page(page)
