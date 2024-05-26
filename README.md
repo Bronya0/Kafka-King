@@ -13,8 +13,10 @@
 <strong>一个现代、实用的kafka GUI客户端，使用python flet构建。</strong>
 </div>
 
-> 项目完全由python开发，开源免费、简单易懂，右上角点个 **star**，和作者一起学习 python gui开发🥰 
-> <a target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=pDqlVFyLMYEEw8DPJlRSBN27lF8qHV2v&jump_from=webapi&authKey=Wle/K0ARM1YQWlpn6vvfiZuMedy2tT9BI73mUvXVvCuktvi0fNfmNR19Jhyrf2Nz">研发技术交流群：964440643</a>
+> 项目完全由python开发，开源免费、简单易懂，右上角点个 **star**，和作者一起学习🥰 <a target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=pDqlVFyLMYEEw8DPJlRSBN27lF8qHV2v&jump_from=webapi&authKey=Wle/K0ARM1YQWlpn6vvfiZuMedy2tT9BI73mUvXVvCuktvi0fNfmNR19Jhyrf2Nz">研发技术交流群：964440643</a>
+ 
+😋👍同款elastic search客户端 `ES-King` 开发中，更好用，更简单！发布地址：https://github.com/Bronya0/ES-King 
+
 
 
 # 功能清单
