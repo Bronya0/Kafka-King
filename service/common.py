@@ -173,3 +173,20 @@ class page_info:
 
 
 common_page = page_info()
+
+
+def build_tab_container(col_controls):
+    """
+    一个通用的、自适应的内容
+    """
+    return flet.Column(
+            scroll=flet.ScrollMode.ALWAYS,  # 设置滚动条始终显示
+            controls=[
+                flet.Container(
+                    alignment=flet.alignment.top_left, padding=10,
+                    content=flet.Column(
+                        scroll=flet.ScrollMode.ALWAYS,
+                        controls=col_controls
+                    )
+                )
+            ])

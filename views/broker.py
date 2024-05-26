@@ -4,7 +4,7 @@
 import flet as ft
 from flet_core import ControlEvent
 
-from service.common import S_Text
+from service.common import S_Text, build_tab_container
 from service.kafka_service import kafka_service
 
 
@@ -30,11 +30,11 @@ class Broker(object):
 
         # 先加载框架
         self.base_info_tab = ft.Tab(
-            text="基础信息", content=ft.Container(), icon=ft.icons.INFO_OUTLINE,
+            text="基础信息", content=ft.Column(), icon=ft.icons.INFO_OUTLINE
         )
 
         self.node_tab = ft.Tab(
-            text='集群节点列表', content=ft.Container(), icon=ft.icons.HIVE_OUTLINED,
+            text='集群节点列表', content=ft.Column(), icon=ft.icons.HIVE_OUTLINED,
         )
 
         self.config_tab = ft.Tab(
@@ -43,13 +43,11 @@ class Broker(object):
         )
 
         self.tab = ft.Tabs(
-            animation_duration=300,
             tabs=[
                 self.node_tab,
                 self.base_info_tab,
                 self.config_tab,
             ],
-            expand=1,
         )
 
         self.controls = [
@@ -61,81 +59,67 @@ class Broker(object):
             return "请先选择一个可用的kafka连接！\nPlease select an available kafka connection first!"
 
         self.meta, self.api_version = kafka_service.get_brokers()
-        self.base_info = ft.Column(
-            [
-                ft.DataTable(
-                    columns=[
-                        ft.DataColumn(S_Text(f"{self.throttle_time_ms}")),
-                        ft.DataColumn(S_Text(f"{self.cluster_id}")),
-                        ft.DataColumn(S_Text(f"{self.controller_id}")),
-                        ft.DataColumn(S_Text(f"{self.version}")),
+        self.base_info = ft.DataTable(
+            columns=[
+                ft.DataColumn(S_Text(f"{self.throttle_time_ms}")),
+                ft.DataColumn(S_Text(f"{self.cluster_id}")),
+                ft.DataColumn(S_Text(f"{self.controller_id}")),
+                ft.DataColumn(S_Text(f"{self.version}")),
+            ],
+            rows=[
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(S_Text(f"{self.meta[self.throttle_time_ms]}")),
+                        ft.DataCell(S_Text(f"{self.meta[self.cluster_id]}")),
+                        ft.DataCell(S_Text(f"{self.meta[self.controller_id]}")),
+                        ft.DataCell(S_Text(f"{self.api_version}")),
                     ],
-                    rows=[
-                        ft.DataRow(
-                            cells=[
-                                ft.DataCell(S_Text(f"{self.meta[self.throttle_time_ms]}")),
-                                ft.DataCell(S_Text(f"{self.meta[self.cluster_id]}")),
-                                ft.DataCell(S_Text(f"{self.meta[self.controller_id]}")),
-                                ft.DataCell(S_Text(f"{self.api_version}")),
-                            ],
-                        )
-                    ],
-                    column_spacing=20,
-
                 )
             ],
-            scroll=ft.ScrollMode.ALWAYS,
-            height=page.window_height,
-
+            column_spacing=20,
+            expand=True
         )
 
-        self.cluster_table = ft.Column(
-            [
-                ft.DataTable(
-                    columns=[
-                        ft.DataColumn(S_Text("broker.id")),
-                        ft.DataColumn(S_Text("host")),
-                        ft.DataColumn(S_Text("port")),
-                        ft.DataColumn(S_Text("机架感知")),
-                        ft.DataColumn(S_Text("查看配置")),
-                    ],
-                    rows=[
-                        ft.DataRow(
-                            cells=[
-                                ft.DataCell(S_Text(broker['node_id'])),
-                                ft.DataCell(S_Text(broker['host'])),
-                                ft.DataCell(S_Text(broker['port'])),
-                                ft.DataCell(S_Text(broker['rack'])),
-                                ft.DataCell(ft.IconButton(icon=ft.icons.CONSTRUCTION, data=broker['node_id'],
-                                                          on_click=self.show_config_tab)),
-                            ],
-                        )
-                        for broker in sorted(self.meta['brokers'], key=lambda x: x['node_id'], )
-                    ],
-                    column_spacing=20,
-                )
+        self.cluster_table = ft.DataTable(
+            columns=[
+                ft.DataColumn(S_Text("broker.id")),
+                ft.DataColumn(S_Text("host")),
+                ft.DataColumn(S_Text("port")),
+                ft.DataColumn(S_Text("机架感知")),
+                ft.DataColumn(S_Text("查看配置")),
             ],
-            scroll=ft.ScrollMode.ALWAYS,
-            height=page.window_height,
-
+            rows=[
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(S_Text(broker['node_id'])),
+                        ft.DataCell(S_Text(broker['host'])),
+                        ft.DataCell(S_Text(broker['port'])),
+                        ft.DataCell(S_Text(broker['rack'])),
+                        ft.DataCell(ft.IconButton(icon=ft.icons.CONSTRUCTION, data=broker['node_id'],
+                                                  on_click=self.show_config_tab)),
+                    ],
+                )
+                for broker in sorted(self.meta['brokers'], key=lambda x: x['node_id'], )
+            ],
+            column_spacing=20,
+            expand=True
         )
 
-        self.base_info_tab.content = ft.Row(
-            wrap=False,  # 禁止换行，以确保内容在一行内展示并出现滚动条
-            scroll=ft.ScrollMode.ALWAYS,  # 设置滚动条始终显示
-            expand=True,  # 让Row填充页面宽度
-            controls=[
-                ft.Container(
-                    content=self.base_info, alignment=ft.alignment.top_left, padding=10
-                )])
+        self.base_info_tab.content = build_tab_container(
+            col_controls=[
+                ft.Row([
+                    self.base_info,
+                ])
+            ]
+        )
 
-        self.node_tab.content = ft.Row(
-            wrap=False,  # 禁止换行，以确保内容在一行内展示并出现滚动条
-            scroll=ft.ScrollMode.ALWAYS,  # 设置滚动条始终显示
-            expand=True,  # 让Row填充页面宽度
-            controls=[ft.Container(
-                self.cluster_table, alignment=ft.alignment.top_left, padding=10, adaptive=True
-            )])
+        self.node_tab.content = build_tab_container(
+            col_controls=[
+                ft.Row([
+                    self.cluster_table,
+                ])
+            ]
+        )
 
     def show_config_tab(self, e: ControlEvent):
         """

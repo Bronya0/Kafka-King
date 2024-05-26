@@ -9,7 +9,7 @@ from kafka.admin import NewTopic
 from kafka.errors import for_code
 
 from service.common import S_Text, open_snack_bar, S_Button, dd_common_configs, close_dlg, SIMULATE, view_instance_map, \
-    Navigation, body, progress_bar, common_page
+    Navigation, body, progress_bar, common_page, build_tab_container
 from service.kafka_service import kafka_service
 from views.simulate import Simulate
 
@@ -170,6 +170,7 @@ class Topic(object):
             ],
             rows=rows,
             column_spacing=20,
+            expand=True
         )
         _topics = []
         # 根据self.describe_topics、self.page_num、self.page_size实现分页
@@ -197,7 +198,7 @@ class Topic(object):
             rows.append(
                 ft.DataRow(
                     cells=[
-                        ft.DataCell(S_Text(offset+i+1)),
+                        ft.DataCell(S_Text(offset + i + 1)),
                         ft.DataCell(ft.Icon(ft.icons.CIRCLE, color=err_color, size=16, tooltip=err_desc)),
                         ft.DataCell(S_Text(topic_name_, size=13)),
                         ft.DataCell(S_Text(refactor)),
@@ -253,10 +254,8 @@ class Topic(object):
         self.table_topics = _topics
 
         # init topic tab
-        self.topic_tab.content = ft.Row(
-            wrap=False,  # 禁止换行，以确保内容在一行内展示并出现滚动条
+        self.topic_tab.content = ft.Column(
             scroll=ft.ScrollMode.ALWAYS,  # 设置滚动条始终显示
-            expand=True,  # 让Row填充页面宽度
             controls=[
                 ft.Container(
                     ft.Column(
@@ -270,7 +269,8 @@ class Topic(object):
                                     S_Button(text="刷新offset", on_click=self.groups_dd_onchange),
                                     self.refresh_button
                                 ]),
-                            self.topic_table,
+
+                            ft.Row([self.topic_table]),
                             ft.Row(
                                 [
                                     # 翻页图标和当前页显示
@@ -280,7 +280,7 @@ class Topic(object):
                                         on_click=self.page_prev,
                                         tooltip="上一页",
                                     ),
-                                    ft.Text(f"{self.page_num}/{int(len(self.describe_topics) / self.page_size)+1}"),
+                                    ft.Text(f"{self.page_num}/{int(len(self.describe_topics) / self.page_size) + 1}"),
                                     ft.IconButton(
                                         icon=ft.icons.ARROW_FORWARD,
                                         icon_size=20,
@@ -292,9 +292,7 @@ class Topic(object):
                             )
                         ],
                         scroll=ft.ScrollMode.ALWAYS,
-                        width=common_page.page.window_width * 0.86,
-                        height=common_page.page.window_height * 0.86,
-                    ), alignment=ft.alignment.top_left, padding=10, adaptive=True)
+                    ), alignment=ft.alignment.top_left, padding=10)
             ],
         )
 
@@ -338,6 +336,7 @@ class Topic(object):
                 ft.DataColumn(S_Text("积压量")),
             ],
             rows=rows,
+            expand=True
 
         )
         partitions = self.describe_topics_map[topic_name_]['partitions']
@@ -371,27 +370,20 @@ class Topic(object):
             )
 
         # 初始化 partition_tab 页面
-        self.partition_tab.content = ft.Row(
-            wrap=False,  # 禁止换行，以确保内容在一行内展示并出现滚动条
-            scroll=ft.ScrollMode.ALWAYS,  # 设置滚动条始终显示
-            expand=True,  # 让Row填充页面宽度
-            controls=[
-                ft.Container(
-                    ft.Column(
-                        [
-                            ft.Row([
-                                self.partition_topic_dd,
-                                S_Button(text="为主题添加额外的分区", on_click=self.open_create_partition_dlg_modal,
-                                         # Create Partitions
-                                         tooltip="为当前topic增加额外的分区数", ),
-                            ]),
-                            self.partition_table
-                        ],
-                        scroll=ft.ScrollMode.ALWAYS
-                    ),
-                    alignment=ft.alignment.top_left, padding=10, adaptive=True,
-                    width=1120
-                )])
+        self.partition_tab.content = build_tab_container(
+            col_controls=[
+                ft.Row([
+                    self.partition_topic_dd,
+                    S_Button(text="为主题添加额外的分区", on_click=self.open_create_partition_dlg_modal,
+                             # Create Partitions
+                             tooltip="为当前topic增加额外的分区数", ),
+                ]),
+                ft.Row([
+                    self.partition_table
+                ]),
+
+            ]
+        )
 
     def click_topic_button(self, e: ControlEvent):
         """

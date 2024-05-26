@@ -5,7 +5,8 @@ import datetime
 import flet as ft
 import requests
 
-from service.common import S_Button, GITHUB_URL, ISSUES_URL, ISSUES_API_URL, GITHUB_REPOS_URL, progress_bar
+from service.common import S_Button, GITHUB_URL, ISSUES_URL, ISSUES_API_URL, GITHUB_REPOS_URL, progress_bar, \
+    build_tab_container
 
 
 class Suggest(object):
@@ -18,7 +19,7 @@ class Suggest(object):
         self.repo = ft.Text(value="", size=16)
 
         self.controls = [
-            ft.Column(
+            build_tab_container(
                 [
                     ft.Row(
                         [
@@ -29,27 +30,28 @@ class Suggest(object):
                         [
                             ft.Markdown(
                                 value="""
-- 提建议: {}
-- 喜欢的话可以点个star，更新更有动力！
-                                """.format(GITHUB_URL),
+        - 提建议: {}
+        - 喜欢的话可以点个star，更新更有动力！
+                                        """.format(GITHUB_URL),
                                 selectable=True,
                                 auto_follow_links=True,
                             ),
                         ]
                     ),
                     self.repo,
+                    ft.Text("GITHUB 问题合集", size=20),
+                    self.issues,
+                    ft.Row([
+                        S_Button(text="项目主页",
+                                 url=GITHUB_URL,
+                                 ),
+                        S_Button(text="BUG反馈",
+                                 url=ISSUES_URL,
+                                 )
+                    ]),
                 ],
-            ),
-            ft.Text("GITHUB 问题合集", size=20),
-            self.issues,
-            ft.Row([
-                S_Button(text="项目主页",
-                         url=GITHUB_URL,
-                         ),
-                S_Button(text="BUG反馈",
-                         url=ISSUES_URL,
-                         )
-            ]),
+            )
+
         ]
 
     def init(self, page=None):

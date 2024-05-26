@@ -12,7 +12,7 @@ import traceback
 import flet as ft
 from flet_core import ControlEvent
 
-from service.common import dd_common_configs, S_Button, open_snack_bar, KAFKA_KING_GROUP
+from service.common import dd_common_configs, S_Button, open_snack_bar, KAFKA_KING_GROUP, build_tab_container
 from service.kafka_service import kafka_service
 
 
@@ -71,14 +71,13 @@ class Simulate(object):
             min_lines=8,
             max_lines=8,
             text_size=14,
-            width=1000,
+            expand=True,
             hint_text="支持字符串，可以输入String、Json等消息。",
-            adaptive=True
         )
 
         # 消息倍数
         self.producer_slider = ft.Slider(min=1, max=10000, divisions=50, label="×{value}", value=1,
-                                         on_change=self.update_text, adaptive=True, width=1000)
+                                         on_change=self.update_text, expand=True)
 
         # send button
         self.producer_send_button = S_Button(
@@ -118,6 +117,7 @@ class Simulate(object):
         # consumer fetch msg text
         self.consumer_fetch_msg_body = ft.Text(
             selectable=True,
+            expand=True
         )
 
         # consumer tap
@@ -162,69 +162,68 @@ class Simulate(object):
         self.producer_slider_value = ft.Text(f"消息发送倍数：{self.producer_slider.value} (默认*1)")
 
         # init producer tab
-        self.producer_tab.content = ft.Row(
-            wrap=False,  # 禁止换行，以确保内容在一行内展示并出现滚动条
-            scroll=ft.ScrollMode.ALWAYS,  # 设置滚动条始终显示
-            expand=True,  # 让Row填充页面宽度
-            controls=[
-                ft.Container(
-                    content=ft.Column(
-                        [
-                            ft.Row([
-                                self.producer_topic_dd,
-                                self.producer_msg_key_input,
-                                self.producer_acks_input,
-                                self.producer_batch_size_input,
-                                self.producer_linger_ms_input
-                            ]),
-                            ft.Markdown(value="""# 输入单条消息内容"""),
-                            # msg input
-                            self.producer_send_input,
-                            # enable gzip
-                            self.producer_compress_switch,
-                            # msg multiplier
-                            self.producer_slider_value,
-                            self.producer_slider,
-                            # msg send button
-                            self.producer_send_button
-                        ],
-                        scroll=ft.ScrollMode.ALWAYS,
-                        adaptive=True
-                    ),
-                    alignment=ft.alignment.top_left,
-                    padding=10,
-                    adaptive=True
-                )])
+        self.producer_tab.content = build_tab_container(
+            [
+                ft.Row([
+                    self.producer_topic_dd,
+                    self.producer_msg_key_input,
+                    self.producer_acks_input,
+                    self.producer_batch_size_input,
+                    self.producer_linger_ms_input
+                ]),
+                ft.Markdown(value="""# 输入单条消息内容"""),
+
+                ft.Row(
+                    [
+                        # msg input
+                        self.producer_send_input,
+                    ]
+                ),
+                ft.Row(
+                    [
+                        # enable gzip
+                        self.producer_compress_switch,
+                    ]
+                ),
+                ft.Row(
+                    [
+                        # msg multiplier
+                        self.producer_slider_value,
+                    ]
+                ),
+                ft.Row(
+                    [
+                        self.producer_slider,
+                    ]
+                ),
+                # msg send button
+                self.producer_send_button
+            ]
+        )
 
         # init consumer tab
-        self.consumer_tab.content = ft.Row(
-            wrap=False,  # 禁止换行，以确保内容在一行内展示并出现滚动条
-            scroll=ft.ScrollMode.ALWAYS,  # 设置滚动条始终显示
-            expand=True,  # 让Row填充页面宽度
-            controls=[
-                ft.Container(
-                    content=ft.Column([
-                        ft.Row([
-                            self.consumer_topic_dd,
-                            self.consumer_fetch_size_input,
-                            ft.Text(f"内置消费者组（避免干扰正常业务）:  {KAFKA_KING_GROUP}"),
-                            ft.Text(f"拉取超时时间:  {self.kafka_fetch_timeout}")
-                        ]),
-                        ft.Row([
-                            self.consumer_fetch_msg_button,
-                            S_Button(
-                                text="清空界面",
-                                on_click=self.clean_msg,
-                            ),
-                        ]),
-
-                        self.consumer_fetch_msg_body,
-                    ],
-
-                        scroll=ft.ScrollMode.ALWAYS,
+        self.consumer_tab.content = build_tab_container(
+            [
+                ft.Row([
+                    self.consumer_topic_dd,
+                    self.consumer_fetch_size_input,
+                    ft.Text(f"内置消费者组（避免干扰正常业务）:  {KAFKA_KING_GROUP}"),
+                    ft.Text(f"拉取超时时间:  {self.kafka_fetch_timeout}")
+                ]),
+                ft.Row([
+                    self.consumer_fetch_msg_button,
+                    S_Button(
+                        text="清空界面",
+                        on_click=self.clean_msg,
                     ),
-                    alignment=ft.alignment.top_left, padding=10, adaptive=True
-                )])
+                ]),
+                ft.Row(
+                    [
+                        self.consumer_fetch_msg_body,
+                    ]
+                )
+
+            ])
 
     def clean_msg(self, e):
         self.consumer_fetch_msg_body.value = None
