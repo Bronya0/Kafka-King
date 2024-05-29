@@ -287,7 +287,9 @@ class Topic(object):
                                         on_click=self.page_next,
                                         tooltip="下一页",
                                     ),
-
+                                    ft.Text(f"每页{self.page_size}条"),
+                                    ft.Slider(min=5, max=55, divisions=10, round=1, value=self.page_size,
+                                              label="{value}", on_change_end=self.page_size_change),
                                 ]
                             )
                         ],
@@ -317,6 +319,14 @@ class Topic(object):
         self.page_num += 1
         offset = (self.page_num - 1) * self.page_size
         self.describe_topics_tmp = self.describe_topics[offset:offset + self.page_size]
+
+        self.init_table()
+        e.page.update()
+
+    def page_size_change(self, e):
+        # page
+        self.page_size = int(e.control.value)
+        self.describe_topics_tmp = self.describe_topics[:self.page_size]
 
         self.init_table()
         e.page.update()
