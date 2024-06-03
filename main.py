@@ -140,7 +140,6 @@ class Main:
         """
         连接测试
         """
-        ori = e.control.text
         e.control.text = "连接中……"
         e.page.update()
         conn_name_input, kafka_input, sasl_plain_username, sasl_plain_password = [i.value for i in e.control.data]
@@ -161,11 +160,8 @@ class Main:
                 msg = f"连接失败: {err}"
                 color = "#000000"
 
-        self.page.snack_bar.content = ft.Text(msg)
-        self.page.snack_bar.bgcolor = color
-        self.page.snack_bar.open = True
-        self.page.update()
-        e.control.text = ori
+        e.control.text = msg
+        e.control.style = ft.ButtonStyle(color=color)
         self.page.update()
 
     def add_connect(self, e):
