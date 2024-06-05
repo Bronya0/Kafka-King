@@ -48,6 +48,8 @@ class Broker(object):
                 self.base_info_tab,
                 self.config_tab,
             ],
+            animation_duration=300,
+            expand=True
         )
 
         self.controls = [
