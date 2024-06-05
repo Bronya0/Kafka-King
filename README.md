@@ -10,7 +10,7 @@
 ![GitHub stars](https://img.shields.io/github/stars/Bronya0/Kafka-King)
 ![GitHub forks](https://img.shields.io/github/forks/Bronya0/Kafka-King)
 
-<strong>一个现代、实用的kafka GUI客户端，使用flet构建。</strong>
+<strong>一个现代、实用的kafka GUI客户端。</strong>
 </div>
 
 本项目是一个kafka GUI客户端，支持各个系统，开源免费、简单好用。
