@@ -72,6 +72,74 @@ class Main:
         self.Navigation = Navigation
         self.Navigation.on_change = self.refresh_view
 
+        self.color_menu_item = [
+            ft.MenuItemButton(
+                data="primary",
+                content=ft.Text("default"),
+                on_click=self.change_color,
+            ),
+            ft.MenuItemButton(
+                data="red",
+                content=ft.Text("red"),
+                on_click=self.change_color,
+            ),
+            ft.MenuItemButton(
+                data="orange",
+                content=ft.Text("orange"),
+                on_click=self.change_color,
+            ),
+            ft.MenuItemButton(
+                data="pink",
+                content=ft.Text("pink"),
+                on_click=self.change_color,
+            ),
+            ft.MenuItemButton(
+                data="yellow",
+                content=ft.Text("yellow"),
+                on_click=self.change_color,
+            ),
+            ft.MenuItemButton(
+                data="green",
+                content=ft.Text("green"),
+                on_click=self.change_color,
+            ),
+            ft.MenuItemButton(
+                data="blue",
+                content=ft.Text("blue"),
+                on_click=self.change_color,
+            ),
+            ft.MenuItemButton(
+                data="purple",
+                content=ft.Text("purple"),
+                on_click=self.change_color,
+            ),
+            ft.MenuItemButton(
+                data="grey",
+                content=ft.Text("grey"),
+                on_click=self.change_color,
+            ),
+            ft.MenuItemButton(
+                data="white",
+                content=ft.Text("white"),
+                on_click=self.change_color,
+            ),
+            ft.MenuItemButton(
+                data="black",
+                content=ft.Text("black"),
+                on_click=self.change_color,
+            ),
+
+        ]
+        self.color_menu = ft.MenuBar(
+            style=ft.MenuStyle(),
+            controls=[
+                ft.SubmenuButton(
+                    content=ft.Text(f"配色"),
+                    leading=ft.Icon(ft.icons.COLORIZE),
+                    controls=self.color_menu_item
+                )
+            ]
+        )
         # 工具按钮
         self.tools = [
             ft.TextButton("添加kafka连接", on_click=self.add_dlg_modal, icon=ft.icons.ADD_BOX_OUTLINED,
@@ -85,7 +153,9 @@ class Main:
             ft.TextButton("更新", on_click=self.change_theme, icon=ft.icons.UPGRADE_OUTLINED,
                           tooltip="去github更新或者提出想法",
                           style=ft.ButtonStyle(color=ft.colors.SECONDARY, shape=ft.RoundedRectangleBorder(radius=8)),
-                          url=GITHUB_URL), ]
+                          url=GITHUB_URL),
+            self.color_menu
+        ]
         # 每个页面的主体
         self.body = body
         self.body.controls = self.tools
@@ -110,6 +180,7 @@ class Main:
                 ft.IconButton(on_click=self.change_theme, icon=ft.icons.WB_SUNNY_OUTLINED, tooltip="切换明暗",),
                 ft.IconButton(on_click=self.change_theme, icon=ft.icons.UPGRADE_OUTLINED,
                               tooltip="去github更新或者提出想法", url=GITHUB_URL),
+                self.color_menu
             ],
         )
 
@@ -413,6 +484,19 @@ class Main:
         view_instance_map[selected_index] = view
         gc.collect()
 
+    def change_color(self, e):
+        """
+        切换主题颜色
+        """
+        try:
+            self.page.theme.color_scheme_seed = e.control.data
+            self.page.update()
+            self.page.client_storage.set("color", e.control.data)
+            print("切换主题颜色：", e.control.data)
+        except Exception as e:
+            traceback.print_exc()
+            self.page.update()
+
     def change_theme(self, e):
 
         change = {
@@ -486,7 +570,9 @@ def init(page: ft.Page):
         lang.language = language
 
     # 主题
-    page.theme = ft.Theme(font_family=get_default_font(get_os_platform()))
+    font_family = get_default_font(get_os_platform())
+    color = page.client_storage.get("color")
+    page.theme = ft.Theme(font_family=font_family, color_scheme_seed=color)
 
     # 窗口大小
     page.window_width = config['default_width'] if 'default_width' in config else PAGE_WIDTH
