@@ -154,7 +154,6 @@ class Main:
                           tooltip="去github更新或者提出想法",
                           style=ft.ButtonStyle(color=ft.colors.SECONDARY, shape=ft.RoundedRectangleBorder(radius=8)),
                           url=GITHUB_URL),
-            self.color_menu
         ]
         # 每个页面的主体
         self.body = body
