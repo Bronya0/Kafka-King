@@ -14,10 +14,11 @@
 </div>
 
 本项目是一个kafka GUI客户端，支持各个系统，开源免费、简单好用。
+点个star支持作者辛苦开源吧 谢谢❤❤
 
-本项目无需捐赠，你的一个**star**，就是对作者最好的支持。加群和作者一起交流： <a target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=pDqlVFyLMYEEw8DPJlRSBN27lF8qHV2v&jump_from=webapi&authKey=Wle/K0ARM1YQWlpn6vvfiZuMedy2tT9BI73mUvXVvCuktvi0fNfmNR19Jhyrf2Nz">研发技术交流群：964440643</a>
+加群和作者一起交流： <a target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=pDqlVFyLMYEEw8DPJlRSBN27lF8qHV2v&jump_from=webapi&authKey=Wle/K0ARM1YQWlpn6vvfiZuMedy2tT9BI73mUvXVvCuktvi0fNfmNR19Jhyrf2Nz">研发技术交流群：964440643</a>
  
-😋👍另外，同款elastic search客户端 `ES-King` 开发中，更好用，更简单！发布地址：https://github.com/Bronya0/ES-King 
+同款elasticsearch客户端 `ES-King` ：https://github.com/Bronya0/ES-King 
 
 
 
