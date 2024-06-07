@@ -216,6 +216,7 @@ class Main:
         print("连接测试：", conn_name_input, kafka_input, sasl_plain_username, sasl_plain_password)
 
         color = "green"
+        err = None
         if None in [conn_name_input, kafka_input] or "" in [conn_name_input, kafka_input]:
             msg = "请先填写kafka连接"
         elif sasl_plain_username and not sasl_plain_password or sasl_plain_password and not sasl_plain_username:
@@ -230,6 +231,7 @@ class Main:
                 color = "red"
 
         e.control.text = msg
+        e.control.tooltip = err
         e.control.style = ft.ButtonStyle(color=color)
         self.page.update()
 
