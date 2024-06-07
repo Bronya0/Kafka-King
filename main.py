@@ -215,20 +215,19 @@ class Main:
         conn_name_input, kafka_input, sasl_plain_username, sasl_plain_password = [i.value for i in e.control.data]
         print("连接测试：", conn_name_input, kafka_input, sasl_plain_username, sasl_plain_password)
 
+        color = "green"
         if None in [conn_name_input, kafka_input] or "" in [conn_name_input, kafka_input]:
             msg = "请先填写kafka连接"
-            color = "#000000"
         elif sasl_plain_username and not sasl_plain_password or sasl_plain_password and not sasl_plain_username:
             msg = "SASL填写不正确（如未开启认证可以不填）"
-            color = "#000000"
         else:
             res, err = kafka_service.new_client(kafka_input.split(','), sasl_plain_username, sasl_plain_password)
             if res:
                 msg = f"连接成功"
-                color = "#00a0b0"
+                color = "green"
             else:
-                msg = f"连接失败: {err}"
-                color = "#000000"
+                msg = f"连接失败"
+                color = "red"
 
         e.control.text = msg
         e.control.style = ft.ButtonStyle(color=color)
