@@ -546,7 +546,7 @@ class Topic(object):
             page.update()
 
         dlg_modal = ft.AlertDialog(
-            modal=True,
+            modal=False,
             title=ft.Text("请确认"),
             content=ft.Text("您真的要删除topic: {}吗？".format(topic_name)),
             actions=[
