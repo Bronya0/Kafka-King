@@ -28,7 +28,7 @@ def version_check(page: ft.Page):
         print("需要更新 {} -> {}".format(version, latest_version))
 
         page.dialog = ft.AlertDialog(
-            modal=True,
+            modal=False,
             title=ft.Text("🎉🎉发现新版本: {}".format(latest_version)),
             actions=[
                 ft.Row(

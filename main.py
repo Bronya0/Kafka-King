@@ -29,7 +29,7 @@ class Main:
         # 存储当前实例化的页面，用于左侧点击切换
 
         self.delete_modal = ft.AlertDialog(
-            modal=True,
+            modal=False,
             title=S_Text("删除kafka连接？"),
             actions=[
             ],
