@@ -213,36 +213,47 @@ class Topic(object):
                         ft.DataCell(S_Text(_lag, color='red' if isinstance(lag, list) and int(_lag) > 10000 else None,
                                            size=13)),
                         ft.DataCell(
-                            ft.Row([
-                                ft.TextButton(
-                                    text="生产",
-                                    on_click=self.show_produce_page,
-                                    data=topic_name_,
-                                    disabled=disabled,
+                            ft.MenuBar(
+                                style=ft.MenuStyle(
+                                    alignment=ft.alignment.top_left,
                                 ),
-                                ft.TextButton(
-                                    text="消费",
-                                    on_click=self.show_consumer_page,
-                                    data=topic_name_,
-                                    disabled=disabled
-                                ),
-                                ft.TextButton(
-                                    text="配置",
-                                    style=ft.ButtonStyle(color=ft.colors.BROWN),
-                                    on_click=self.show_config_tab,
-                                    data=topic_name_,
-                                ),
-                                ft.TextButton(
-                                    text="删除",
-                                    style=ft.ButtonStyle(color=ft.colors.RED) if not topic.get(
-                                        'is_internal') else ft.ButtonStyle(color=ft.colors.GREY),
-                                    on_click=self.open_delete_dialog,
-                                    data=topic_name_,
-                                    disabled=disabled
-                                ),
+                                controls=[
+                                    ft.SubmenuButton(
+                                        content=ft.Text("操作"),
+                                        height=40,
+                                        leading=ft.Icon(ft.icons.MORE_VERT),
+                                        controls=[
+                                            ft.MenuItemButton(
+                                                data=topic_name_,
+                                                content=ft.Text("生产"),
+                                                on_click=self.show_produce_page,
+                                                disabled=disabled,
+                                            ),
+                                            ft.MenuItemButton(
+                                                data=topic_name_,
+                                                content=ft.Text("消费"),
+                                                on_click=self.show_consumer_page,
+                                                disabled=disabled,
 
-                            ],
-                                spacing=0
+                                            ),
+                                            ft.MenuItemButton(
+                                                data=topic_name_,
+                                                content=ft.Text("配置", color="brown"),
+                                                on_click=self.show_config_tab,
+                                                disabled=disabled,
+
+                                            ),
+                                            ft.MenuItemButton(
+                                                data=topic_name_,
+                                                content=ft.Text("删除", color="red"),
+                                                on_click=self.open_delete_dialog,
+                                                disabled=disabled,
+
+                                            ),
+
+                                        ]
+                                    ),
+                                ]
                             )
 
                         ),
