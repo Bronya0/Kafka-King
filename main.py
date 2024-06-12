@@ -526,13 +526,9 @@ class Main:
             page.window_top = self.window_top
             page.window_left = self.window_left
 
-        elif e.data == "resized":
+        else:
             self.page_width = page.window_width
             self.page_height = page.window_height
-            self.window_top = page.window_top
-            self.window_left = page.window_left
-
-        elif e.data == "moved":
             self.window_top = page.window_top
             self.window_left = page.window_left
 
