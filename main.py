@@ -16,10 +16,10 @@ from views.all_views import get_view_instance
 
 class Main:
 
-    def __init__(self, page):
-        self.page = page
+    def __init__(self, page: ft.Page):
+        self.page: ft.Page = page
 
-        page.on_window_event = self.on_win_event
+        self.page.on_window_event = self.on_win_event
 
         self.page_width = PAGE_WIDTH
         self.page_height = PAGE_HEIGHT
@@ -130,15 +130,13 @@ class Main:
             ),
 
         ]
-        self.color_menu = ft.MenuBar(
-            style=ft.MenuStyle(),
-            controls=[
-                ft.SubmenuButton(
-                    content=ft.Text(f"配色"),
-                    leading=ft.Icon(ft.icons.COLORIZE),
-                    controls=self.color_menu_item
-                )
-            ]
+        self.color_menu = ft.Dropdown(
+            options=self.color_menu_item,
+            label="配色",
+            height=35,
+            alignment=ft.alignment.center_left,
+            content_padding=5,
+            width=100,
         )
         # 工具按钮
         self.tools = [
@@ -160,7 +158,7 @@ class Main:
         self.body.controls = self.tools
 
         # 底部提示
-        self.page.snack_bar = ft.SnackBar(content=ft.Text(""))
+        self.page.overlay.append(ft.SnackBar(content=ft.Text("")))
 
         # 顶部导航
         # 如果 AppBar.adaptive=True 且应用程序在 iOS 或 macOS 设备上打开，则仅使用此列表的第一个元素!!!!!!
@@ -179,7 +177,7 @@ class Main:
                 ft.IconButton(on_click=self.change_theme, icon=ft.icons.WB_SUNNY_OUTLINED, tooltip="切换明暗",),
                 ft.IconButton(on_click=self.change_theme, icon=ft.icons.UPGRADE_OUTLINED,
                               tooltip="去github更新或者提出想法", url=GITHUB_URL),
-                self.color_menu
+                ft.Row([self.color_menu])
             ],
         )
 
@@ -519,18 +517,18 @@ class Main:
         """
         修复flet恢复窗口时会导致的无法展开的问题！！
         """
-        page = e.page
+        page: ft.Page = e.page
         if e.data == 'restore':
-            page.window_width = self.page_width
-            page.window_height = self.page_height
-            page.window_top = self.window_top
-            page.window_left = self.window_left
+            page.window.width = self.page_width
+            page.window.height = self.page_height
+            page.window.top = self.window_top
+            page.window.left = self.window_left
 
         else:
-            self.page_width = page.window_width
-            self.page_height = page.window_height
-            self.window_top = page.window_top
-            self.window_left = page.window_left
+            self.page_width = page.window.width
+            self.page_height = page.window.height
+            self.window_top = page.window.top
+            self.window_left = page.window.left
 
         page.update()
 
@@ -571,10 +569,10 @@ def init(page: ft.Page):
     page.theme = ft.Theme(font_family=font_family, color_scheme_seed=color)
 
     # 窗口大小
-    page.window_width = config['default_width'] if 'default_width' in config else PAGE_WIDTH
-    page.window_height = config['default_height'] if 'default_height' in config else PAGE_HEIGHT
-    page.window_min_width = PAGE_MIN_WIDTH
-    page.window_min_height = PAGE_MIN_HEIGHT
+    page.window.width = config['default_width'] if 'default_width' in config else PAGE_WIDTH
+    page.window.height = config['default_height'] if 'default_height' in config else PAGE_HEIGHT
+    page.window.min_width = PAGE_MIN_WIDTH
+    page.window.min_height = PAGE_MIN_HEIGHT
 
     Main(page)
 

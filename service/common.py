@@ -70,13 +70,14 @@ def S_Button(**kwargs):
 
 
 def open_snack_bar(page: flet.Page, msg, success=False):
-    page.snack_bar.content = flet.Text(msg)
-    page.snack_bar.open = True
     if success:
         color = "#1677ff"
     else:
         color = "#000000"
-    page.snack_bar.bgcolor = color
+    page.overlay.append(flet.SnackBar(
+        content=flet.Text(msg, color=color),
+        open=True
+    ))
     page.update()
 
 
