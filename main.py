@@ -392,7 +392,7 @@ class Main:
         else:
             self.connect_dd.label = i18n("请选择连接")
             for name, info_lst in conns.items():
-                op = ft.dropdown.Option(key=name, content=ft.Text(f"{name}（{info_lst[0]}）", selectable=True, tooltip=info_lst[0]))
+                op = ft.dropdown.Option(key=name, text=f"『{name}』 {info_lst[0]}")
                 options.append(op)
         self.connect_dd.options = options
 
