@@ -61,8 +61,8 @@ def S_Button(**kwargs):
     return flet.ElevatedButton(
         style=flet.ButtonStyle(
             shape={
-                flet.MaterialState.HOVERED: flet.RoundedRectangleBorder(radius=2),
-                flet.MaterialState.DEFAULT: flet.RoundedRectangleBorder(radius=10),
+                "hovered": flet.RoundedRectangleBorder(radius=2),
+                "": flet.RoundedRectangleBorder(radius=10),
             },
         ),
         **kwargs,
@@ -70,12 +70,9 @@ def S_Button(**kwargs):
 
 
 def open_snack_bar(page: flet.Page, msg, success=False):
-    if success:
-        color = "#1677ff"
-    else:
-        color = "#000000"
+
     page.overlay.append(flet.SnackBar(
-        content=flet.Text(msg, color=color),
+        content=flet.Text(msg, selectable=True),
         open=True
     ))
     page.update()
@@ -93,7 +90,7 @@ dd_common_configs = {
     "text_size": 14,
     "alignment": flet.alignment.center_left,
     "dense": True,
-    "content_padding": 5,
+    "content_padding": 7,
 }
 
 input_kwargs = {

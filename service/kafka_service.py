@@ -203,7 +203,7 @@ class KafkaService:
                                                                               record.partition,
                                                                               record.key.decode(
                                                                                   'utf-8') if record.key is not None else "",
-                                                                              record.value.decode('utf-8'))
+                                                                              record.value.decode('utf-8') if record.value is not None else "")
                     n += 1
             consumer.commit()
             if time.time() - st >= timeout:

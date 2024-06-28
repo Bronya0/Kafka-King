@@ -7,7 +7,7 @@ import flet as ft
 from flet_core import Column, Row, TextStyle
 
 from service.check import fetch_lag
-from service.common import S_Button, open_snack_bar
+from service.common import S_Button, open_snack_bar, dd_common_configs
 from service.kafka_service import kafka_service
 
 
@@ -28,18 +28,13 @@ class Monitor(object):
             label_style=TextStyle(size=14),
             hint_text="topic1,topic2",
             width=400,
-            height=30,
+            height=35,
             text_size=14,
-            content_padding=1
+            content_padding=10
         )
         self.topic_groups_dd = ft.Dropdown(
             label="请选择消费组",
-            label_style=TextStyle(size=14),
-            width=200,
-            height=30,
-            dense=True,
-            text_size=14,
-            content_padding=1
+            **dd_common_configs
         )
         self.save_button = S_Button(
             text="保存",
