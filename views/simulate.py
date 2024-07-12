@@ -6,13 +6,16 @@
 @Project : kafka-king
 @Desc    : 
 """
+import datetime
+import os
 import time
 import traceback
 
 import flet as ft
 from flet_core import ControlEvent
 
-from service.common import dd_common_configs, S_Button, open_snack_bar, KAFKA_KING_GROUP, build_tab_container
+from service.common import dd_common_configs, S_Button, open_snack_bar, KAFKA_KING_GROUP, build_tab_container, \
+    progress_bar, open_directory
 from service.kafka_service import kafka_service
 
 
@@ -110,10 +113,14 @@ class Simulate(object):
 
         # consumer fetch msg button
         self.consumer_fetch_msg_button = S_Button(
-            text="拉取消息",
+            text="拉取消息并utf8解码",
             on_click=self.click_fetch_msg,
         )
-
+        self.consumer_fetch_msg_button_save = S_Button(
+            text="拉取二进制消息并保存到本地文件",
+            tooltip="有些消息没法utf-8解码，例如avro、protobuf、binlog等，可以下载自行解码",
+            on_click=self.click_fetch_msg_save,
+        )
         # consumer fetch msg text
         self.consumer_fetch_msg_body = ft.Text(
             selectable=True,
@@ -212,6 +219,7 @@ class Simulate(object):
                 ]),
                 ft.Row([
                     self.consumer_fetch_msg_button,
+                    self.consumer_fetch_msg_button_save,
                     S_Button(
                         text="清空界面",
                         on_click=self.clean_msg,
@@ -236,6 +244,7 @@ class Simulate(object):
         乘以倍数，and 是否压缩
         """
         try:
+
             topic = self.producer_topic_dd.value
             msg = self.producer_send_input.value
             enable_gzip = self.producer_compress_switch.value
@@ -284,6 +293,9 @@ class Simulate(object):
         """
         根据topic 和 group、size、拉取消息
         """
+        progress_bar.visible = True
+        progress_bar.update()
+
         err = None
         topic = self.consumer_topic_dd.value
         if topic is None:
@@ -300,11 +312,12 @@ class Simulate(object):
             err = "请输入正确的size，整数类型"
         if err:
             self.consumer_fetch_msg_body.value = err
+            progress_bar.visible = False
+
             e.page.update()
             return
 
         self.consumer_fetch_msg_button.disabled = True
-        self.consumer_fetch_msg_body.value = "拉取中，请稍后...\n将从上次拉取位置继续拉取，如无新消息可拉取，则会在10秒后超时返回\n拉取完成将显示在当前页面"
         e.page.update()
 
         print(topic, group, size)
@@ -314,17 +327,84 @@ class Simulate(object):
         msgs = "拉取失败"
 
         try:
-            msgs = kafka_service.fetch_msgs(topic=topic, group_id=group, size=size,
-                                            timeout=self.kafka_fetch_timeout)
+            msgs, _ = kafka_service.fetch_msgs(topic=topic, group_id=group, size=size,
+                                               timeout=self.kafka_fetch_timeout)
         except Exception as e_:
             traceback.print_exc()
             res = "拉取失败：{}".format(e_)
         self.consumer_fetch_msg_body.value = msgs
+        e.page.update()
+
         et = time.time() - st
         res += "\n拉取耗时{} s".format(et)
         print(res)
+        progress_bar.visible = False
+
         self.consumer_fetch_msg_button.disabled = False
         open_snack_bar(e.page, res)
+
+    def click_fetch_msg_save(self, e: ControlEvent):
+        """
+        根据topic 和 group、size、拉取消息并保存
+        """
+        progress_bar.visible = True
+        progress_bar.update()
+
+        err = None
+        topic = self.consumer_topic_dd.value
+        if topic is None:
+            err = "请选择topic"
+        group = KAFKA_KING_GROUP
+        size = self.consumer_fetch_size_input.value
+        try:
+            size = int(size)
+            if size <= 0:
+                err = "size需要大于0"
+            if size > 10000:
+                err = "size不能大于10000"
+        except:
+            err = "请输入正确的size，整数类型"
+        if err:
+            self.consumer_fetch_msg_body.value = err
+            progress_bar.visible = False
+
+            e.page.update()
+            return
+
+        self.consumer_fetch_msg_button_save.disabled = True
+        e.page.update()
+
+        print(topic, group, size)
+        res = ""
+        ori_msgs_lst = []
+        try:
+            msgs, ori_msgs_lst = kafka_service.fetch_msgs(topic=topic, group_id=group, size=size,
+                                                          timeout=self.kafka_fetch_timeout)
+        except Exception as e_:
+            traceback.print_exc()
+            res = "拉取失败：{}".format(e_)
+
+        root = os.path.normpath("/kafka-king-export")
+        if not os.path.exists(root):
+            os.mkdir(root)
+
+        path = os.path.join(root, f"{topic}_{group}_{size}_{int(time.time())}.bin")
+        with open(path, 'wb') as f:
+            for i in ori_msgs_lst:
+                f.write(i)
+                f.write(b'\n')
+
+        bar = ft.SnackBar(content=ft.Text(f"成功导出：{path}", selectable=True), open=True, action="打开目录",
+                          on_action=lambda e: open_directory(root))
+        e.page.snack_bar = bar
+
+        self.consumer_fetch_msg_button_save.disabled = False
+        progress_bar.visible = False
+
+        if res:
+            self.consumer_fetch_msg_body.value = res
+
+        e.page.update()
 
     def update_text(self, e):
         self.producer_slider_value.value = f"消息发送倍数：{int(e.control.value)} (默认*1)"

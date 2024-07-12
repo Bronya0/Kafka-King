@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*-coding:utf-8 -*-
+import math
 from typing import Optional, Dict
 
 import flet as ft
@@ -291,7 +292,7 @@ class Topic(object):
                                         on_click=self.page_prev,
                                         tooltip="上一页",
                                     ),
-                                    ft.Text(f"{self.page_num}/{int(len(self.describe_topics) / self.page_size) + 1}"),
+                                    ft.Text(f"{self.page_num}/{math.ceil(len(self.describe_topics) / self.page_size)}"),
                                     ft.IconButton(
                                         icon=ft.icons.ARROW_FORWARD,
                                         icon_size=20,
@@ -299,7 +300,7 @@ class Topic(object):
                                         tooltip="下一页",
                                     ),
                                     ft.Text(f"每页{self.page_size}条"),
-                                    ft.Slider(min=5, max=55, divisions=10, round=1, value=self.page_size,
+                                    ft.Slider(min=5, max=55, divisions=50, round=1, value=self.page_size,
                                               label="{value}", on_change_end=self.page_size_change),
                                 ]
                             )
@@ -337,6 +338,7 @@ class Topic(object):
     def page_size_change(self, e):
         # page
         self.page_size = int(e.control.value)
+        self.page_num = 1
         self.describe_topics_tmp = self.describe_topics[:self.page_size]
 
         self.init_table()

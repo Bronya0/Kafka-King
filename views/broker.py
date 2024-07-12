@@ -138,7 +138,7 @@ class Broker(object):
             config_value = f"{config['config_value']}" if config['config_value'] is not None else ""
             _col.controls.append(ft.Row([
                 ft.Text(f" • {config_names}", style=ft.TextStyle(weight=ft.FontWeight.BOLD), ),
-                ft.Text(f"    值：{config_value}"),
+                ft.Text(f":    {config_value}"),
             ]))
         self.config_tab.content = _col
 

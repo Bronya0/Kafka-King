@@ -192,6 +192,7 @@ class KafkaService:
         # 计数器
         n = 0
         msgs = ""
+        ori_msgs_lst = []
         st = time.time()
         while n < size:
             # timeout_ms：一直拉不到数据时，最多等待的时间，超时直接返回空字典
@@ -199,17 +200,27 @@ class KafkaService:
 
             for tp, records in res.items():
                 for record in records:
-                    msgs += "{}. 偏移量:{}, 分区号:{}, 键:{}, 值:{}\n".format(n, record.offset,
-                                                                              record.partition,
-                                                                              record.key.decode(
-                                                                                  'utf-8') if record.key is not None else "",
-                                                                              record.value.decode('utf-8') if record.value is not None else "")
+                    try:
+                        msgs += "{}. 偏移量:{}, 分区号:{}, 键:{}, 消息内容:{}\n".format(
+                            n, record.offset,
+                            record.partition,
+                            record.key.decode('utf-8') if record.key is not None else "",
+                            record.value.decode('utf-8') if record.value is not None else ""
+                        )
+                    except:
+                        msgs += "{}. 偏移量:{}, 分区号:{}, 键:{}, 消息内容:{}\n".format(
+                            n, record.offset,
+                            record.partition,
+                            record.key,
+                            "无法utf-8解码"
+                        )
+                    ori_msgs_lst.append(record.value)
                     n += 1
             consumer.commit()
             if time.time() - st >= timeout:
                 break
 
-        return msgs
+        return msgs, ori_msgs_lst
 
     def get_configs(self, res_type, name):
         """

@@ -7,9 +7,10 @@
 @Desc    : 
 """
 import os
+import platform
+import subprocess
 
 import flet
-import flet_core
 from flet_core import TextStyle
 
 from service.translate import i18n
@@ -188,3 +189,24 @@ def build_tab_container(col_controls):
                     )
                 )
             ])
+
+
+def open_directory(path):
+    """
+    打开指定的本地目录。
+
+    :param path: 要打开的目录路径
+    """
+    if platform.system() == "Windows":
+        # Windows系统使用start命令
+        os.startfile(os.path.normpath(path))
+    elif platform.system() == "Darwin":  # macOS
+        # macOS使用open命令
+        subprocess.Popen(["open", path])
+    else:  # Linux系统
+        # 假设使用Nautilus，其他Linux发行版可能需要使用不同的命令，如xdg-open
+        try:
+            subprocess.Popen(["xdg-open", path])
+        except OSError:
+            # 如果xdg-open不可用，尝试使用Nautilus
+            subprocess.Popen(["nautilus", path])
