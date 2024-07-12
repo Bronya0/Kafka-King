@@ -117,10 +117,9 @@ class Simulate(object):
             on_click=self.click_fetch_msg,
         )
 
-        self.consumer_fetch_msg_button_utf8_save = S_Button(
+        self.consumer_fetch_utf8_msg_button = S_Button(
             text="拉取消息utf8解码并保存到本地文件",
-            tooltip="有些消息没法utf-8解码，例如avro、protobuf、binlog等，可以下载自行解码",
-            on_click=self.click_fetch_msg_utf8_save,
+            on_click=self.click_fetch_utf8_msg_save,
         )
         self.consumer_fetch_msg_button_save = S_Button(
             text="拉取二进制消息并保存到本地文件",
@@ -225,7 +224,7 @@ class Simulate(object):
                 ]),
                 ft.Row([
                     self.consumer_fetch_msg_button,
-                    self.click_fetch_msg_utf8_save,
+                    self.consumer_fetch_utf8_msg_button,
                     self.consumer_fetch_msg_button_save,
                     S_Button(
                         text="清空界面",
@@ -350,7 +349,10 @@ class Simulate(object):
         self.consumer_fetch_msg_button.disabled = False
         open_snack_bar(e.page, res)
 
-    def click_fetch_msg_utf8_save(self, e: ControlEvent):
+    def click_fetch_utf8_msg_save(self, e: ControlEvent):
+        """
+        根据topic 和 group、size、拉取消息并保存
+        """
         progress_bar.visible = True
         progress_bar.update()
 
@@ -375,9 +377,10 @@ class Simulate(object):
             e.page.update()
             return
 
-        self.consumer_fetch_msg_button_save.disabled = True
+        self.consumer_fetch_utf8_msg_button.disabled = True
         e.page.update()
 
+        print(topic, group, size)
         res = ""
         ori_msgs_lst = []
         try:
@@ -405,7 +408,7 @@ class Simulate(object):
                           on_action=lambda e: open_directory(root))
         e.page.snack_bar = bar
 
-        self.consumer_fetch_msg_button_save.disabled = False
+        self.consumer_fetch_utf8_msg_button.disabled = False
         progress_bar.visible = False
 
         if res:
