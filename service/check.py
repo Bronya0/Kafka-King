@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # -*-coding:utf-8 -*-
 import datetime
+import platform
 import time
 import traceback
 
 import flet as ft
 import requests
 
-from service.common import UPDATE_URL, BASEDIR, GITHUB_URL, close_dlg
+from service.common import UPDATE_URL, BASEDIR, GITHUB_URL, close_dlg, c_version
 from service.kafka_service import kafka_service
 
 
@@ -64,6 +65,19 @@ def version_check(page: ft.Page):
         )
 
         page.update()
+
+
+def ping():
+    # 统计使用情况， 不涉及敏感信息。
+    try:
+        ping_url = "https://ysboke.cn/api/kingTool/ping"
+        requests.post(url=ping_url, json={
+            "name": "Kafka-King",
+            "version": c_version,
+            "platform": platform.system()
+        })
+    except Exception as e:
+        pass
 
 
 def fetch_lag(page: ft.Page, only_one=False):

@@ -4,7 +4,7 @@ import traceback
 import flet as ft
 from flet_core import TextField, ControlEvent
 
-from service.check import version_check
+from service.check import version_check, ping
 from service.common import S_Text, prefix, GITHUB_URL, TITLE, open_snack_bar, close_dlg, PAGE_WIDTH, PAGE_HEIGHT, \
     WINDOW_TOP, WINDOW_LEFT, view_instance_map, Navigation, body, progress_bar, CONFIG_KEY, PAGE_MIN_WIDTH, \
     PAGE_MIN_HEIGHT, common_page
@@ -579,6 +579,7 @@ def init(page: ft.Page):
     # 版本检查, 务必要包异常，内网无法连接会报错
     try:
         version_check(page)
+        ping()
     except:
         traceback.print_exc()
 
