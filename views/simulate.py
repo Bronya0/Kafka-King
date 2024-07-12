@@ -116,6 +116,12 @@ class Simulate(object):
             text="拉取消息并utf8解码",
             on_click=self.click_fetch_msg,
         )
+
+        self.consumer_fetch_msg_button_utf8_save = S_Button(
+            text="拉取消息utf8解码并保存到本地文件",
+            tooltip="有些消息没法utf-8解码，例如avro、protobuf、binlog等，可以下载自行解码",
+            on_click=self.click_fetch_msg_utf8_save,
+        )
         self.consumer_fetch_msg_button_save = S_Button(
             text="拉取二进制消息并保存到本地文件",
             tooltip="有些消息没法utf-8解码，例如avro、protobuf、binlog等，可以下载自行解码",
@@ -219,6 +225,7 @@ class Simulate(object):
                 ]),
                 ft.Row([
                     self.consumer_fetch_msg_button,
+                    self.click_fetch_msg_utf8_save,
                     self.consumer_fetch_msg_button_save,
                     S_Button(
                         text="清空界面",
@@ -342,6 +349,69 @@ class Simulate(object):
 
         self.consumer_fetch_msg_button.disabled = False
         open_snack_bar(e.page, res)
+
+    def click_fetch_msg_utf8_save(self, e: ControlEvent):
+        progress_bar.visible = True
+        progress_bar.update()
+
+        err = None
+        topic = self.consumer_topic_dd.value
+        if topic is None:
+            err = "请选择topic"
+        group = KAFKA_KING_GROUP
+        size = self.consumer_fetch_size_input.value
+        try:
+            size = int(size)
+            if size <= 0:
+                err = "size需要大于0"
+            if size > 10000:
+                err = "size不能大于10000"
+        except:
+            err = "请输入正确的size，整数类型"
+        if err:
+            self.consumer_fetch_msg_body.value = err
+            progress_bar.visible = False
+
+            e.page.update()
+            return
+
+        self.consumer_fetch_msg_button_save.disabled = True
+        e.page.update()
+
+        res = ""
+        ori_msgs_lst = []
+        try:
+            msgs, ori_msgs_lst = kafka_service.fetch_msgs(topic=topic, group_id=group, size=size,
+                                                          timeout=self.kafka_fetch_timeout)
+        except Exception as e_:
+            traceback.print_exc()
+            res = "拉取失败：{}".format(e_)
+
+        root = os.path.normpath("/kafka-king-export")
+        if not os.path.exists(root):
+            os.mkdir(root)
+
+        path = os.path.join(root, f"{topic}_{group}_{size}_{int(time.time())}.txt")
+        with open(path, 'w', encoding='utf-8') as f:
+            for i in ori_msgs_lst:
+                try:
+                    v = i.decode('utf-8') if i is not None else ""
+                except:
+                    v = "无法解码"
+                f.write(v)
+                f.write('\n')
+
+        bar = ft.SnackBar(content=ft.Text(f"成功导出：{path}", selectable=True), open=True, action="打开目录",
+                          on_action=lambda e: open_directory(root))
+        e.page.snack_bar = bar
+
+        self.consumer_fetch_msg_button_save.disabled = False
+        progress_bar.visible = False
+
+        if res:
+            self.consumer_fetch_msg_body.value = res
+
+        e.page.update()
 
     def click_fetch_msg_save(self, e: ControlEvent):
         """
