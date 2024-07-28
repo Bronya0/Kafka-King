@@ -20,7 +20,6 @@
  
 同款elasticsearch客户端 `ES-King` ：https://github.com/Bronya0/ES-King 
 
-> 小提示：使用前请检查kafka集群配置的`advertised.listeners`，如果配置写的是域名，那么你在King中填写连接地址时，请提前在本机电脑的hosts文件中添加对应域名解析，否则会因为无法解析域名而报NodeNotReadyError
 
 # Kafka-King功能清单
 - [x] 查看集群节点列表（完成）
@@ -37,6 +36,8 @@
 
 # 下载
 [下载地址](https://github.com/Bronya0/Kafka-King/releases)，点击【Assets】，选择自己的平台下载，支持windows、macos、linux。
+
+> 小提示：使用前请检查kafka集群配置的`advertised.listeners`，如果配置是域名，那么在King中填写连接地址时，请提前在本机电脑的hosts文件中添加对应域名解析，否则会因为无法解析域名而报NodeNotReadyError
 
 # 功能截图
 
