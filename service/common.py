@@ -105,7 +105,7 @@ input_kwargs = {
 Navigation = flet.NavigationRail(
     selected_index=0,
     label_type=flet.NavigationRailLabelType.ALL,
-    min_width=100,
+    # min_width=100,
     min_extended_width=100,
     group_alignment=-0.8,
     # 定义在导航栏中排列的按钮项的外观，该值必须是两个或更多NavigationRailDestination实例的列表。

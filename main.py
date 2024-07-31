@@ -277,6 +277,7 @@ class Main:
 
         dlg_modal = ft.AlertDialog(
             modal=True,
+            open=True,
             title=S_Text("添加kafka连接"),
             actions=[
                 ft.Column([
@@ -304,7 +305,6 @@ class Main:
 
         )
         e.page.dialog = dlg_modal
-        dlg_modal.open = True
         e.page.update()
 
     def delete_connect(self, e):

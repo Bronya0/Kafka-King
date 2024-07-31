@@ -21,7 +21,6 @@
 同款elasticsearch客户端 `ES-King` ：https://github.com/Bronya0/ES-King 
 
 
-
 # Kafka-King功能清单
 - [x] 查看集群节点列表（完成）
 - [x] 支持PLAINTEXT、SASL PLAINTEXT用户名密码认证（完成）
@@ -37,8 +36,8 @@
 
 # 下载
 [下载地址](https://github.com/Bronya0/Kafka-King/releases)，点击【Assets】，选择自己的平台下载，支持windows、macos、linux。
-（mac m1/m2芯片请下载arm64版本）
-（windows用户通常下载amd64版本即可）
+
+> 小提示：使用前请检查kafka集群配置的`advertised.listeners`，如果配置是域名，那么在King中填写连接地址时，请提前在本机电脑的hosts文件中添加对应域名解析，否则会因为无法解析域名而报NodeNotReadyError
 
 # 功能截图
 
