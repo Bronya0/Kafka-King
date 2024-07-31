@@ -17,6 +17,8 @@ from kafka import KafkaAdminClient, KafkaClient, KafkaConsumer, TopicPartition, 
 from kafka.admin import NewPartitions, ConfigResource, ConfigResourceType
 from kafka.protocol.admin import DescribeConfigsResponse_v2
 
+from service.common import KAFKA_KING_GROUP
+
 # 配置日志输出
 logging.basicConfig(level=logging.INFO)
 
@@ -33,6 +35,7 @@ class KafkaService:
         self.connect_name = None
         self.SASL_PARAM = None
         self.kac: Optional[KafkaAdminClient] = None
+        self.consumer = None
 
     def set_connect(self, connect_name, bootstrap_servers: list, sasl_plain_username, sasl_plain_password):
         SASL_PARAM = {"bootstrap_servers": bootstrap_servers}
@@ -51,6 +54,21 @@ class KafkaService:
         except Exception as e:
             self.kac = None
             raise e
+
+        self.consumer = self.new_consumer()
+
+    def new_consumer(self):
+        try:
+            self.consumer = KafkaConsumer(
+                group_id=KAFKA_KING_GROUP,
+                enable_auto_commit=False,
+                auto_offset_reset="earliest",
+                max_poll_records=10000,
+                **self.SASL_PARAM,
+            )
+        except Exception as e:
+            traceback.print_exc()
+            return f"无法连接集群并创建消费者：{e}"
 
     def new_client(self, bootstrap_servers: list, sasl_plain_username, sasl_plain_password):
         SASL_PARAM = {"bootstrap_servers": bootstrap_servers}
@@ -156,7 +174,7 @@ class KafkaService:
             return True, None
         except Exception as err:
             traceback.print_exc()
-        return False, str(err)
+            return False, str(err)
 
     def send_msgs(self, topic, msg: bytes, enable_gzip=False, msg_multiplier=1, msg_key=None, **kwargs):
         """
@@ -178,17 +196,10 @@ class KafkaService:
         """
         拉取消息
         """
-        try:
-            consumer = KafkaConsumer(topic,
-                                     group_id=group_id,
-                                     enable_auto_commit=False,
-                                     auto_offset_reset="earliest",
-                                     max_poll_records=size,
-                                     **self.SASL_PARAM,
-                                     )
-        except Exception as e:
-            return f"无法连接集群并创建消费者：{e}"
+        if not self.consumer:
+            self.new_consumer()
 
+        self.consumer.subscribe(topics=[topic])
         # 计数器
         n = 0
         msgs = ""
@@ -196,7 +207,7 @@ class KafkaService:
         st = time.time()
         while n < size:
             # timeout_ms：一直拉不到数据时，最多等待的时间，超时直接返回空字典
-            res: dict = consumer.poll(timeout_ms=3000, max_records=size)
+            res: dict = self.consumer.poll(timeout_ms=3000, max_records=size)
 
             for tp, records in res.items():
                 for record in records:
@@ -216,7 +227,7 @@ class KafkaService:
                         )
                     ori_msgs_lst.append(record.value)
                     n += 1
-            consumer.commit()
+            self.consumer.commit()
             if time.time() - st >= timeout:
                 break
 

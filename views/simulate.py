@@ -6,7 +6,6 @@
 @Project : kafka-king
 @Desc    : 
 """
-import datetime
 import os
 import time
 import traceback
@@ -338,7 +337,8 @@ class Simulate(object):
         except Exception as e_:
             traceback.print_exc()
             res = "拉取失败：{}".format(e_)
-        self.consumer_fetch_msg_body.value = msgs
+        _, topic_lag = kafka_service.get_topic_offsets(topics=[topic], group_id=KAFKA_KING_GROUP, consumer=kafka_service.consumer)
+        self.consumer_fetch_msg_body.value = f"【末尾offset：{topic_lag.get(topic, ['', ''])[0]} 提交offset：{topic_lag.get(topic, ['', ''])[1]}】\n\n{msgs}"
         e.page.update()
 
         et = time.time() - st
