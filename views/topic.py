@@ -278,7 +278,7 @@ class Topic(object):
                                     self.search_text,
                                     S_Button(text="创建主题", on_click=self.open_create_topic_dlg_modal,
                                              tooltip="批量输入要创建的主题及参数，一行一个", ),
-                                    S_Button(text="刷新offset", on_click=self.groups_dd_onchange),
+                                    S_Button(text="读取offset", on_click=self.groups_dd_onchange),
                                     self.refresh_button
                                 ]),
 
