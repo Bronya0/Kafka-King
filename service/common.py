@@ -41,8 +41,8 @@ SETTINGS = 4
 SUGGEST = 5
 HELP = 6
 
-PAGE_WIDTH = 1280
-PAGE_HEIGHT = 730
+PAGE_WIDTH = 1440
+PAGE_HEIGHT = 800
 WINDOW_TOP = 200
 WINDOW_LEFT = 260
 PAGE_MIN_WIDTH = 1140
@@ -124,7 +124,7 @@ Navigation = flet.NavigationRail(
             icon_content=flet.Icon(flet.icons.SWITCH_ACCESS_SHORTCUT_ADD_OUTLINED,
                                    tooltip="模拟producer及consumer"),
             selected_icon_content=flet.Icon(flet.icons.SWITCH_ACCESS_SHORTCUT_ADD),
-            label=i18n("模拟"),
+            label=i18n("生产"),
         ),
 
         flet.NavigationRailDestination(

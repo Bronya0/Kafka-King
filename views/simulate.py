@@ -337,8 +337,8 @@ class Simulate(object):
         except Exception as e_:
             traceback.print_exc()
             res = "拉取失败：{}".format(e_)
-        _, topic_lag = kafka_service.get_topic_offsets(topics=[topic], group_id=KAFKA_KING_GROUP, consumer=kafka_service.consumer)
-        self.consumer_fetch_msg_body.value = f"【末尾offset：{topic_lag.get(topic, ['', ''])[0]} 提交offset：{topic_lag.get(topic, ['', ''])[1]}】\n\n{msgs}"
+        _, topic_lag = kafka_service.get_topic_offsets(topics=[topic], group_id=None)
+        self.consumer_fetch_msg_body.value = f"【末尾offset：{topic_lag.get(topic, ['', ''])[0]} || 当前offset：{topic_lag.get(topic, ['', ''])[1]}】\n\n{msgs}"
         e.page.update()
 
         et = time.time() - st

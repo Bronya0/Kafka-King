@@ -51,24 +51,21 @@ class KafkaService:
         # 此处异常要重置kac，否则会复用之前的历史连接
         try:
             self.kac = KafkaAdminClient(**SASL_PARAM)
+            self.new_consumer()
         except Exception as e:
             self.kac = None
+            self.consumer = None
             raise e
 
-        self.consumer = self.new_consumer()
-
     def new_consumer(self):
-        try:
-            self.consumer = KafkaConsumer(
-                group_id=KAFKA_KING_GROUP,
-                enable_auto_commit=False,
-                auto_offset_reset="earliest",
-                max_poll_records=10000,
-                **self.SASL_PARAM,
-            )
-        except Exception as e:
-            traceback.print_exc()
-            return f"无法连接集群并创建消费者：{e}"
+        self.consumer = KafkaConsumer(
+            group_id=KAFKA_KING_GROUP,
+            enable_auto_commit=False,
+            auto_offset_reset="earliest",
+            max_poll_records=10000,
+            **self.SASL_PARAM,
+        )
+        print("内置消费者创建成功")
 
     def new_client(self, bootstrap_servers: list, sasl_plain_username, sasl_plain_password):
         SASL_PARAM = {"bootstrap_servers": bootstrap_servers}
@@ -127,10 +124,15 @@ class KafkaService:
         consumer_groups = [i[0] for i in _consumer_groups]
         return consumer_groups
 
-    def get_topic_offsets(self, topics, group_id, consumer=None):
-        if not consumer:
+    def get_topic_offsets(self, topics, group_id):
+        if group_id is not None:
+            print(f"创建消费者:{group_id}")
             consumer = KafkaConsumer(**self.SASL_PARAM, group_id=group_id)
-
+        else:
+            print(f"使用自带消费者:{group_id}")
+            consumer = self.consumer
+            if consumer is None:
+                self.new_consumer()
         topic_lag, topic_end_and_commit_offset = {}, {}
         topic_offset = defaultdict(dict)
         for topic in topics:
@@ -197,8 +199,10 @@ class KafkaService:
         拉取消息
         """
         if not self.consumer:
+            print("使用内置消费者")
             self.new_consumer()
 
+        print(f"订阅主题:{topic}")
         self.consumer.subscribe(topics=[topic])
         # 计数器
         n = 0

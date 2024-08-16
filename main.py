@@ -285,6 +285,7 @@ class Main:
                     self.kafka_input,
                     self.sasl_plain_username,
                     self.sasl_plain_password,
+                    ft.Text("提示：请先将kafka节点的域名添加到本地hosts中"),
                     ft.Row([
                         ft.TextButton("连接测试", on_click=self.test_connect, on_long_press=True,
                                       style=ft.ButtonStyle(color=ft.colors.RED),
@@ -347,6 +348,7 @@ class Main:
                     self.edit_kafka_input,
                     self.edit_sasl_plain_username,
                     self.edit_sasl_plain_password,
+                    ft.Text("提示：请先将kafka节点的域名添加到本地hosts中"),
                     ft.Row([
                         ft.TextButton("连接测试", on_click=self.test_connect, on_long_press=True,
                                       style=ft.ButtonStyle(color=ft.colors.RED),

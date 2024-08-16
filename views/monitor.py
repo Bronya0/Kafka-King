@@ -242,7 +242,6 @@ class Monitor(object):
             return
 
         self.refresh_button.disabled = True
-        self.refresh_button.text = "更新中……"
         self.page.update()
         try:
             fetch_lag(page=self.page, only_one=True)
@@ -250,8 +249,7 @@ class Monitor(object):
         except:
             traceback.print_exc()
         self.refresh_button.disabled = False
-        self.refresh_button.text = "更新"
-        self.page.update()
+        open_snack_bar(self.page, "更新成功")
 
     def update(self, page: ft.Page, First=False):
         """

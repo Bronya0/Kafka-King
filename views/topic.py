@@ -251,6 +251,12 @@ class Topic(object):
                                                 disabled=disabled,
 
                                             ),
+                                            ft.MenuItemButton(
+                                                data=topic_name_,
+                                                content=ft.Text("读取消息量"),
+                                                on_click=self.groups_dd_onchange,
+                                                disabled=disabled,
+                                            ),
 
                                         ]
                                     ),
@@ -278,7 +284,7 @@ class Topic(object):
                                     self.search_text,
                                     S_Button(text="创建主题", on_click=self.open_create_topic_dlg_modal,
                                              tooltip="批量输入要创建的主题及参数，一行一个", ),
-                                    S_Button(text="读取offset", on_click=self.groups_dd_onchange),
+                                    S_Button(text="读取消息量", on_click=self.groups_dd_onchange),
                                     self.refresh_button
                                 ]),
 
@@ -591,23 +597,15 @@ class Topic(object):
         """
         group_id = self.topic_groups_dd.value
         topics = self.table_topics
-        if group_id is None:
-            open_snack_bar(e.page, "请先选择消费组", success=False)
-            return
-
         self.pr.visible = True
         self.pr.update()
-
         open_snack_bar(e.page, "正在获取消费组offset信息，请稍后……", success=True)
 
-        self.topic_offset, self.topic_lag = None, None
-        self.get_offset_handle(topics, group_id)
+        self.topic_offset, self.topic_lag, = kafka_service.get_topic_offsets(topics, group_id)
+
         self.init_table()
         self.pr.visible = False
-        e.page.update()
-
-    def get_offset_handle(self, topics, group_id):
-        self.topic_offset, self.topic_lag, = kafka_service.get_topic_offsets(topics, group_id)
+        open_snack_bar(e.page, "读取完成。不选择消费组则使用默认内置消费组", success=True)
 
     def search_table(self, e: ControlEvent):
         """
