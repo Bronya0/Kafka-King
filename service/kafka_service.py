@@ -216,14 +216,14 @@ class KafkaService:
             for tp, records in res.items():
                 for record in records:
                     try:
-                        msgs += "{}. 偏移量:{}, 分区号:{}, 键:{}, 消息内容:{}\n".format(
+                        msgs += "{}. 偏移:{}, 分区:{}, 键:{}, 内容:{}\n".format(
                             n, record.offset,
                             record.partition,
                             record.key.decode('utf-8') if record.key is not None else "",
                             record.value.decode('utf-8') if record.value is not None else ""
                         )
                     except:
-                        msgs += "{}. 偏移量:{}, 分区号:{}, 键:{}, 消息内容:{}\n".format(
+                        msgs += "{}. 偏移:{}, 分区:{}, 键:{}, 内容:{}\n".format(
                             n, record.offset,
                             record.partition,
                             record.key,

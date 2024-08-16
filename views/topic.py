@@ -226,27 +226,27 @@ class Topic(object):
                                         controls=[
                                             ft.MenuItemButton(
                                                 data=topic_name_,
-                                                content=ft.Text("生产"),
+                                                content=ft.Text("生产消息"),
                                                 on_click=self.show_produce_page,
                                                 disabled=disabled,
                                             ),
                                             ft.MenuItemButton(
                                                 data=topic_name_,
-                                                content=ft.Text("消费"),
+                                                content=ft.Text("消费/查看消息"),
                                                 on_click=self.show_consumer_page,
                                                 disabled=disabled,
 
                                             ),
                                             ft.MenuItemButton(
                                                 data=topic_name_,
-                                                content=ft.Text("配置", color="brown"),
+                                                content=ft.Text("查看配置", color="brown"),
                                                 on_click=self.show_config_tab,
                                                 disabled=disabled,
 
                                             ),
                                             ft.MenuItemButton(
                                                 data=topic_name_,
-                                                content=ft.Text("删除", color="red"),
+                                                content=ft.Text("删除topic", color="red"),
                                                 on_click=self.open_delete_dialog,
                                                 disabled=disabled,
 
