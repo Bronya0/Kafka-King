@@ -47,6 +47,9 @@ class Suggest(object):
                                  ),
                         S_Button(text="BUG反馈",
                                  url=ISSUES_URL,
+                                 ),
+                        S_Button(text="支持开源，给仓库点个star",
+                                 url=GITHUB_URL,
                                  )
                     ]),
                 ],
