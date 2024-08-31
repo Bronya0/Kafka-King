@@ -1,6 +1,6 @@
 <h1 align="center">Kafka King </h1>
 
-![](docs/snap/p11.png)
+![](docs/snap/p0.png)
 
 <h4 align="center"><strong>简体中文</strong> | <a href="https://github.com/Bronya0/Kafka-King/blob/main/docs/README_EN.md">English</a></h4>
 
