@@ -49,25 +49,28 @@ PAGE_MIN_WIDTH = 1140
 PAGE_MIN_HEIGHT = 720
 
 
-def S_Text(value, **kwargs):
-    return flet.Text(
-        selectable=True,
-        value=value,
-        tooltip=value,
-        **kwargs
-    )
+class S_Text(flet.Text):
+
+    def __init__(self, value, **kwargs):
+        super().__init__(
+            selectable=True,
+            value=value,
+            tooltip=value,
+            **kwargs
+        )
 
 
-def S_Button(**kwargs):
-    return flet.ElevatedButton(
-        style=flet.ButtonStyle(
-            shape={
-                "hovered": flet.RoundedRectangleBorder(radius=2),
-                "": flet.RoundedRectangleBorder(radius=10),
-            },
-        ),
-        **kwargs,
-    )
+class S_Button(flet.ElevatedButton):
+    def __init__(self, **kwargs):
+        super().__init__(
+            style=flet.ButtonStyle(
+                shape={
+                    "hovered": flet.RoundedRectangleBorder(radius=2),
+                    "": flet.RoundedRectangleBorder(radius=10),
+                },
+            ),
+            **kwargs,
+        )
 
 
 def open_snack_bar(page: flet.Page, msg, success=False):

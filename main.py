@@ -19,7 +19,7 @@ class Main:
     def __init__(self, page: ft.Page):
         self.page: ft.Page = page
 
-        self.page.on_window_event = self.on_win_event
+        self.page.window.on_event = self.on_win_event
 
         self.page_width = PAGE_WIDTH
         self.page_height = PAGE_HEIGHT
