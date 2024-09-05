@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*-coding:utf-8 -*-
-import math
 from typing import Optional, Dict
 
 import flet as ft
@@ -12,6 +11,7 @@ from kafka.errors import for_code
 from service.common import S_Text, open_snack_bar, S_Button, dd_common_configs, close_dlg, SIMULATE, view_instance_map, \
     Navigation, body, progress_bar, common_page, build_tab_container
 from service.kafka_service import kafka_service
+from service.page_table import PageTable
 from views.simulate import Simulate
 
 
@@ -24,18 +24,14 @@ class Topic(object):
         # _lag_label: when select consumer groups, use it, that is 'loading...'
         self.page = None
         self.pr = progress_bar
-        self.table_topics = []
         self._lag_label = None
         self.topic_offset = None
         self.topic_lag = None
         self.topic_op_content = None
         self.describe_topics_map: Optional[Dict] = None
         self.partition_table = None
-        self.describe_topics = None
-        self.describe_topics_tmp = []
-        self.topic_table = None
-        self.page_num = 1
-        self.page_size = 8
+        self.describe_topics = []
+        self.topic_table: Optional[PageTable] = None
 
         # 创建topic输入框
         self.create_topics_multi_text_input = ft.TextField(
@@ -141,6 +137,7 @@ class Topic(object):
             return "请先选择一个可用的kafka连接！\nPlease select an available kafka connection first!"
         # 数据初始化
         self.describe_topics = kafka_service.get_topics()
+
         self.describe_topics_map = {i['topic']: i for i in self.describe_topics}
         self.search_table_handle(self.describe_topics)
 
@@ -153,33 +150,12 @@ class Topic(object):
 
         self.init_table()
 
-    def init_table(self):
+    def init_table(self, page_num=1, page_size=8):
 
-        # init topic table data
-        rows = []
-        self.topic_table = ft.DataTable(
-            columns=[
-                ft.DataColumn(S_Text("编号")),
-                ft.DataColumn(S_Text("健康")),
-                ft.DataColumn(S_Text("主题")),
-                ft.DataColumn(S_Text("副本数")),
-                ft.DataColumn(S_Text("分区")),
-                ft.DataColumn(S_Text("消息总量(组)")),
-                ft.DataColumn(S_Text("提交总量(组)")),
-                ft.DataColumn(S_Text("积压量(组)")),
-                ft.DataColumn(S_Text("操作"))
-            ],
-            rows=rows,
-            column_spacing=20,
-            expand=True
-        )
-        _topics = []
-        # 根据self.describe_topics、self.page_num、self.page_size实现分页
-        offset = (self.page_num - 1) * self.page_size
-        for i, topic in enumerate(self.describe_topics_tmp):
+        def row_func(i, offset, topic):
             topic_name_ = topic.get('topic')
-
             lag = self.topic_lag.get(topic_name_) if self.topic_lag else self._lag_label
+
             end_offset = lag[0] if isinstance(lag, list) and lag else self._lag_label
             commit_offset = lag[1] if isinstance(lag, list) and lag else self._lag_label
             _lag = self._lag_label
@@ -196,8 +172,7 @@ class Topic(object):
                     err_desc = for_code(_p['error_code']).description
                     break
 
-            rows.append(
-                ft.DataRow(
+            return ft.DataRow(
                     cells=[
                         ft.DataCell(S_Text(offset + i + 1)),
                         ft.DataCell(ft.Icon(ft.icons.CIRCLE, color=err_color, size=16, tooltip=err_desc)),
@@ -254,7 +229,7 @@ class Topic(object):
                                             ft.MenuItemButton(
                                                 data=topic_name_,
                                                 content=ft.Text("读取消息量"),
-                                                on_click=self.groups_dd_onchange,
+                                                on_click=self.query_one_lag,
                                                 disabled=disabled,
                                             ),
 
@@ -267,9 +242,28 @@ class Topic(object):
 
                     ],
                 )
-            )
-            _topics.append(topic_name_)
-        self.table_topics = _topics
+
+        # init topic table data
+        self.topic_table = PageTable(
+            page=common_page.page,
+            page_num=page_num,
+            page_size=page_size,
+            data_lst=self.describe_topics,
+            row_func=row_func,
+            columns=[
+                ft.DataColumn(S_Text("编号")),
+                ft.DataColumn(S_Text("健康")),
+                ft.DataColumn(S_Text("主题")),
+                ft.DataColumn(S_Text("副本数")),
+                ft.DataColumn(S_Text("分区")),
+                ft.DataColumn(S_Text("消息总量(组)")),
+                ft.DataColumn(S_Text("提交总量(组)")),
+                ft.DataColumn(S_Text("积压量(组)")),
+                ft.DataColumn(S_Text("操作"))
+            ],
+            column_spacing=20,
+            expand=True
+        )
 
         # init topic tab
         self.topic_tab.content = ft.Column(
@@ -289,27 +283,7 @@ class Topic(object):
                                 ]),
 
                             ft.Row([self.topic_table]),
-                            ft.Row(
-                                [
-                                    # 翻页图标和当前页显示
-                                    ft.IconButton(
-                                        icon=ft.icons.ARROW_BACK,
-                                        icon_size=20,
-                                        on_click=self.page_prev,
-                                        tooltip="上一页",
-                                    ),
-                                    ft.Text(f"{self.page_num}/{math.ceil(len(self.describe_topics) / self.page_size)}"),
-                                    ft.IconButton(
-                                        icon=ft.icons.ARROW_FORWARD,
-                                        icon_size=20,
-                                        on_click=self.page_next,
-                                        tooltip="下一页",
-                                    ),
-                                    ft.Text(f"每页{self.page_size}条"),
-                                    ft.Slider(min=5, max=55, divisions=50, round=1, value=self.page_size,
-                                              label="{value}", on_change_end=self.page_size_change),
-                                ]
-                            )
+                            self.topic_table.page_controls
                         ],
                         scroll=ft.ScrollMode.ALWAYS,
                     ), alignment=ft.alignment.top_left, padding=10)
@@ -319,70 +293,16 @@ class Topic(object):
         # init partition tab
         self.partition_topic_dd.options = [ft.dropdown.Option(text=i) for i in self.describe_topics_map.keys()]
 
-    def page_prev(self, e):
-        if self.page_num == 1:
-            return
-        self.page_num -= 1
-
-        offset = (self.page_num - 1) * self.page_size
-        self.describe_topics_tmp = self.describe_topics[offset:offset + self.page_size]
-
-        self.init_table()
-        e.page.update()
-
-    def page_next(self, e):
-        # 最后一页则return
-        if self.page_num * self.page_size >= len(self.describe_topics):
-            return
-        self.page_num += 1
-        offset = (self.page_num - 1) * self.page_size
-        self.describe_topics_tmp = self.describe_topics[offset:offset + self.page_size]
-
-        self.init_table()
-        e.page.update()
-
-    def page_size_change(self, e):
-        # page
-        self.page_size = int(e.control.value)
-        self.page_num = 1
-        self.describe_topics_tmp = self.describe_topics[:self.page_size]
-
-        self.init_table()
-        e.page.update()
-
     def _create_partition_table(self, topic_name_):
-        rows = []
-        self.partition_table = ft.DataTable(
-            columns=[
-                ft.DataColumn(S_Text("编号")),
-                ft.DataColumn(S_Text("健康")),
-                ft.DataColumn(S_Text("Leader分布")),
-                ft.DataColumn(S_Text("Replicas分布")),
-                ft.DataColumn(S_Text("ISR分布")),
-                ft.DataColumn(S_Text("失联副本分布")),
-                ft.DataColumn(S_Text("上次提交")),
-                ft.DataColumn(S_Text("最末偏移量")),
-                ft.DataColumn(S_Text("积压量")),
-            ],
-            rows=rows,
-            expand=True
 
-        )
-        partitions = self.describe_topics_map[topic_name_]['partitions']
-        partitions = sorted(partitions, key=lambda d: d['partition'])
-        for i, partition in enumerate(partitions):
+        def row_func(i, offset, partition):
             p_id = partition.get('partition')
-
-            # topic_offset[topic][partition] = [last_committed, end_offsets, _lag]
             last_committed, end_offsets, _lag = None, None, None
             if self.topic_offset:
                 last_committed, end_offsets, _lag = self.topic_offset.get(topic_name_, {}).get(p_id, (None, None, None))
-
             err_desc = for_code(partition.get('error_code')).description
             err_color = 'green' if partition.get('error_code') == 0 else 'red'
-
-            rows.append(
-                ft.DataRow(
+            return ft.DataRow(
                     cells=[
                         ft.DataCell(S_Text(p_id)),
                         ft.DataCell(ft.Icon(ft.icons.CIRCLE, color=err_color, size=16, tooltip=err_desc)),
@@ -396,7 +316,25 @@ class Topic(object):
 
                     ],
                 )
-            )
+
+        partitions = sorted(self.describe_topics_map[topic_name_]['partitions'], key=lambda d: d['partition'])
+        self.partition_table = PageTable(
+            page=common_page.page,
+            data_lst=partitions,
+            row_func=row_func,
+            columns=[
+                ft.DataColumn(S_Text("编号")),
+                ft.DataColumn(S_Text("健康")),
+                ft.DataColumn(S_Text("Leader分布")),
+                ft.DataColumn(S_Text("Replicas分布")),
+                ft.DataColumn(S_Text("ISR分布")),
+                ft.DataColumn(S_Text("失联副本分布")),
+                ft.DataColumn(S_Text("上次提交")),
+                ft.DataColumn(S_Text("最末偏移量")),
+                ft.DataColumn(S_Text("积压量")),
+            ],
+            expand=True,
+        )
 
         # 初始化 partition_tab 页面
         self.partition_tab.content = build_tab_container(
@@ -410,6 +348,7 @@ class Topic(object):
                 ft.Row([
                     self.partition_table
                 ]),
+                self.partition_table.page_controls
 
             ]
         )
@@ -589,6 +528,18 @@ class Topic(object):
             msg = "{}删除失败： {}".format(topic_name, str(e_))
             return msg, False
 
+    def query_one_lag(self, e: ControlEvent):
+        """
+        给topic表格添加
+        :param e:
+        :return:
+        """
+        group_id = self.topic_groups_dd.value
+        topics = [e.control.data]
+        self.pr.visible = True
+        self.pr.update()
+        self.query_log_func(topics, group_id)
+
     def groups_dd_onchange(self, e: ControlEvent):
         """
         给topic表格添加
@@ -596,16 +547,21 @@ class Topic(object):
         :return:
         """
         group_id = self.topic_groups_dd.value
-        topics = self.table_topics
+        topics = [i['topic'] for i in self.topic_table.data_lst_tmp]
         self.pr.visible = True
         self.pr.update()
-        open_snack_bar(e.page, "正在获取消费组offset信息，请稍后……", success=True)
+        self.query_log_func(topics, group_id)
 
-        self.topic_offset, self.topic_lag, = kafka_service.get_topic_offsets(topics, group_id)
-
-        self.init_table()
+    def query_log_func(self, topics, group_id):
+        try:
+            open_snack_bar(common_page.page, "正在获取消费组offset信息，请稍后……", success=True)
+            self.topic_offset, self.topic_lag, = kafka_service.get_topic_offsets(topics, group_id)
+        except Exception as ex:
+            open_snack_bar(common_page.page, f"获取失败: {ex}", success=False)
+            return
+        self.init_table(page_num=self.topic_table.page_num, page_size=self.topic_table.page_size)
         self.pr.visible = False
-        open_snack_bar(e.page, "读取完成。不选择消费组则使用默认内置消费组", success=True)
+        open_snack_bar(common_page.page, "读取完成。如不选择消费组则使用默认内置消费组", success=True)
 
     def search_table(self, e: ControlEvent):
         """
@@ -620,16 +576,15 @@ class Topic(object):
     def search_table_handle(self, all_topics):
         search_text_value = self.search_text.value
         _lst = []
-        if search_text_value is not None:
+        if search_text_value is not None and search_text_value != '':
+            print(111, search_text_value)
             for i in all_topics:
                 topic_name_ = i.get('topic')
                 if str(search_text_value) in topic_name_:
                     _lst.append(i)
         else:
             _lst = all_topics
-        self.page_num = 1
         self.describe_topics = _lst
-        self.describe_topics_tmp = _lst[:self.page_size]
         self.init_table()
 
     def topic_page_refresh(self, e):

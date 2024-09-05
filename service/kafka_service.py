@@ -125,11 +125,12 @@ class KafkaService:
         return consumer_groups
 
     def get_topic_offsets(self, topics, group_id):
-        if group_id is not None:
+        print(topics, group_id)
+        if group_id is not None and group_id != KAFKA_KING_GROUP:
             print(f"创建消费者:{group_id}")
             consumer = KafkaConsumer(**self.SASL_PARAM, group_id=group_id)
         else:
-            print(f"使用自带消费者:{group_id}")
+            print(f"使用自带消费者:{KAFKA_KING_GROUP}")
             consumer = self.consumer
             if consumer is None:
                 self.new_consumer()
@@ -138,7 +139,6 @@ class KafkaService:
         for topic in topics:
             _lag = 0
             partitions = consumer.partitions_for_topic(topic)
-            print(f"{topic} 对应的分区编号： {partitions}")
             if partitions is None:
                 continue
             topic_end_offsets = 0

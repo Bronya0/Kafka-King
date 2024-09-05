@@ -4,8 +4,9 @@
 import flet as ft
 from flet_core import ControlEvent
 
-from service.common import S_Text, build_tab_container
+from service.common import S_Text, build_tab_container, common_page
 from service.kafka_service import kafka_service
+from service.page_table import PageTable
 
 
 class Broker(object):
@@ -20,6 +21,7 @@ class Broker(object):
     detail_configs = 'detail_configs'
 
     def __init__(self):
+        self.brokers = []
         self.base_info = None
         self.api_version = None
         self.meta = None
@@ -61,6 +63,8 @@ class Broker(object):
             return "请先选择一个可用的kafka连接！\nPlease select an available kafka connection first!"
 
         self.meta, self.api_version = kafka_service.get_brokers()
+        self.brokers = sorted(self.meta['brokers'], key=lambda x: x['node_id'])
+
         self.base_info = ft.DataTable(
             columns=[
                 ft.DataColumn(S_Text(f"{self.throttle_time_ms}")),
@@ -82,7 +86,9 @@ class Broker(object):
             expand=True
         )
 
-        self.cluster_table = ft.DataTable(
+        self.cluster_table = PageTable(
+            page=common_page.page,
+            data_lst=self.brokers,
             columns=[
                 ft.DataColumn(S_Text("broker.id")),
                 ft.DataColumn(S_Text("host")),
@@ -90,19 +96,16 @@ class Broker(object):
                 ft.DataColumn(S_Text("机架感知")),
                 ft.DataColumn(S_Text("查看配置")),
             ],
-            rows=[
-                ft.DataRow(
-                    cells=[
-                        ft.DataCell(S_Text(broker['node_id'])),
-                        ft.DataCell(S_Text(broker['host'])),
-                        ft.DataCell(S_Text(broker['port'])),
-                        ft.DataCell(S_Text(broker['rack'])),
-                        ft.DataCell(ft.IconButton(icon=ft.icons.CONSTRUCTION, data=broker['node_id'],
-                                                  on_click=self.show_config_tab)),
-                    ],
-                )
-                for broker in sorted(self.meta['brokers'], key=lambda x: x['node_id'], )
-            ],
+            row_func=lambda i, offset, broker: ft.DataRow(
+                cells=[
+                    ft.DataCell(S_Text(broker['node_id'])),
+                    ft.DataCell(S_Text(broker['host'])),
+                    ft.DataCell(S_Text(broker['port'])),
+                    ft.DataCell(S_Text(broker['rack'])),
+                    ft.DataCell(ft.IconButton(icon=ft.icons.CONSTRUCTION, data=broker['node_id'],
+                                              on_click=self.show_config_tab)),
+                ],
+            ),
             column_spacing=20,
             expand=True
         )
@@ -119,7 +122,8 @@ class Broker(object):
             col_controls=[
                 ft.Row([
                     self.cluster_table,
-                ])
+                ]),
+                self.cluster_table.page_controls
             ]
         )
 
