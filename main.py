@@ -177,7 +177,8 @@ class Main:
                 ft.IconButton(on_click=self.change_theme, icon=ft.icons.WB_SUNNY_OUTLINED, tooltip="切换明暗",),
                 ft.IconButton(on_click=self.change_theme, icon=ft.icons.UPGRADE_OUTLINED,
                               tooltip="去github更新或者提出想法", url=GITHUB_URL),
-                ft.Row([self.color_menu])
+                self.color_menu,
+                ft.Text(" ")
             ],
         )
 

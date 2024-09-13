@@ -11,11 +11,12 @@ import logging
 import time
 import traceback
 from collections import defaultdict
-from typing import Optional
+from typing import Optional, List
 
 from kafka import KafkaAdminClient, KafkaClient, KafkaConsumer, TopicPartition, KafkaProducer
 from kafka.admin import NewPartitions, ConfigResource, ConfigResourceType
 from kafka.protocol.admin import DescribeConfigsResponse_v2
+from kafka.structs import GroupInformation
 
 from service.common import KAFKA_KING_GROUP
 
@@ -253,6 +254,13 @@ class KafkaService:
         configs = res.to_object()['resources'][0]['config_entries']
         configs = sorted(configs, key=lambda item: item['config_names'])
         return configs
+
+    def describe_groups(self, groups):
+        """
+        通过组名获取组信息和成员信息
+        """
+        group_descriptions: List[GroupInformation] = self.kac.describe_consumer_groups(groups)
+        return group_descriptions
 
 
 kafka_service = KafkaService()

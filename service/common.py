@@ -36,10 +36,11 @@ view_instance_map = {}
 BROKER = 0
 TOPIC = 1
 SIMULATE = 2
-MONITOR = 3
-SETTINGS = 4
-SUGGEST = 5
-HELP = 6
+GROUP = 3
+MONITOR = 4
+SETTINGS = 5
+SUGGEST = 6
+HELP = 7
 
 PAGE_WIDTH = 1440
 PAGE_HEIGHT = 800
@@ -51,10 +52,11 @@ PAGE_MIN_HEIGHT = 720
 
 class S_Text(flet.Text):
 
-    def __init__(self, value, **kwargs):
+    def __init__(self, value, length=0, **kwargs):
+
         super().__init__(
             selectable=True,
-            value=value,
+            value=value[:length] + "..." if (length and len(value) > length) else value,
             tooltip=value,
             **kwargs
         )
@@ -129,7 +131,11 @@ Navigation = flet.NavigationRail(
             selected_icon_content=flet.Icon(flet.icons.SWITCH_ACCESS_SHORTCUT_ADD),
             label=i18n("生产"),
         ),
-
+        flet.NavigationRailDestination(
+            icon_content=flet.Icon(flet.icons.GROUP_WORK_OUTLINED, tooltip="消费者组及成员"),
+            selected_icon_content=flet.Icon(flet.icons.GROUP_WORK),
+            label=i18n("消费组"),
+        ),
         flet.NavigationRailDestination(
             icon_content=flet.Icon(flet.icons.STACKED_BAR_CHART_ROUNDED, tooltip="监控（开发中）"),
             selected_icon_content=flet.Icon(flet.icons.STACKED_BAR_CHART),

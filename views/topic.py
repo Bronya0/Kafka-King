@@ -232,7 +232,12 @@ class Topic(object):
                                                 on_click=self.query_one_lag,
                                                 disabled=disabled,
                                             ),
-
+                                            ft.MenuItemButton(
+                                                data=topic_name_,
+                                                content=ft.Text("查看分区"),
+                                                on_click=self.click_topic_button,
+                                                disabled=disabled,
+                                            ),
                                         ]
                                     ),
                                 ]
