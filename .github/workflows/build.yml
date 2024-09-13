@@ -50,13 +50,13 @@ jobs:
       with:
         upload_url: ${{ github.event.release.upload_url }}
         asset_path: ./dist.zip
-        asset_name: kafka-King-v${{ steps.normalise_version.outputs.version }}-windows-2022.zip # 替换成适当的版本和平台标记
+        asset_name: kafka-King-v${{ steps.normalise_version.outputs.version }}-windows.zip # 替换成适当的版本和平台标记
         asset_content_type: application/octet-stream # 对于.exe文件，可以是application/octet-stream
 
   build-macos:
     strategy:
       matrix:
-        os: [macos-12, macos-13, macos-14]  # 定义多个 macOS 版本，macos-14是m1芯片即arm64
+        os: [macos-13, macos-14]  # 定义多个 macOS 版本，macos-14是m1芯片即arm64
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
 
