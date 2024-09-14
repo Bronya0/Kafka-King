@@ -14,7 +14,7 @@ import flet as ft
 from flet_core import ControlEvent
 
 from service.common import dd_common_configs, S_Button, open_snack_bar, KAFKA_KING_GROUP, build_tab_container, \
-    progress_bar, open_directory
+    progress_bar, open_directory, CONFIG_KEY
 from service.kafka_service import kafka_service
 
 
@@ -390,7 +390,8 @@ class Simulate(object):
             traceback.print_exc()
             res = "拉取失败：{}".format(e_)
 
-        root = os.path.normpath("/kafka-king-export")
+        config = e.page.client_storage.get(CONFIG_KEY)
+        root = config.get("export_dir") if config.get("export_dir") else "/kafka-king-export"
         if not os.path.exists(root):
             os.mkdir(root)
 
@@ -457,7 +458,8 @@ class Simulate(object):
             traceback.print_exc()
             res = "拉取失败：{}".format(e_)
 
-        root = os.path.normpath("/kafka-king-export")
+        config = e.page.client_storage.get(CONFIG_KEY)
+        root = config.get("export_dir") if config.get("export_dir") else "/kafka-king-export"
         if not os.path.exists(root):
             os.mkdir(root)
 

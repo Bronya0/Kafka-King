@@ -9,9 +9,10 @@
 import os
 import platform
 import subprocess
+from typing import Optional
 
 import flet
-from flet_core import TextStyle
+from flet_core import TextStyle, Page
 
 from service.translate import i18n
 
@@ -174,7 +175,7 @@ class page_info:
     """
 
     def __init__(self):
-        self.page = None
+        self.page: Optional[Page] = None
 
     def set_page(self, page):
         self.page = page

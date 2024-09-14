@@ -457,6 +457,7 @@ class Main:
         try:
             self.body.controls = view.controls
         except Exception as e:
+            traceback.print_exc()
             self.body.controls = [S_Text(value=str(e), size=24)] + self.tools
             self.page.update()
             return
