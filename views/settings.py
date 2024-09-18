@@ -91,6 +91,7 @@ class Settings(object):
         config = page.client_storage.get(CONFIG_KEY)
         self.page = page
         print(config)
+        self.page.add(self.get_directory_dialog)
 
         language = config.get("language")
         if language is not None:
@@ -104,8 +105,6 @@ class Settings(object):
         # 保存的路径
         export_dir = config.get("export_dir")
         self.directory_path.value = export_dir
-
-        page.overlay.extend([self.get_directory_dialog, self.directory_path])
 
         page.update()
 
@@ -123,6 +122,7 @@ class Settings(object):
             "language": language,
             "default_width": width,
             "default_height": height,
+            "export_dir": self.directory_path.value
         }
         e.page.client_storage.set(CONFIG_KEY, config)
 
@@ -138,7 +138,4 @@ class Settings(object):
     def get_directory_result(self, e: FilePickerResultEvent):
         self.directory_path.value = e.path if e.path else None
         print(self.directory_path.value)
-        config = self.page.client_storage.get(CONFIG_KEY)
-        config['export_dir'] = self.directory_path.value
-        self.page.client_storage.set(CONFIG_KEY, config)
-        self.page.update()
+        self.directory_path.update()
