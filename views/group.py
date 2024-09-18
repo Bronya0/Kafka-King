@@ -32,7 +32,7 @@ class Group(object):
             icon=ft.icons.LIST_ALT_OUTLINED, text="消费者组列表", content=ft.Row()
         )
         self.members_tab = ft.Tab(
-            icon=ft.icons.VERIFIED_USER, text="消费者成员列表", content=ft.Row()
+            icon=ft.icons.LIST_OUTLINED, text="消费者成员列表", content=ft.Row()
         )
         # all in one
         self.tab = ft.Tabs(
