@@ -85,7 +85,7 @@ class Group(object):
             row_func=row_func,
             columns=[
                 ft.DataColumn(S_Text("编号")),
-                ft.DataColumn(S_Text("消费者组名")),
+                ft.DataColumn(S_Text("消费组名")),
                 ft.DataColumn(S_Text("状态")),
                 ft.DataColumn(S_Text("协议类型")),
                 ft.DataColumn(S_Text("协议")),
@@ -140,7 +140,7 @@ class Group(object):
                 ft.DataColumn(S_Text("客户端id")),
                 ft.DataColumn(S_Text("host")),
                 ft.DataColumn(S_Text("订阅topic")),
-                ft.DataColumn(S_Text("分区分配")),
+                ft.DataColumn(S_Text("订阅分区分配")),
             ],
             column_spacing=20,
             expand=True

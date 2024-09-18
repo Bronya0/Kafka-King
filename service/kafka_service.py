@@ -179,7 +179,7 @@ class KafkaService:
             traceback.print_exc()
             return False, str(err)
 
-    def send_msgs(self, topic, msg: bytes, enable_gzip=False, msg_multiplier=1, msg_key=None, **kwargs):
+    def send_msgs(self, topic, msg: bytes, enable_gzip=False, msg_multiplier=1, msg_key=None, headers_lst=None, **kwargs):
         """
         send msgs发送消息
         """
@@ -191,7 +191,7 @@ class KafkaService:
         p = KafkaProducer(**config)
 
         for i in range(msg_multiplier):
-            p.send(topic=topic, value=msg, key=msg_key)
+            p.send(topic=topic, value=msg, key=msg_key, headers=headers_lst)
         p.flush()
         p.close()
 
@@ -216,18 +216,27 @@ class KafkaService:
 
             for tp, records in res.items():
                 for record in records:
+                    headers = ""
                     try:
-                        msgs += "{}. 偏移:{}, 分区:{}, 键:{}, 内容:{}\n".format(
+                        print(record.headers)
+                        for header in record.headers:
+                            key = header[0]  # 解码头部键
+                            value = header[1].decode('utf-8')  # 解码头部值
+                            headers += f"{key}:{value},"
+
+                        msgs += "{}. 偏移:{}, 分区:{}, 键:{}, header:{} 内容:{}\n".format(
                             n, record.offset,
                             record.partition,
                             record.key.decode('utf-8') if record.key is not None else "",
+                            headers,
                             record.value.decode('utf-8') if record.value is not None else ""
                         )
                     except:
-                        msgs += "{}. 偏移:{}, 分区:{}, 键:{}, 内容:{}\n".format(
+                        msgs += "{}. 偏移:{}, 分区:{}, 键:{}, header:{}, 内容:{}\n".format(
                             n, record.offset,
                             record.partition,
                             record.key,
+                            headers,
                             "无法utf-8解码"
                         )
                     ori_msgs_lst.append(record.value)

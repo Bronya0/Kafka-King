@@ -77,6 +77,17 @@ class Simulate(object):
             hint_text="支持字符串，可以输入String、Json等消息。",
         )
 
+        self.headers_input = ft.TextField(
+            multiline=True,
+            keyboard_type=ft.KeyboardType.MULTILINE,
+            max_length=999,
+            min_lines=1,
+            max_lines=4,
+            text_size=12,
+            expand=True,
+            hint_text="输入消息header，键值用英文冒号隔开，键值对之间用英文逗号隔开。例如：key1:value1,key2:value2，格式不正确会失败",
+        )
+
         # 消息倍数
         self.producer_slider = ft.Slider(min=1, max=10000, divisions=50, label="×{value}", value=1,
                                          on_change=self.update_text, expand=True)
@@ -88,7 +99,7 @@ class Simulate(object):
         )
 
         # producer tab's enable compress switch
-        self.producer_compress_switch = ft.Switch(label="开启gzip压缩：", label_position=ft.LabelPosition.LEFT,
+        self.producer_compress_switch = ft.Switch(label="gzip压缩：", label_position=ft.LabelPosition.LEFT,
                                                   value=False)
 
         # producer tap
@@ -182,12 +193,18 @@ class Simulate(object):
                     self.producer_batch_size_input,
                     self.producer_linger_ms_input
                 ]),
-                ft.Markdown(value="""# 输入单条消息内容"""),
+                ft.Markdown(value="""## 输入单条消息内容"""),
 
                 ft.Row(
                     [
                         # msg input
                         self.producer_send_input,
+                    ]
+                ),
+                ft.Markdown(value="""### 输入消息Headers（可选）"""),
+                ft.Row(
+                    [
+                        self.headers_input,
                     ]
                 ),
                 ft.Row(
@@ -252,6 +269,7 @@ class Simulate(object):
 
             topic = self.producer_topic_dd.value
             msg = self.producer_send_input.value
+            headers = self.headers_input.value
             enable_gzip = self.producer_compress_switch.value
             msg_multiplier = int(self.producer_slider.value)
             msg_key = self.producer_msg_key_input.value.rstrip()
@@ -260,9 +278,18 @@ class Simulate(object):
             linger_ms = int(self.producer_linger_ms_input.value.rstrip())
 
             if acks not in [0, 1, -1] or linger_ms < 0 or batch_size < 0 or msg == "" or topic is None:
-                raise Exception("参数填写不正确")
-        except:
-            open_snack_bar(e.page, "参数漏填、漏选或填写不正确")
+                raise Exception("acks、linger_ms、batch_size、msg、topic参数填写不正确")
+        except Exception as e_:
+            open_snack_bar(e.page, f"参数漏填、漏选或填写不正确：{e_}")
+            return
+        try:
+            headers_lst = None
+            if headers:
+                headers = headers.strip()
+                headers_lst = [(i.split(":")[0], i.split(":")[1].encode("utf-8")) for i in headers.split(",")]
+                print("headers_lst: ", headers_lst)
+        except Exception as e_:
+            open_snack_bar(e.page, f"headers填写不正确：{e_}")
             return
 
         ori = self.producer_send_button.text
@@ -282,7 +309,8 @@ class Simulate(object):
                 msg_key=msg_key.encode('utf-8'),
                 acks=acks,
                 batch_size=batch_size,
-                linger_ms=linger_ms
+                linger_ms=linger_ms,
+                headers_lst=headers_lst,
             )
         except Exception as e_:
             traceback.print_exc()
