@@ -42,6 +42,7 @@
 
 > 小提示：使用前请检查kafka集群配置的`advertised.listeners`，如果配置是域名，那么在King中填写连接地址时，请提前在本机电脑的hosts文件中添加对应域名解析，否则会因为无法解析域名而报NodeNotReadyError
 
+> ubuntu桌面用户请安装涉及依赖：sudo apt install libmpv1
 # 功能截图
 
 读取生产性能、消费性能、积压情况
