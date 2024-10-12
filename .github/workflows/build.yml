@@ -5,14 +5,12 @@ on:
   release:
     types: [ created ]
 
+env:
+  APP_NAME: 'Kafka-King'
+
 jobs:
   build-windows:
     runs-on: windows-2022
-#    strategy:
-#      matrix:
-#        platform:
-#          - windows/amd64
-#          - windows/arm64
 
     # 步骤合集
     steps:
@@ -25,26 +23,24 @@ jobs:
 
     - name: Install dependencies
       run: |
-        echo -n ${{ github.event.release.tag_name }} > assets/version.txt
+        echo -n ${{ github.ref_name }} > assets/version.txt
         
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        flet pack main.py -i assets/icon.ico -n kafka-King-${{ github.event.release.tag_name } --distpath dist/Kafka-King --add-data=assets/*:assets --product-name kafka-King
+        flet pack main.py -i assets/icon.ico -n ${{ env.APP_NAME }}-${{ github.ref_name }} --distpath dist/Kafka-King --add-data=assets/*:assets --product-name ${{ env.APP_NAME }}
         
         copy README.md dist/Kafka-King/
         copy LICENSE dist/Kafka-King/
-        Compress-Archive -Path ./dist/kafka-King -DestinationPath dist.zip -CompressionLevel Optimal
+        Compress-Archive -Path ./dist/kafka-King -DestinationPath ${{ env.APP_NAME }}-${{ github.ref_name }}-windows-amd64.zip -CompressionLevel Optimal
 
     - name: Upload Release Asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: ${{ env.APP_NAME }}-${{ github.ref_name }}-windows-amd64.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./dist.zip
-        asset_name: kafka-King-${{ github.event.release.tag_name }-windows.zip # 替换成适当的版本和平台标记
-        asset_content_type: application/octet-stream # 对于.exe文件，可以是application/octet-stream
+
 
   build-macos:
     strategy:
@@ -64,36 +60,31 @@ jobs:
         
     - name: Install dependencies
       run: |
-        echo -n ${{ github.event.release.tag_name }} > assets/version.txt
+        echo -n ${{ github.ref_name }} > assets/version.txt
         
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        flet pack main.py -i assets/icon.icns  -n kafka-King-${{ github.event.release.tag_name } --add-data=assets/*:assets --product-name kafka-King
+        flet pack main.py -i assets/icon.icns  -n ${{ env.APP_NAME }}-${{ github.ref_name }} --add-data=assets/*:assets --product-name ${{ env.APP_NAME }}
         ls -al dist/
 
     # 打包.app文件夹为zip或tar.gz以方便传输
     - name: Package .app folder
       run: |
          cd dist
-         tar -czf kafka-King-${{ github.event.release.tag_name }.tar.gz kafka-King-${{ github.event.release.tag_name }.app
+         tar -czf ${{ env.APP_NAME }}-${{ github.ref_name }}.tar.gz ${{ env.APP_NAME }}-${{ github.ref_name }}.app
+
 
     - name: Upload Release Asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: ./dist/${{ github.APP_NAME }}-${{ github.ref_name }}.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./dist/kafka-King-${{ github.event.release.tag_name }.tar.gz
-        asset_name: kafka-King-${{ github.event.release.tag_name }-${{ matrix.os }}.tar.gz
-        asset_content_type: application/octet-stream
+
 
   build-ubuntu:
     runs-on: ubuntu-22.04
-#    strategy:
-#      matrix:
-#        platform:
-#          - linux/amd64
 
     # 步骤合集
     steps:
@@ -106,28 +97,24 @@ jobs:
 
     - name: Install dependencies
       run: |
-        echo -n ${{ github.event.release.tag_name }} > assets/version.txt
+        echo -n ${{ github.ref_name }} > assets/version.txt
         
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        flet pack main.py -i assets/icon.ico  -n kafka-King-${{ github.event.release.tag_name } --add-data=assets/*:assets --product-name kafka-King
+        flet pack main.py -i assets/icon.ico -n ${{ github.APP_NAME }}-${{ github.ref_name }} --add-data=assets/*:assets --product-name ${{ github.APP_NAME }}
         ls -al dist/
 
     # 打包.app文件夹为zip或tar.gz以方便传输
-    # 为啥linux的要cp，因为我测试老是文件变动无法压缩
     - name: Package .app folder
       run: |
         cp -r dist temp_dist
         cd temp_dist
-        tar -czf kafka-King-${{ github.event.release.tag_name }.tar.gz kafka-King-${{ github.event.release.tag_name }
+        tar -czf ${{ github.APP_NAME }}-${{ github.ref_name }}-ubuntu-22.04.tar.gz ${{ github.APP_NAME }}-${{ github.ref_name }}
 
     - name: Upload Release Asset
-      id: upload-release-asset
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: ./temp_dist/${{ github.APP_NAME }}-${{ github.ref_name }}-ubuntu-22.04.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./temp_dist/kafka-King-${{ github.event.release.tag_name }.tar.gz
-        asset_name: kafka-King-${{ github.event.release.tag_name }-ubuntu-22.04.tar.gz
-        asset_content_type: application/octet-stream
