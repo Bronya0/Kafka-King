@@ -40,15 +40,27 @@ class Main:
         )
 
         # 添加连接
-        self.conn_name_input = TextField(tooltip="连接名", label="连接名，任意取名，保证唯一", hint_text="例如：本地环境", height=40, content_padding=5)
-        self.bootstrap_servers = TextField(tooltip="Kafka地址，使用域名:port而不是ip:port，必须在本地添加域名ip映射，多个地址用逗号分隔，通常写一个就行", label="bootstrap_servers", hint_text="域名:9092，必须在本地电脑添加域名ip映射", height=40, content_padding=5)
-        self.api_version = TextField(tooltip="指定要使用的 Kafka API 版本。如果不设置，则将尝试通过探测各种 API 来推断代理版本。示例：(2, 5, 0)", label="api_version", hint_text="例如：(2, 5, 0)", height=40, content_padding=5)
+        self.conn_name_input = TextField(tooltip="连接名", label="连接名，任意取名，保证唯一", hint_text="例如：本地环境",
+                                         height=40, content_padding=5)
+        self.bootstrap_servers = TextField(
+            tooltip="Kafka地址，使用域名:port而不是ip:port，必须在本地添加域名ip映射，多个地址用逗号分隔，通常写一个就行",
+            label="bootstrap_servers", hint_text="域名:9092，必须在本地电脑添加域名ip映射", height=40, content_padding=5)
+        self.api_version = TextField(
+            tooltip="指定要使用的 Kafka API 版本。如果不设置，则将尝试通过探测各种 API 来推断代理版本。示例：(2, 5, 0)",
+            label="api_version", hint_text="例如：(2, 5, 0)", height=40, content_padding=5)
 
-        self.ssl_cafile = TextField(tooltip="证书验证的CA文件的文件路径", hint_text=r"例如：C:\ssl\ca.pem", label="ssl_cafile", height=40, content_padding=5)
-        self.ssl_certfile = TextField(tooltip="证书PEM文件的文件路径，其中包含客户端证书以及建立证书真实性所需的任何 CA 证书", hint_text=r"例如：C:\client\ca.pem", label="ssl_certfile", height=40, content_padding=5)
-        self.ssl_keyfile = TextField(tooltip="包含客户端私钥的可选文件路径", hint_text=r"例如：C:\ssl\client.key", label="ssl_keyfile", height=40, content_padding=5)
-        self.ssl_password = TextField(tooltip="加载证书链时使用的可选密码,如果你的key文件有密码的话", label="ssl_password", height=40, content_padding=5)
-        self.ssl_crlfile = TextField(tooltip="包含用于检查证书过期的CRL文件路径。默认情况下，不执行 CRL 检查。提供文件时，将仅根据此 CRL 检查叶证书。", hint_text=r"例如：C:\ssl\ca.pem", label="ssl_crlfile", height=40, content_padding=5)
+        self.ssl_cafile = TextField(tooltip="证书验证的CA文件的文件路径", hint_text=r"例如：C:\ssl\ca.pem",
+                                    label="ssl_cafile", height=40, content_padding=5)
+        self.ssl_certfile = TextField(
+            tooltip="证书PEM文件的文件路径，其中包含客户端证书以及建立证书真实性所需的任何 CA 证书",
+            hint_text=r"例如：C:\client\ca.pem", label="ssl_certfile", height=40, content_padding=5)
+        self.ssl_keyfile = TextField(tooltip="包含客户端私钥的可选文件路径", hint_text=r"例如：C:\ssl\client.key",
+                                     label="ssl_keyfile", height=40, content_padding=5)
+        self.ssl_password = TextField(tooltip="加载证书链时使用的可选密码,如果你的key文件有密码的话",
+                                      label="ssl_password", height=40, content_padding=5)
+        self.ssl_crlfile = TextField(
+            tooltip="包含用于检查证书过期的CRL文件路径。默认情况下，不执行 CRL 检查。提供文件时，将仅根据此 CRL 检查叶证书。",
+            hint_text=r"例如：C:\ssl\ca.pem", label="ssl_crlfile", height=40, content_padding=5)
 
         self.security_protocol = ft.Dropdown(
             tooltip="可选：与代理通信的协议。有效值为：PLAINTEXT、SSL、SASL_PLAINTEXT、SASL_SSL。默认值：PLAINTEXT。",
@@ -71,14 +83,18 @@ class Main:
             ],
             label="sasl身份验证机制", dense=True, height=40, text_size=14, content_padding=7
         )
-        self.sasl_plain_username = TextField(tooltip="可选：用于 sasl PLAIN 和 SCRAM 身份验证的用户名。如果 身份验证机制 是 PLAIN 或 SCRAM 机制之一，则为必需。",
-                                             label="sasl/SCRAM 用户名", hint_text="", height=40, content_padding=5)
-        self.sasl_plain_password = TextField(tooltip="可选：用于 sasl PLAIN 和 SCRAM 身份验证的密码。如果 身份验证机制 是 PLAIN 或 SCRAM 机制之一，则为必需。",
-                                             label="sasl/SCRAM 密码", hint_text="", height=40, content_padding=5)
-        self.sasl_kerberos_service_name = TextField(tooltip="可选：要包含在 GSSAPI sasl 机制握手中的服务名称。默认值：'kafka'", label="sasl Kerberos GSSAPI服务名",
-                                                    hint_text="", height=40, content_padding=5)
-        self.sasl_kerberos_domain_name = TextField(tooltip="可选：用于 GSSAPI SASL 机制握手的 Kerberos 域名。默认值：引导服务器之一", label="sasl Kerberos域名",
-                                                   hint_text="", height=40, content_padding=5)
+        self.sasl_plain_username = TextField(
+            tooltip="可选：用于 sasl PLAIN 和 SCRAM 身份验证的用户名。如果 身份验证机制 是 PLAIN 或 SCRAM 机制之一，则为必需。",
+            label="sasl/SCRAM 用户名", hint_text="", height=40, content_padding=5)
+        self.sasl_plain_password = TextField(
+            tooltip="可选：用于 sasl PLAIN 和 SCRAM 身份验证的密码。如果 身份验证机制 是 PLAIN 或 SCRAM 机制之一，则为必需。",
+            label="sasl/SCRAM 密码", hint_text="", height=40, content_padding=5)
+        self.sasl_kerberos_service_name = TextField(
+            tooltip="可选：要包含在 GSSAPI sasl 机制握手中的服务名称。默认值：'kafka'", label="sasl Kerberos GSSAPI服务名",
+            hint_text="", height=40, content_padding=5)
+        self.sasl_kerberos_domain_name = TextField(
+            tooltip="可选：用于 GSSAPI SASL 机制握手的 Kerberos 域名。默认值：引导服务器之一", label="sasl Kerberos域名",
+            hint_text="", height=40, content_padding=5)
 
         # 链接下拉
         self.connect_dd = ft.Dropdown(
@@ -187,7 +203,7 @@ class Main:
 
         # 顶部导航
         # 如果 AppBar.adaptive=True 且应用程序在 iOS 或 macOS 设备上打开，则仅使用此列表的第一个元素!!!!!!
-        self.page.appbar = ft.AppBar(
+        self.appbar = ft.AppBar(
             leading=ft.Image(src="icon.png"),
             leading_width=40,
             title=S_Text(TITLE),
@@ -199,17 +215,22 @@ class Main:
                 ft.IconButton(on_click=self.edit_link_modal, icon=ft.icons.EDIT, tooltip="编辑kafka地址",
                               style=ft.ButtonStyle(color=ft.colors.SECONDARY,
                                                    shape=ft.RoundedRectangleBorder(radius=8))),
-                ft.IconButton(on_click=self.change_theme, icon=ft.icons.WB_SUNNY_OUTLINED, tooltip="切换明暗",),
+                ft.IconButton(on_click=self.change_theme, icon=ft.icons.WB_SUNNY_OUTLINED, tooltip="切换明暗", ),
                 ft.IconButton(on_click=self.change_theme, icon=ft.icons.UPGRADE_OUTLINED,
                               tooltip="去github更新或者提出想法", url=GITHUB_URL),
                 self.color_menu,
-                ft.Text(" ")
+                ft.Text("   ")
+                # ft.IconButton(on_click=self.window_min, icon=ft.icons.HORIZONTAL_RULE_OUTLINED, tooltip="最小化", ),
+                # ft.IconButton(on_click=self.window_max, icon=ft.icons.CROP_SQUARE_OUTLINED, tooltip="最大化", ),
+                # ft.IconButton(on_click=self.window_close, icon=ft.icons.CLOSE_ROUNDED, tooltip="关闭", ),
             ],
         )
 
         self.pr = progress_bar
         # 初始化加载全部连接
         self.refresh_dd_links()
+
+        self.page.add(self.appbar)
 
         # 页面主体框架
         self.page.add(
@@ -623,26 +644,22 @@ class Main:
             self.page.update()
             self.page.client_storage.set("theme", ft.ThemeMode.DARK.value)
 
-    def on_win_event(self, e):
-        """
-        修复flet恢复窗口时会导致的无法展开的问题！！
-
-        新版本已经修复。这个函数无用了~
-        """
-        page: ft.Page = e.page
-        if e.data == 'restore':
-            page.window.width = self.page_width
-            page.window.height = self.page_height
-            page.window.top = self.window_top
-            page.window.left = self.window_left
-
+    def window_max(self, e):
+        if self.page.window.maximized:
+            self.page.window.maximized = False
         else:
-            self.page_width = page.window.width
-            self.page_height = page.window.height
-            self.window_top = page.window.top
-            self.window_left = page.window.left
+            self.page.window.maximized = True
+        self.page.update()
 
-        page.update()
+    def window_min(self, e):
+        if self.page.window.minimized:
+            self.page.window.minimized = False
+        else:
+            self.page.window.minimized = True
+        self.page.update()
+
+    def window_close(self, e):
+        self.page.window.close()
 
 
 def init_config(page):
@@ -660,9 +677,8 @@ def init_config(page):
 
 def init(page: ft.Page):
     page.title = TITLE
-
-    # 存储page引用
     common_page.set_page(page)
+    # page.window.frameless = True
 
     # 主题
     theme = page.client_storage.get("theme")
