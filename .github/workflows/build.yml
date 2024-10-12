@@ -71,14 +71,14 @@ jobs:
     - name: Package .app folder
       run: |
          cd dist
-         tar -czf ${{ env.APP_NAME }}-${{ github.ref_name }}.tar.gz ${{ env.APP_NAME }}-${{ github.ref_name }}.app
+         tar -czf ${{ env.APP_NAME }}-${{ github.ref_name }}-${{ matrix.os }}.tar.gz ${{ env.APP_NAME }}-${{ github.ref_name }}.app
 
 
     - name: Upload Release Asset
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: ./dist/${{ env.APP_NAME }}-${{ github.ref_name }}.tar.gz
+        files: ./dist/${{ env.APP_NAME }}-${{ github.ref_name }}-${{ matrix.os }}.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -109,7 +109,7 @@ jobs:
       run: |
         cp -r dist temp_dist
         cd temp_dist
-        tar -czf ${{ github.APP_NAME }}-${{ github.ref_name }}-ubuntu-22.04.tar.gz ${{ env.APP_NAME }}-${{ github.ref_name }}
+        tar -czf ${{ env.APP_NAME }}-${{ github.ref_name }}-ubuntu-22.04.tar.gz ${{ env.APP_NAME }}-${{ github.ref_name }}
 
     - name: Upload Release Asset
       uses: softprops/action-gh-release@v1
