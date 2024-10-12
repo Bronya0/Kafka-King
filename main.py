@@ -203,7 +203,7 @@ class Main:
 
         # 顶部导航
         # 如果 AppBar.adaptive=True 且应用程序在 iOS 或 macOS 设备上打开，则仅使用此列表的第一个元素!!!!!!
-        self.appbar = ft.AppBar(
+        self.page.appbar = ft.AppBar(
             leading=ft.Image(src="icon.png"),
             leading_width=40,
             title=S_Text(TITLE),
@@ -229,8 +229,6 @@ class Main:
         self.pr = progress_bar
         # 初始化加载全部连接
         self.refresh_dd_links()
-
-        self.page.add(self.appbar)
 
         # 页面主体框架
         self.page.add(
