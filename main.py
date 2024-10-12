@@ -1,5 +1,6 @@
 import ast
 import gc
+import os
 import traceback
 
 import flet as ft
@@ -53,7 +54,7 @@ class Main:
                                     label="ssl_cafile", height=40, content_padding=5)
         self.ssl_certfile = TextField(
             tooltip="证书PEM文件的文件路径，其中包含客户端证书以及建立证书真实性所需的任何 CA 证书",
-            hint_text=r"例如：C:\client\ca.pem", label="ssl_certfile", height=40, content_padding=5)
+            hint_text=r"例如：C:\ca.pem or .keytab", label="ssl_certfile", height=40, content_padding=5)
         self.ssl_keyfile = TextField(tooltip="包含客户端私钥的可选文件路径", hint_text=r"例如：C:\ssl\client.key",
                                      label="ssl_keyfile", height=40, content_padding=5)
         self.ssl_password = TextField(tooltip="加载证书链时使用的可选密码,如果你的key文件有密码的话",
@@ -95,6 +96,10 @@ class Main:
         self.sasl_kerberos_domain_name = TextField(
             tooltip="可选：用于 GSSAPI SASL 机制握手的 Kerberos 域名。默认值：引导服务器之一", label="sasl Kerberos域名",
             hint_text="", height=40, content_padding=5)
+        # https://www.cnblogs.com/zjqv/p/16810181.html
+        self.krb5_conf = TextField(
+            tooltip="可选：Kerberos krb5conf文件位置", label="Kerberos krb5.conf",
+            hint_text="Kerberos krb5.conf文件位置", height=40, content_padding=5)
 
         # 链接下拉
         self.connect_dd = ft.Dropdown(
