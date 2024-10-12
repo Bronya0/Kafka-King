@@ -78,7 +78,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: ./dist/${{ github.APP_NAME }}-${{ github.ref_name }}.tar.gz
+        files: ./dist/${{ env.APP_NAME }}-${{ github.ref_name }}.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -101,7 +101,7 @@ jobs:
         
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        flet pack main.py -i assets/icon.ico -n ${{ github.APP_NAME }}-${{ github.ref_name }} --add-data=assets/*:assets --product-name ${{ github.APP_NAME }}
+        flet pack main.py -i assets/icon.ico -n ${{ env.APP_NAME }}-${{ github.ref_name }} --add-data=assets/*:assets --product-name ${{ env.APP_NAME }}
         ls -al dist/
 
     # 打包.app文件夹为zip或tar.gz以方便传输
@@ -109,12 +109,12 @@ jobs:
       run: |
         cp -r dist temp_dist
         cd temp_dist
-        tar -czf ${{ github.APP_NAME }}-${{ github.ref_name }}-ubuntu-22.04.tar.gz ${{ github.APP_NAME }}-${{ github.ref_name }}
+        tar -czf ${{ github.APP_NAME }}-${{ github.ref_name }}-ubuntu-22.04.tar.gz ${{ env.APP_NAME }}-${{ github.ref_name }}
 
     - name: Upload Release Asset
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: ./temp_dist/${{ github.APP_NAME }}-${{ github.ref_name }}-ubuntu-22.04.tar.gz
+        files: ./temp_dist/${{ env.APP_NAME }}-${{ github.ref_name }}-ubuntu-22.04.tar.gz
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
