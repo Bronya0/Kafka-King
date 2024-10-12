@@ -1,3 +1,4 @@
+import ast
 import gc
 import traceback
 
@@ -39,21 +40,45 @@ class Main:
         )
 
         # 添加连接
-        self.conn_name_input = TextField(label="连接名", hint_text="例如：本地环境", height=40, content_padding=5)
-        self.kafka_input = TextField(label="Kafka地址", hint_text="例如：127.0.0.1:9092", height=40, content_padding=5)
-        self.sasl_plain_username = TextField(label="SASL PLAIN用户名(简单明文认证)(可选)", hint_text="", height=40,
-                                             content_padding=5)
-        self.sasl_plain_password = TextField(label="SASL PLAIN密码(简单明文认证)(可选)", hint_text="", height=40,
-                                             content_padding=5)
+        self.conn_name_input = TextField(tooltip="连接名", label="连接名，任意取名，保证唯一", hint_text="例如：本地环境", height=40, content_padding=5)
+        self.bootstrap_servers = TextField(tooltip="Kafka地址，使用域名:port而不是ip:port，必须在本地添加域名ip映射，多个地址用逗号分隔，通常写一个就行", label="bootstrap_servers", hint_text="域名:9092，必须在本地电脑添加域名ip映射", height=40, content_padding=5)
+        self.api_version = TextField(tooltip="指定要使用的 Kafka API 版本。如果不设置，则将尝试通过探测各种 API 来推断代理版本。示例：(2, 5, 0)", label="api_version", hint_text="例如：(2, 5, 0)", height=40, content_padding=5)
 
-        # 编辑连接
-        self.edit_conn_name_input = TextField(label="连接名", hint_text="例如：本地环境", height=40, content_padding=5)
-        self.edit_kafka_input = TextField(label="Kafka地址", hint_text="例如：127.0.0.1:9092", height=40,
-                                          content_padding=5)
-        self.edit_sasl_plain_username = TextField(label="SASL PLAIN用户名(简单明文认证)(可选)", hint_text="", height=40,
-                                                  content_padding=5)
-        self.edit_sasl_plain_password = TextField(label="SASL PLAIN密码(简单明文认证)(可选)", hint_text="", height=40,
-                                                  content_padding=5)
+        self.ssl_cafile = TextField(tooltip="证书验证的CA文件的文件路径", hint_text=r"例如：C:\ssl\ca.pem", label="ssl_cafile", height=40, content_padding=5)
+        self.ssl_certfile = TextField(tooltip="证书PEM文件的文件路径，其中包含客户端证书以及建立证书真实性所需的任何 CA 证书", hint_text=r"例如：C:\client\ca.pem", label="ssl_certfile", height=40, content_padding=5)
+        self.ssl_keyfile = TextField(tooltip="包含客户端私钥的可选文件路径", hint_text=r"例如：C:\ssl\client.key", label="ssl_keyfile", height=40, content_padding=5)
+        self.ssl_password = TextField(tooltip="加载证书链时使用的可选密码,如果你的key文件有密码的话", label="ssl_password", height=40, content_padding=5)
+        self.ssl_crlfile = TextField(tooltip="包含用于检查证书过期的CRL文件路径。默认情况下，不执行 CRL 检查。提供文件时，将仅根据此 CRL 检查叶证书。", hint_text=r"例如：C:\ssl\ca.pem", label="ssl_crlfile", height=40, content_padding=5)
+
+        self.security_protocol = ft.Dropdown(
+            tooltip="可选：与代理通信的协议。有效值为：PLAINTEXT、SSL、SASL_PLAINTEXT、SASL_SSL。默认值：PLAINTEXT。",
+            options=[
+                ft.dropdown.Option("PLAINTEXT"),
+                ft.dropdown.Option("SSL"),
+                ft.dropdown.Option("SASL_PLAINTEXT"),
+                ft.dropdown.Option("SASL_SSL"),
+            ],
+            value="PLAINTEXT", label="代理通信协议", dense=True, height=40, text_size=14, content_padding=7
+        )
+        self.sasl_mechanism = ft.Dropdown(
+            tooltip="可选：为 SASL_PLAINTEXT 或 SASL_SSL 配置代理通信协议时的身份验证机制。有效值为：PLAIN、GSSAPI、OAUTHBEARER、SCRAM-SHA-256、SCRAM-SHA-512。",
+            options=[
+                ft.dropdown.Option("PLAIN"),
+                ft.dropdown.Option("GSSAPI"),
+                ft.dropdown.Option("OAUTHBEARER"),
+                ft.dropdown.Option("SCRAM-SHA-256"),
+                ft.dropdown.Option("SCRAM-SHA-512"),
+            ],
+            label="sasl身份验证机制", dense=True, height=40, text_size=14, content_padding=7
+        )
+        self.sasl_plain_username = TextField(tooltip="可选：用于 sasl PLAIN 和 SCRAM 身份验证的用户名。如果 身份验证机制 是 PLAIN 或 SCRAM 机制之一，则为必需。",
+                                             label="sasl/SCRAM 用户名", hint_text="", height=40, content_padding=5)
+        self.sasl_plain_password = TextField(tooltip="可选：用于 sasl PLAIN 和 SCRAM 身份验证的密码。如果 身份验证机制 是 PLAIN 或 SCRAM 机制之一，则为必需。",
+                                             label="sasl/SCRAM 密码", hint_text="", height=40, content_padding=5)
+        self.sasl_kerberos_service_name = TextField(tooltip="可选：要包含在 GSSAPI sasl 机制握手中的服务名称。默认值：'kafka'", label="sasl Kerberos GSSAPI服务名",
+                                                    hint_text="", height=40, content_padding=5)
+        self.sasl_kerberos_domain_name = TextField(tooltip="可选：用于 GSSAPI SASL 机制握手的 Kerberos 域名。默认值：引导服务器之一", label="sasl Kerberos域名",
+                                                   hint_text="", height=40, content_padding=5)
 
         # 链接下拉
         self.connect_dd = ft.Dropdown(
@@ -170,7 +195,7 @@ class Main:
             actions=[
                 self.connect_dd,
                 ft.TextButton("添加", on_click=self.add_dlg_modal, icon=ft.icons.ADD_BOX_OUTLINED,
-                              tooltip="添加kafka地址",style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))),
+                              tooltip="添加kafka地址", style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=8))),
                 ft.IconButton(on_click=self.edit_link_modal, icon=ft.icons.EDIT, tooltip="编辑kafka地址",
                               style=ft.ButtonStyle(color=ft.colors.SECONDARY,
                                                    shape=ft.RoundedRectangleBorder(radius=8))),
@@ -211,22 +236,21 @@ class Main:
         """
         e.control.text = "连接中……"
         e.page.update()
-        conn_name_input, kafka_input, sasl_plain_username, sasl_plain_password = [i.value for i in e.control.data]
-        print("连接测试：", conn_name_input, kafka_input, sasl_plain_username, sasl_plain_password)
+        conn_name = self.conn_name_input.value
+        print("连接测试：", conn_name)
 
         color = "green"
         err = None
-        if None in [conn_name_input, kafka_input] or "" in [conn_name_input, kafka_input]:
+        if None in [conn_name, self.bootstrap_servers.value] or "" in [conn_name, self.bootstrap_servers.value]:
             msg = "请先填写kafka连接"
-        elif sasl_plain_username and not sasl_plain_password or sasl_plain_password and not sasl_plain_username:
-            msg = "SASL填写不正确（如未开启认证可以不填）"
         else:
-            res, err = kafka_service.new_client(kafka_input.split(','), sasl_plain_username, sasl_plain_password)
+            conn = self.get_conn()
+            res, err = kafka_service.new_client(conn_name, conn)
             if res:
                 msg = f"连接成功"
                 color = "green"
             else:
-                msg = f"连接失败"
+                msg = f"连接失败: {err}"
                 color = "red"
 
         e.control.text = msg
@@ -238,16 +262,14 @@ class Main:
         """
         存储连接信息，会覆盖，唯一key是连接名。{prefix: {"name1": [bootstraps, sasl name, sasl pwd]}}
         """
-        new_connect, kafka_input, sasl_plain_username, sasl_plain_password = [i.value for i in e.control.data]
+        connect_name = self.conn_name_input.value
         print("添加连接：", e.control.data)
-        if not new_connect or not kafka_input:
-            open_snack_bar(e.page, "请正确填写连接信息", False)
-            return
 
         connects = self.page.client_storage.get(prefix)
         connects = {} if connects is None else connects
-        connects.pop(new_connect, None)
-        connects[new_connect] = [kafka_input, sasl_plain_username, sasl_plain_password]
+        connects.pop(connect_name, None)
+
+        connects[connect_name] = self.get_conn()
         print("保存：", connects)
 
         self.page.client_storage.set(prefix, connects)
@@ -258,8 +280,7 @@ class Main:
         close_dlg(e)
 
         # 清空输入框
-        for i in e.control.data:
-            i.value = None
+        self.clear_conn()
         open_snack_bar(e.page, "操作成功", True)
 
     def add_dlg_modal(self, e):
@@ -271,10 +292,7 @@ class Main:
 
         def cancel(event):
             close_dlg(event)
-            self.conn_name_input.value = None
-            self.kafka_input.value = None
-            self.sasl_plain_username.value = None
-            self.sasl_plain_password.value = None
+            self.clear_conn()
 
         dlg_modal = ft.AlertDialog(
             modal=True,
@@ -282,28 +300,47 @@ class Main:
             title=S_Text("添加kafka连接"),
             actions=[
                 ft.Column([
-                    self.conn_name_input,
-                    self.kafka_input,
-                    self.sasl_plain_username,
-                    self.sasl_plain_password,
+                    ft.Row([
+                        ft.Column([
+                            ft.Text("必填：连接信息"),
+                            self.conn_name_input,
+                            self.bootstrap_servers,
+                            ft.Text("选填：kafka API版本信息"),
+                            self.api_version,
+                        ]),
+                        ft.Column([
+                            ft.Text("选填：ssl配置"),
+                            self.ssl_cafile,
+                            self.ssl_certfile,
+                            self.ssl_keyfile,
+                            self.ssl_password,
+                        ]),
+                        ft.Column([
+                            ft.Text("选填：sasl配置"),
+                            self.security_protocol,
+                            self.sasl_mechanism,
+                            self.sasl_plain_username,
+                            self.sasl_plain_password,
+                            self.sasl_kerberos_service_name,
+                            self.sasl_kerberos_domain_name,
+                        ]),
+                    ], vertical_alignment=ft.CrossAxisAlignment.START),
                     ft.Text("提示：请先将kafka节点的域名ip映射添加到本地hosts文件中，否则无法连接", color="red"),
                     ft.Row([
-                        ft.TextButton("连接测试", on_click=self.test_connect, on_long_press=True,
+                        ft.TextButton("连接测试", on_click=self.test_connect,
                                       style=ft.ButtonStyle(color=ft.colors.RED),
-                                      data=[self.conn_name_input, self.kafka_input,
-                                            self.sasl_plain_username, self.sasl_plain_password],
                                       ),
                         ft.TextButton("添加", on_click=self.add_connect,
-                                      data=[self.conn_name_input, self.kafka_input,
-                                            self.sasl_plain_username, self.sasl_plain_password]),
+                                      data=self.conn_name_input.value
+                                      ),
                         ft.TextButton("取消", on_click=cancel),
                     ])
                 ],
-                    width=360
+                    width=960
                 )
             ],
             actions_alignment=ft.MainAxisAlignment.CENTER,
-            shape=ft.RoundedRectangleBorder(radius=8)
+            shape=ft.RoundedRectangleBorder(radius=2)
 
         )
         e.page.dialog = dlg_modal
@@ -317,6 +354,7 @@ class Main:
         e.page.client_storage.set(prefix, connects)
         self.refresh_dd_links()
         close_dlg(e)
+        self.clear_conn()
         open_snack_bar(e.page, "删除成功", True)
 
     def edit_link_modal(self, e: ControlEvent):
@@ -326,18 +364,27 @@ class Main:
 
         def cancel(event):
             close_dlg(event)
-            self.edit_conn_name_input.value = None
-            self.edit_kafka_input.value = None
-            self.edit_sasl_plain_username.value = None
-            self.edit_sasl_plain_password.value = None
+            self.clear_conn()
 
-        key = self.connect_dd.value
-        if not key:
+        connect_name = self.connect_dd.value
+        if not connect_name:
             open_snack_bar(e.page, "请先打开kafka连接", False)
             return
-        connects = self.page.client_storage.get(prefix).get(key, [None, None, None])
-        self.edit_conn_name_input.value = key
-        self.edit_kafka_input.value, self.edit_sasl_plain_username.value, self.edit_sasl_plain_password.value = connects
+        conn: dict = self.page.client_storage.get(prefix).get(connect_name, {})
+
+        self.conn_name_input.value = connect_name
+        self.bootstrap_servers.value = conn.get("bootstrap_servers")
+        self.api_version.value = conn.get("api_version")
+        self.ssl_cafile.value = conn.get("ssl_cafile")
+        self.ssl_certfile.value = conn.get("ssl_certfile")
+        self.ssl_keyfile.value = conn.get("ssl_keyfile")
+        self.ssl_password.value = conn.get("ssl_password")
+        self.security_protocol.value = conn.get("security_protocol")
+        self.sasl_mechanism.value = conn.get("sasl_mechanism")
+        self.sasl_plain_username.value = conn.get("sasl_plain_username")
+        self.sasl_plain_password.value = conn.get("sasl_plain_password")
+        self.sasl_kerberos_service_name.value = conn.get("sasl_kerberos_service_name")
+        self.sasl_kerberos_domain_name.value = conn.get("sasl_kerberos_domain_name")
 
         e.page.dialog = ft.AlertDialog(
             modal=True,
@@ -345,37 +392,52 @@ class Main:
             title=S_Text("编辑连接"),
             actions=[
                 ft.Column([
-                    self.edit_conn_name_input,
-                    self.edit_kafka_input,
-                    self.edit_sasl_plain_username,
-                    self.edit_sasl_plain_password,
+                    ft.Row([
+                        ft.Column([
+                            ft.Text("必填：连接信息"),
+                            self.conn_name_input,
+                            self.bootstrap_servers,
+                            ft.Text("选填：kafka API版本信息"),
+                            self.api_version,
+                        ]),
+                        ft.Column([
+                            ft.Text("选填：ssl配置"),
+                            self.ssl_cafile,
+                            self.ssl_certfile,
+                            self.ssl_keyfile,
+                            self.ssl_password,
+                        ]),
+                        ft.Column([
+                            ft.Text("选填：sasl配置"),
+                            self.security_protocol,
+                            self.sasl_mechanism,
+                            self.sasl_plain_username,
+                            self.sasl_plain_password,
+                            self.sasl_kerberos_service_name,
+                            self.sasl_kerberos_domain_name,
+                        ]),
+                    ], vertical_alignment=ft.CrossAxisAlignment.START),
                     ft.Text("提示：请先将kafka节点的域名ip映射添加到本地hosts文件中，否则无法连接", color="red"),
                     ft.Row([
-                        ft.TextButton("连接测试", on_click=self.test_connect, on_long_press=True,
+                        ft.TextButton("连接测试", on_click=self.test_connect,
                                       style=ft.ButtonStyle(color=ft.colors.RED),
-                                      data=[self.edit_conn_name_input,
-                                            self.edit_kafka_input,
-                                            self.edit_sasl_plain_username,
-                                            self.edit_sasl_plain_password, ]
+                                      data=conn
                                       ),
                         ft.TextButton("删除", on_click=self.delete_connect,
                                       style=ft.ButtonStyle(color=ft.colors.RED),
-                                      data=key),
+                                      data=self.conn_name_input.value),
 
                         ft.TextButton("保存", on_click=self.add_connect,
-                                      data=[self.edit_conn_name_input,
-                                            self.edit_kafka_input,
-                                            self.edit_sasl_plain_username,
-                                            self.edit_sasl_plain_password, ]
+                                      data=(self.conn_name_input.value, conn)
                                       ),
                         ft.TextButton("取消", on_click=cancel),
                     ])
                 ],
-                    width=360
+                    width=960
                 )
             ],
             actions_alignment=ft.MainAxisAlignment.CENTER,
-            shape=ft.RoundedRectangleBorder(radius=8)
+            shape=ft.RoundedRectangleBorder(radius=2)
 
         )
 
@@ -390,12 +452,24 @@ class Main:
         conns: dict = self.page.client_storage.get(prefix)
         options = []
         print("当前全部连接存储：", conns)
-        if not conns:
+
+        # 清理历史的格式不对的存储
+        new_conns = {}
+        need_write = False
+        for k, v in conns.items():
+            if isinstance(v, dict):
+                new_conns[k] = v
+            else:
+                need_write = True
+        if need_write:
+            self.page.client_storage.set(prefix, new_conns)
+
+        if not new_conns:
             self.connect_dd.label = i18n("请添加kafka连接")
         else:
             self.connect_dd.label = i18n("请选择连接")
-            for name, info_lst in conns.items():
-                op = ft.dropdown.Option(key=name, text=f"『{name}』 {info_lst[0]}")
+            for name, coon in new_conns.items():
+                op = ft.dropdown.Option(key=name, text=f"『{name}』 {coon.get('bootstrap_servers')}")
                 options.append(op)
         self.connect_dd.options = options
 
@@ -408,15 +482,14 @@ class Main:
         self.pr.visible = True
         self.page.update()
 
-        key = self.connect_dd.value
-        self.connect_dd.label = key
+        conn_name = self.connect_dd.value
+        self.connect_dd.label = conn_name
 
         conns: dict = self.page.client_storage.get(prefix)
 
-        info_lst = conns.get(key)
-        bootstrap_servers, SASL_NAME, SASL_PWD = info_lst
-        print(bootstrap_servers)
-        self.page.appbar.title = S_Text(f"{TITLE} | 当前连接: {key}")
+        conn = conns.get(conn_name)
+        print(conn_name)
+        self.page.appbar.title = S_Text(f"{TITLE} | 当前连接: {conn_name}")
         self.Navigation.selected_index = 0
         print("切换连接时，清空页面缓存")
         view_instance_map.clear()
@@ -424,7 +497,7 @@ class Main:
         self.page.update()
 
         try:
-            kafka_service.set_connect(key, bootstrap_servers, SASL_NAME, SASL_PWD)
+            kafka_service.set_connect(conn_name, conn)
             self.refresh_body()
         except Exception as e:
             self.body.controls = [S_Text(value=f"连接失败：{str(e)}", size=24)] + self.tools
@@ -485,6 +558,39 @@ class Main:
         # 缓存页面。
         view_instance_map[selected_index] = view
         gc.collect()
+
+    def get_conn(self):
+        api_version = None
+        if self.api_version.value:
+            try:
+                api_version = ast.literal_eval(self.api_version.value)
+            except:
+                open_snack_bar(self.page, i18n("api_version格式不正确，请检查"))
+
+        conn = {
+            "bootstrap_servers": self.bootstrap_servers.value,
+            "api_version": api_version,
+            "ssl_cafile": self.ssl_cafile.value,
+            "ssl_certfile": self.ssl_certfile.value,
+            "ssl_keyfile": self.ssl_keyfile.value,
+            "ssl_password": self.ssl_password.value,
+            "ssl_crlfile": self.ssl_crlfile.value,
+            "security_protocol": self.security_protocol.value,
+            "sasl_mechanism": self.sasl_mechanism.value,
+            "sasl_plain_username": self.sasl_plain_username.value,
+            "sasl_plain_password": self.sasl_plain_password.value,
+            "sasl_kerberos_service_name": self.sasl_kerberos_service_name.value,
+            "sasl_kerberos_domain_name": self.sasl_kerberos_domain_name.value,
+        }
+        conn = {key: value for key, value in conn.items() if value is not None and value != ""}
+        return conn
+
+    def clear_conn(self):
+        for i in (self.conn_name_input, self.bootstrap_servers, self.api_version,
+                  self.ssl_cafile, self.ssl_certfile, self.ssl_keyfile, self.ssl_password, self.ssl_crlfile,
+                  self.security_protocol, self.sasl_mechanism, self.sasl_plain_username, self.sasl_plain_password,
+                  self.sasl_kerberos_service_name, self.sasl_kerberos_domain_name):
+            i.value = None
 
     def change_color(self, e):
         """

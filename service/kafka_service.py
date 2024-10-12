@@ -34,24 +34,16 @@ class TopicConfig:
 class KafkaService:
     def __init__(self):
         self.connect_name = None
-        self.SASL_PARAM = None
+        self.conn = {}
         self.kac: Optional[KafkaAdminClient] = None
         self.consumer = None
 
-    def set_connect(self, connect_name, bootstrap_servers: list, sasl_plain_username, sasl_plain_password):
-        SASL_PARAM = {"bootstrap_servers": bootstrap_servers}
-        if sasl_plain_username and sasl_plain_password:
-            SASL_PARAM.update({
-                "security_protocol": 'SASL_PLAINTEXT',
-                "sasl_mechanism": "PLAIN",
-                "sasl_plain_username": sasl_plain_username,
-                "sasl_plain_password": sasl_plain_password,
-            })
-        self.SASL_PARAM = SASL_PARAM
+    def set_connect(self, connect_name, conn):
+        self.conn = conn
         self.connect_name = connect_name
         # 此处异常要重置kac，否则会复用之前的历史连接
         try:
-            self.kac = KafkaAdminClient(**SASL_PARAM)
+            self.kac = KafkaAdminClient(**conn)
             self.new_consumer()
         except Exception as e:
             self.kac = None
@@ -64,22 +56,14 @@ class KafkaService:
             enable_auto_commit=False,
             auto_offset_reset="earliest",
             max_poll_records=10000,
-            **self.SASL_PARAM,
+            **self.conn,
         )
         print("内置消费者创建成功")
 
-    def new_client(self, bootstrap_servers: list, sasl_plain_username, sasl_plain_password):
-        SASL_PARAM = {"bootstrap_servers": bootstrap_servers}
-        if sasl_plain_username and sasl_plain_password:
-            SASL_PARAM.update({
-                "security_protocol": 'SASL_PLAINTEXT',
-                "sasl_mechanism": "PLAIN",
-                "sasl_plain_username": sasl_plain_username,
-                "sasl_plain_password": sasl_plain_password,
-            })
+    def new_client(self, connect_name, conn):
         # 测试连接
         try:
-            admin_client = KafkaAdminClient(**SASL_PARAM)
+            admin_client = KafkaAdminClient(**conn)
             topics = admin_client.list_topics()
             admin_client.close()
             return True, None
@@ -106,7 +90,7 @@ class KafkaService:
         """
         cluster_metadata = self.kac.describe_cluster()
         # 尝试猜测 Kafka 代理的版本
-        kc = KafkaClient(**self.SASL_PARAM)
+        kc = KafkaClient(**self.conn)
         api_version = kc.check_version()
         kc.close()
         return cluster_metadata, api_version
@@ -129,7 +113,7 @@ class KafkaService:
         print(topics, group_id)
         if group_id is not None and group_id != KAFKA_KING_GROUP:
             print(f"创建消费者:{group_id}")
-            consumer = KafkaConsumer(**self.SASL_PARAM, group_id=group_id)
+            consumer = KafkaConsumer(**self.conn, group_id=group_id)
         else:
             print(f"使用自带消费者:{KAFKA_KING_GROUP}")
             consumer = self.consumer
@@ -183,7 +167,7 @@ class KafkaService:
         """
         send msgs发送消息
         """
-        config: dict = copy.copy(self.SASL_PARAM)
+        config: dict = copy.copy(self.conn)
         config.update(kwargs)
         if enable_gzip:
             config['compression_type'] = 'gzip'
