@@ -1,6 +1,5 @@
 import ast
 import gc
-import os
 import traceback
 
 import flet as ft
@@ -90,16 +89,16 @@ class Main:
         self.sasl_plain_password = TextField(
             tooltip="可选：用于 sasl PLAIN 和 SCRAM 身份验证的密码。如果 身份验证机制 是 PLAIN 或 SCRAM 机制之一，则为必需。",
             label="sasl/SCRAM 密码", hint_text="", height=40, content_padding=5)
-        self.sasl_kerberos_service_name = TextField(
-            tooltip="可选：要包含在 GSSAPI sasl 机制握手中的服务名称。默认值：'kafka'", label="sasl Kerberos GSSAPI服务名",
-            hint_text="", height=40, content_padding=5)
-        self.sasl_kerberos_domain_name = TextField(
-            tooltip="可选：用于 GSSAPI SASL 机制握手的 Kerberos 域名。默认值：引导服务器之一", label="sasl Kerberos域名",
-            hint_text="", height=40, content_padding=5)
-        # https://www.cnblogs.com/zjqv/p/16810181.html
-        self.krb5_conf = TextField(
-            tooltip="可选：Kerberos krb5conf文件位置", label="Kerberos krb5.conf",
-            hint_text="Kerberos krb5.conf文件位置", height=40, content_padding=5)
+        # self.sasl_kerberos_service_name = TextField(
+        #     tooltip="可选：要包含在 GSSAPI sasl 机制握手中的服务名称。默认值：'kafka'", label="sasl Kerberos GSSAPI服务名",
+        #     hint_text="", height=40, content_padding=5)
+        # self.sasl_kerberos_domain_name = TextField(
+        #     tooltip="可选：用于 GSSAPI SASL 机制握手的 Kerberos 域名。默认值：引导服务器之一", label="sasl Kerberos域名",
+        #     hint_text="", height=40, content_padding=5)
+        # # https://www.cnblogs.com/zjqv/p/16810181.html
+        # self.krb5_conf = TextField(
+        #     tooltip="可选：Kerberos krb5conf文件位置", label="Kerberos krb5.conf",
+        #     hint_text="Kerberos krb5.conf文件位置", height=40, content_padding=5)
 
         # 链接下拉
         self.connect_dd = ft.Dropdown(
@@ -345,8 +344,8 @@ class Main:
                             self.sasl_mechanism,
                             self.sasl_plain_username,
                             self.sasl_plain_password,
-                            self.sasl_kerberos_service_name,
-                            self.sasl_kerberos_domain_name,
+                            # self.sasl_kerberos_service_name,
+                            # self.sasl_kerberos_domain_name,
                         ]),
                     ], vertical_alignment=ft.CrossAxisAlignment.START),
                     ft.Text("提示：请先将kafka节点的域名ip映射添加到本地hosts文件中，否则无法连接", color="red"),
@@ -407,8 +406,8 @@ class Main:
         self.sasl_mechanism.value = conn.get("sasl_mechanism")
         self.sasl_plain_username.value = conn.get("sasl_plain_username")
         self.sasl_plain_password.value = conn.get("sasl_plain_password")
-        self.sasl_kerberos_service_name.value = conn.get("sasl_kerberos_service_name")
-        self.sasl_kerberos_domain_name.value = conn.get("sasl_kerberos_domain_name")
+        # self.sasl_kerberos_service_name.value = conn.get("sasl_kerberos_service_name")
+        # self.sasl_kerberos_domain_name.value = conn.get("sasl_kerberos_domain_name")
 
         e.page.dialog = ft.AlertDialog(
             modal=True,
@@ -437,8 +436,8 @@ class Main:
                             self.sasl_mechanism,
                             self.sasl_plain_username,
                             self.sasl_plain_password,
-                            self.sasl_kerberos_service_name,
-                            self.sasl_kerberos_domain_name,
+                            # self.sasl_kerberos_service_name,
+                            # self.sasl_kerberos_domain_name,
                         ]),
                     ], vertical_alignment=ft.CrossAxisAlignment.START),
                     ft.Text("提示：请先将kafka节点的域名ip映射添加到本地hosts文件中，否则无法连接", color="red"),
@@ -603,8 +602,8 @@ class Main:
             "sasl_mechanism": self.sasl_mechanism.value,
             "sasl_plain_username": self.sasl_plain_username.value,
             "sasl_plain_password": self.sasl_plain_password.value,
-            "sasl_kerberos_service_name": self.sasl_kerberos_service_name.value,
-            "sasl_kerberos_domain_name": self.sasl_kerberos_domain_name.value,
+            # "sasl_kerberos_service_name": self.sasl_kerberos_service_name.value,
+            # "sasl_kerberos_domain_name": self.sasl_kerberos_domain_name.value,
         }
         conn = {key: value for key, value in conn.items() if value is not None and value != ""}
         return conn
@@ -613,7 +612,8 @@ class Main:
         for i in (self.conn_name_input, self.bootstrap_servers, self.api_version,
                   self.ssl_cafile, self.ssl_certfile, self.ssl_keyfile, self.ssl_password, self.ssl_crlfile,
                   self.security_protocol, self.sasl_mechanism, self.sasl_plain_username, self.sasl_plain_password,
-                  self.sasl_kerberos_service_name, self.sasl_kerberos_domain_name):
+                  # self.sasl_kerberos_service_name, self.sasl_kerberos_domain_name
+                  ):
             i.value = None
 
     def change_color(self, e):
