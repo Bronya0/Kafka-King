@@ -475,6 +475,8 @@ class Main:
         conns: dict = self.page.client_storage.get(prefix)
         options = []
         print("当前全部连接存储：", conns)
+        if not conns:
+            conns = {}
 
         # 清理历史的格式不对的存储
         new_conns = {}
