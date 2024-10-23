@@ -90,11 +90,16 @@ kafka api 版本不写会自动推测(明确知道的建议填写)
 ![](docs/snap/p5.png)
 
 
+## 消费者组操作
+支持查看消费者组、消费者及订阅的topic、分区
+
+
 # 快速开始
 在右侧release下的Assets选择对应版本下载即可。
 或者点击 https://github.com/Bronya0/Kafka-King/releases
 
 # 构建
+只有要研究源码才需要手动构建
 
 pip install -r requirements.txt
 
