@@ -41,7 +41,7 @@ import {
   WbSunnyOutlined,
   NightlightRoundFilled, ContentCopyFilled
 } from '@vicons/material'
-import logo from '../assets/images/logo.svg'
+import logo from '../assets/images/appicon.png'
 import {h, onMounted, ref, shallowRef} from "vue";
 import {BrowserOpenURL, Quit, WindowMaximise, WindowMinimise, WindowUnmaximise} from "../../wailsjs/runtime";
 import {CheckUpdate} from '../../wailsjs/go/system/Update'

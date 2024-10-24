@@ -66,7 +66,6 @@ import {
 import {SettingsOutlined, HiveOutlined} from '@vicons/material'
 import Header from './components/Header.vue'
 import Settings from './components/Settings.vue'
-import HelloWorld from './components/HelloWorld.vue'
 import {GetConfig, SaveTheme} from "../wailsjs/go/config/AppConfig";
 import {WindowSetSize} from "../wailsjs/runtime";
 import {renderIcon} from "./utils/common";
@@ -98,12 +97,7 @@ onMounted(async () => {
 // 左侧菜单
 // 左侧菜单
 const sideMenuOptions = [
-  {
-    label: '集群',
-    key: '集群',
-    icon: renderIcon(HiveOutlined),
-    component: HelloWorld,
-  },
+
   {
     label: '设置',
     key: '设置',
