@@ -3,6 +3,7 @@ package main
 import (
 	"app/backend/common"
 	"app/backend/config"
+	"app/backend/service"
 	"app/backend/system"
 	"context"
 	"embed"
@@ -30,6 +31,7 @@ func main() {
 	appConfig := &config.AppConfig{}
 	configInfo := appConfig.GetConfig()
 	update := &system.Update{}
+	kafkaService := service.NewKafkaService()
 
 	// 主应用程序由对 wails.Run() 的调用组成。 它接受描述应用程序窗口大小、窗口标题、要使用的资源等应用程序配置
 	// 完整说明：https://wails.io/zh-Hans/docs/reference/options/
@@ -71,6 +73,7 @@ func main() {
 			app,
 			appConfig,
 			update,
+			kafkaService,
 		},
 		Windows: &windows.Options{
 			WebviewIsTransparent:              false,

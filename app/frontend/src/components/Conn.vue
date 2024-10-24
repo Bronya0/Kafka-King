@@ -44,17 +44,17 @@
             ref="formRef"
             :model="currentNode"
             :rules="{
-              name: {required: true, message: '请输入节点名称', trigger: 'blur'},
-              host: {required: true, message: '请输入主机地址', trigger: 'blur'},
+              name: {required: true, message: '请输入名称', trigger: 'blur'},
+              bootstrap_servers: {required: true, message: '请输入kafka连接地址', trigger: 'blur'},
               port: {required: true, type: 'number', message: '请输入有效的端口号', trigger: 'blur'},
             }"
             label-placement="left"
         >
-          <n-form-item label="节点名称" path="name">
-            <n-input v-model:value="currentNode.name" placeholder="输入节点名称"/>
+          <n-form-item label="名称" path="name">
+            <n-input v-model:value="currentNode.name" placeholder="输入名称"/>
           </n-form-item>
-          <n-form-item label="协议://主机:端口" path="host">
-            <n-input v-model:value="currentNode.host" placeholder="输入协议://主机:端口"/>
+          <n-form-item label="bootstrap_servers" path="bootstrap_servers">
+            <n-input v-model:value="currentNode.host" placeholder="127.0.0.1:9092"/>
           </n-form-item>
           <n-form-item label="用户名" path="username">
             <n-input v-model:value="currentNode.username" placeholder="输入用户名"/>
