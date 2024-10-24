@@ -1,0 +1,151 @@
+name: Wails build
+
+on:
+  release:
+    types: [ created ]
+
+env:
+  NODE_OPTIONS: "--max-old-space-size=4096"
+  APP_NAME: 'Kafka-King'
+  APP_WORKING_DIRECTORY: 'app'
+  GO_VERSION: '1.23'
+  NODE_VERSION: "20.x"
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build:
+          - platform: 'windows/amd64'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install 7-Zip
+        run: choco install 7zip
+
+      - name: GoLang
+        uses: actions/setup-go@v4
+        with:
+          check-latest: true
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build & Compress
+        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+          cd ${{ env.APP_WORKING_DIRECTORY }}
+          wails build -ldflags="-X 'app/backend/common.Version=${{ github.ref_name }}'" --platform ${{ matrix.build.platform }} -webview2 download -o ${{ env.APP_NAME }}.exe
+          cd ..
+          copy readme.md app\build\bin\
+          copy LICENSE app\build\bin\
+          & "C:\Program Files\7-Zip\7z.exe" a -t7z "${{ env.APP_NAME }}-${{ github.ref_name }}-windows-amd64.7z" ".\app\build\bin\*" -r
+          
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ${{ env.APP_NAME }}-${{ github.ref_name }}-windows-amd64.7z
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build:
+          - platform: 'darwin/universal'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: GoLang
+        uses: actions/setup-go@v4
+        with:
+          check-latest: true
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build & Compress
+        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+          brew install mitchellh/gon/gon
+          cd ${{ env.APP_WORKING_DIRECTORY }}
+          wails build -ldflags "-X 'app/backend/common.Version=${{ github.ref_name }}'" --platform ${{ matrix.build.platform }} -o ${{ env.APP_NAME }} 
+          chmod +x build/bin/*/Contents/MacOS/*
+          ditto -c -k --keepParent ./build/bin/${{ env.APP_NAME }}.app ./build/bin/${{ env.APP_NAME }}-${{ github.ref_name }}-macos.app.zip
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            ${{ env.APP_WORKING_DIRECTORY }}/build/bin/${{ env.APP_NAME }}-${{ github.ref_name }}-macos.pkg
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-linux:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        build:
+          - platform: 'linux/amd64'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: GoLang
+        uses: actions/setup-go@v4
+        with:
+          check-latest: true
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build & Compress
+        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+          sudo apt-get update && sudo apt-get install libgtk-3-0 libwebkit2gtk-4.0-dev gcc-aarch64-linux-gnu
+          cd ${{ env.APP_WORKING_DIRECTORY }}
+          wails build -ldflags="-X 'app/backend/common.Version=${{ github.ref_name }}'" --platform ${{ matrix.build.platform }} -webview2 download -o ${{ env.APP_NAME }}
+          cd ..
+          mkdir _temp_dist
+          cp readme.md _temp_dist/
+          cp LICENSE _temp_dist/
+          cp -r ${{ env.APP_WORKING_DIRECTORY }}/build/bin/* _temp_dist/
+          chmod +x _temp_dist/*
+          cd _temp_dist/
+          tar -zcvf ${{ env.APP_NAME }}-${{ github.ref_name }}-linux-amd64.tar.gz *
+          mv ${{ env.APP_NAME }}-${{ github.ref_name }}-linux-amd64.tar.gz ..
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            ${{ env.APP_NAME }}-${{ github.ref_name }}-linux-amd64.tar.gz
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

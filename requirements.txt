@@ -1,3 +1,0 @@
-flet==0.23.2
-kafka-python==2.0.2
-pyinstaller==6.8.0

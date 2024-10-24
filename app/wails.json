@@ -1,0 +1,19 @@
+{
+  "name": "demo-app",
+  "outputfilename": "demo-app",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "http://localhost:5173",
+  "author": {
+    "name": "bronya0",
+    "email": "tangssst@qq.com"
+  },
+  "info": {
+    "companyName": "bronya0",
+    "productName": "kafka-king",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright © 2024",
+    "comments": "demo-app comments"
+  }
+}

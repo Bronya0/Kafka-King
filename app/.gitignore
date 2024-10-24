@@ -1,0 +1,7 @@
+build/bin
+.vscode
+.idea
+/app/frontend/node_modules
+/app/frontend/wailsjs
+/app/frontend/dist
+/app/frontend/package.json.md5
