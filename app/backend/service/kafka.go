@@ -69,7 +69,8 @@ type Service struct {
 	mutex            sync.Mutex
 	topics           []any
 	groups           []any
-	sshTunnel        *sshTunnel // 新增：存储 SSH 隧道
+	sshTunnel        *sshTunnel   // 新增：存储 SSH 隧道
+	socksTunnel      *socksTunnel // 新增：存储 SOCKS 隧道
 }
 
 func (k *Service) ptr(s string) *string {
@@ -103,6 +104,10 @@ func (k *Service) Close(_ context.Context) bool {
 		_ = k.sshTunnel.client.Close()
 		k.sshTunnel = nil
 	}
+	if k.socksTunnel != nil {
+		_ = k.socksTunnel.client.Close()
+		k.socksTunnel = nil
+	}
 	fmt.Println("连接已关闭")
 	return false
 }
@@ -111,6 +116,12 @@ func (k *Service) Close(_ context.Context) bool {
 type sshTunnel struct {
 	client    *ssh.Client
 	localAddr string
+}
+
+// SOCKS 隧道配置
+type socksTunnel struct {
+	client    *ssh.Client
+	proxyAddr string
 }
 
 func pipe(src, dst net.Conn) {
@@ -131,6 +142,64 @@ func pipe(src, dst net.Conn) {
 		_, _ = io.Copy(src, dst)
 	}()
 	wg.Wait()
+}
+
+// 设置 SOCKS 隧道
+func (k *Service) setupSocksTunnel(conn map[string]any) (*socksTunnel, error) {
+	sshHost, ok := conn["ssh_host"].(string)
+	if !ok || sshHost == "" {
+		return nil, errors.New("SSH host is required")
+	}
+	sshPort, ok := conn["ssh_port"].(float64)
+	if !ok {
+		sshPort = 22
+	}
+	sshUser, ok := conn["ssh_user"].(string)
+	if !ok || sshUser == "" {
+		return nil, errors.New("SSH user is required")
+	}
+
+	// SSH 认证配置
+	var authMethods []ssh.AuthMethod
+	if sshPassword, ok := conn["ssh_password"].(string); ok && sshPassword != "" {
+		authMethods = append(authMethods, ssh.Password(sshPassword))
+	}
+	if sshKeyFile, ok := conn["ssh_key_file"].(string); ok && sshKeyFile != "" {
+		key, err := os.ReadFile(sshKeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read SSH key file: %v", err)
+		}
+		signer, err := ssh.ParsePrivateKey(key)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse SSH key: %v", err)
+		}
+		authMethods = append(authMethods, ssh.PublicKeys(signer))
+	}
+	if len(authMethods) == 0 {
+		return nil, errors.New("SSH authentication method is required (password or key)")
+	}
+
+	// SSH 客户端配置
+	sshConfig := &ssh.ClientConfig{
+		User:            sshUser,
+		Auth:            authMethods,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // 开发环境中忽略主机密钥验证
+		Timeout:         10 * time.Second,
+	}
+
+	// 连接 SSH 服务器
+	sshClient, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", sshHost, int(sshPort)), sshConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to dial SSH server: %v", err)
+	}
+
+	// SOCKS 代理地址应该是SSH服务器地址，因为SSH服务器本身充当SOCKS代理
+	proxyAddr := fmt.Sprintf("%s:%d", sshHost, int(sshPort))
+
+	return &socksTunnel{
+		client:    sshClient,
+		proxyAddr: proxyAddr,
+	}, nil
 }
 
 // setupSSHTunnel 建立 SSH 隧道
@@ -252,21 +321,35 @@ func (k *Service) SetConnect(connectName string, conn map[string]any, isTest boo
 
 	var config []kgo.Opt
 	var sshTunnel *sshTunnel // 此处为本次连接尝试创建的隧道
+	var socksTunnel *socksTunnel
 	var err error
 
 	connCopy := make(map[string]any)
 	for k, v := range conn {
 		connCopy[k] = v
 	}
+	// 设置 SOCKS 隧道
+	if conn["use_ssh"] == "enable" && conn["ssh_socks"] == "enable" {
+		socksTunnel, err = k.setupSocksTunnel(conn)
+		if err != nil {
+			result.Err = fmt.Sprintf("SOCKS tunnel setup failed: %v", err)
+			return result
+		}
 
-	// 尝试建立 SSH 隧道
-	sshTunnel, err = k.setupSSHTunnel(connCopy)
-	if err != nil {
-		result.Err = fmt.Sprintf("SSH tunnel setup failed: %v", err)
-		return result
-	}
-	if sshTunnel != nil {
-		connCopy["bootstrap_servers"] = sshTunnel.localAddr
+		// 直接使用SSH客户端作为拨号器，通过SSH连接来代理流量
+		config = append(config, kgo.Dialer(func(ctx context.Context, network, address string) (net.Conn, error) {
+			return socksTunnel.client.Dial(network, address)
+		}))
+	} else if conn["use_ssh"] == "enable" {
+		// 尝试建立 SSH 隧道
+		sshTunnel, err = k.setupSSHTunnel(connCopy)
+		if err != nil {
+			result.Err = fmt.Sprintf("SSH tunnel setup failed: %v", err)
+			return result
+		}
+		if sshTunnel != nil {
+			connCopy["bootstrap_servers"] = sshTunnel.localAddr
+		}
 	}
 
 	// TLS配置

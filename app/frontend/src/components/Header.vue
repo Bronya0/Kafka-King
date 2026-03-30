@@ -18,7 +18,7 @@
 <template>
   <n-page-header style="padding: 4px;--wails-draggable:drag">
     <template #avatar>
-      <n-avatar :src="logo"/>
+      <n-avatar :src="logo" />
     </template>
     <template #title>
       <div>{{app_name}}</div>

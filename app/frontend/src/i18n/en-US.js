@@ -78,6 +78,7 @@ export default {
         ssh_user: 'SSH Username',
         ssh_password: 'SSH Password',
         ssh_key_file: 'SSH Private Key File',
+        ssh_socks: "Use SOCKS Tunnel",
     },
     node: {
         title: "Node",
