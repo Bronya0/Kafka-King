@@ -18,7 +18,7 @@
 <template>
   <n-page-header style="padding: 4px;--wails-draggable:drag">
     <template #avatar>
-      <n-avatar :src="logo" style="margin-left: 70px" />
+      <n-avatar :src="logo" />
     </template>
     <template #title>
       <div>{{app_name}}</div>
@@ -50,13 +50,13 @@
           </template>
           <span> Check Version：{{ version.tag_name }} {{ check_msg }}</span>
         </n-tooltip>
-<!--        <n-button quaternary :focusable="false" @click="minimizeWindow" :render-icon="renderIcon(RemoveOutlined)"/>-->
-<!--        <n-button quaternary :focusable="false" @click="resizeWindow" :render-icon="renderIcon(MaxMinIcon)"/>-->
-<!--        <n-button quaternary class="close-btn" style="font-size: 22px" :focusable="false" @click="closeWindow">-->
-<!--          <n-icon>-->
-<!--            <CloseFilled/>-->
-<!--          </n-icon>-->
-<!--        </n-button>-->
+        <n-button quaternary :focusable="false" @click="minimizeWindow" :render-icon="renderIcon(RemoveOutlined)"/>
+        <n-button quaternary :focusable="false" @click="resizeWindow" :render-icon="renderIcon(MaxMinIcon)"/>
+        <n-button quaternary class="close-btn" style="font-size: 22px" :focusable="false" @click="closeWindow">
+          <n-icon>
+            <CloseFilled/>
+          </n-icon>
+        </n-button>
       </n-flex>
     </template>
   </n-page-header>

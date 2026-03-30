@@ -153,6 +153,10 @@
                 </n-flex>
               </n-flex>
             </n-form-item>
+            <!-- 添加 SOCKS 隧道启用选项 -->
+            <n-form-item :label="t('conn.ssh_socks')" path="ssh_socks">
+              <n-switch :round="false" checked-value="enable" unchecked-value="disable" v-model:value="currentNode.ssh_socks" />
+            </n-form-item>
           </div>
 
 
@@ -286,6 +290,7 @@ const currentNode = ref({
   ssh_user: '',       // SSH 用户名
   ssh_password: '',   // SSH 密码
   ssh_key_file: '',   // SSH 私钥文件
+  ssh_socks: 'disable',  //SSH socks隧道
 })
 const isEditing = ref(false)
 const spin_loading = ref(false)
@@ -357,6 +362,7 @@ const addNewNode = async () => {
     ssh_user: '',
     ssh_password: '',
     ssh_key_file: '',
+    ssh_socks: 'disable',
   };
   isEditing.value = false
   showEditDrawer.value = true

@@ -78,6 +78,7 @@ export default {
         ssh_user: 'SSH 用户名',
         ssh_password: 'SSH 密码',
         ssh_key_file: 'SSH 私钥文件',
+        ssh_socks: 'SSH Socks隧道',
     },
     node: {
         title: '节点',

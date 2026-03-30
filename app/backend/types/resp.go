@@ -61,6 +61,7 @@ type Connect struct {
 	SshUser             string `json:"ssh_user"`     // SSH 用户名
 	SshPassword         string `json:"ssh_password"` // SSH 密码
 	SshKeyFile          string `json:"ssh_key_file"` // SSH 私钥文件
+	SshSocks            string `json:"ssh_socks"`    // SOCKS 隧道开关
 }
 type H map[string]any
 
@@ -94,12 +95,12 @@ type ConfigSynonym struct {
 
 // AlertConfig 告警配置结构体
 type AlertConfig struct {
-	Enabled       bool   `json:"enabled"`
-	WebhookURL    string `json:"webhook_url"`
-	CustomHeader  string `json:"custom_header"`
-	Threshold     int64  `json:"threshold"`
+	Enabled         bool   `json:"enabled"`
+	WebhookURL      string `json:"webhook_url"`
+	CustomHeader    string `json:"custom_header"`
+	Threshold       int64  `json:"threshold"`
 	MessageTemplate string `json:"message_template"`
-	CheckInterval int    `json:"check_interval"`
+	CheckInterval   int    `json:"check_interval"`
 }
 
 // AlertRequest 告警请求结构体
