@@ -33,6 +33,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/linux"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
+	wruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // 在开发模式下使用 wails dev 命令，资产从磁盘加载，任何更改都会导致“实时重新加载”。 资产的位置将从 embed.FS 推断。
@@ -42,6 +43,11 @@ var assets embed.FS
 
 //go:embed build/appicon.png
 var icon []byte
+
+const (
+	minWindowWidth  = 860
+	minWindowHeight = 600
+)
 
 func main() {
 	app := backend.NewApp()
@@ -53,11 +59,11 @@ func main() {
 	// 主应用程序由对 wails.Run() 的调用组成。 它接受描述应用程序窗口大小、窗口标题、要使用的资源等应用程序配置
 	// 完整说明：https://wails.io/zh-Hans/docs/reference/options/
 	err := wails.Run(&options.App{
-		Title:  common.AppName,
-		Width:  configInfo.Width,
-		Height: configInfo.Height,
-		//MinWidth:          1024,
-		//MinHeight:         768,
+		Title:     common.AppName,
+		Width:     safeInitialWindowSize(configInfo.Width, common.Width, minWindowWidth),
+		Height:    safeInitialWindowSize(configInfo.Height, common.Height, minWindowHeight),
+		MinWidth:  minWindowWidth,
+		MinHeight: minWindowHeight,
 		//MaxWidth:  1440,
 		//MaxHeight: 920,
 		//DisableResize:     false,
@@ -74,6 +80,7 @@ func main() {
 		//OnStartup 此回调在前端创建之后调用，但在 index.html 加载之前调用。 它提供了应用程序上下文。
 		// 传递 ctx
 		OnStartup: func(ctx context.Context) {
+			fitInitialWindowToScreen(ctx, configInfo.Width, configInfo.Height)
 			app.Start(ctx)
 			appConfig.Start(ctx)
 			update.Start(ctx)
@@ -122,4 +129,80 @@ func main() {
 		appConfig.LogErrToFile(err.Error())
 		panic(err)
 	}
+}
+
+func safeInitialWindowSize(value, defaultValue, minValue int) int {
+	if value <= 0 {
+		return defaultValue
+	}
+	if value < minValue {
+		return minValue
+	}
+	if value > defaultValue {
+		return defaultValue
+	}
+	return value
+}
+
+func fitInitialWindowToScreen(ctx context.Context, desiredWidth, desiredHeight int) {
+	screens, err := wruntime.ScreenGetAll(ctx)
+	if err != nil || len(screens) == 0 {
+		return
+	}
+	screen := screens[0]
+	for _, candidate := range screens {
+		if candidate.IsCurrent {
+			screen = candidate
+			break
+		}
+		if candidate.IsPrimary {
+			screen = candidate
+		}
+	}
+	screenWidth := screen.Size.Width
+	screenHeight := screen.Size.Height
+	if screenWidth <= 0 {
+		screenWidth = screen.Width
+	}
+	if screenHeight <= 0 {
+		screenHeight = screen.Height
+	}
+	if screenWidth <= 0 || screenHeight <= 0 {
+		return
+	}
+	if desiredWidth <= 0 {
+		desiredWidth = common.Width
+	}
+	if desiredHeight <= 0 {
+		desiredHeight = common.Height
+	}
+	maxWidth := int(float64(screenWidth) * 0.92)
+	maxHeight := int(float64(screenHeight) * 0.86)
+	runtimeMinWidth := minInt(minWindowWidth, maxWidth)
+	runtimeMinHeight := minInt(minWindowHeight, maxHeight)
+	width := clampInt(desiredWidth, runtimeMinWidth, maxWidth)
+	height := clampInt(desiredHeight, runtimeMinHeight, maxHeight)
+	wruntime.WindowSetMinSize(ctx, runtimeMinWidth, runtimeMinHeight)
+	wruntime.WindowSetSize(ctx, width, height)
+	wruntime.WindowCenter(ctx)
+}
+
+func clampInt(value, minValue, maxValue int) int {
+	if maxValue < minValue {
+		return maxValue
+	}
+	if value < minValue {
+		return minValue
+	}
+	if value > maxValue {
+		return maxValue
+	}
+	return value
+}
+
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

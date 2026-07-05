@@ -26,8 +26,8 @@ var (
 
 const (
 	AppName    = "Kafka-King"
-	Width      = 1600
-	Height     = 870
+	Width      = 1180
+	Height     = 760
 	Theme      = "dark"
 	ConfigDir  = ".kafka-king"
 	ConfigPath = "config.yaml"
