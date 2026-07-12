@@ -24,6 +24,7 @@
 加群和作者一起交流： <a target="_blank" href="https://qm.qq.com/cgi-bin/qm/qr?k=pDqlVFyLMYEEw8DPJlRSBN27lF8qHV2v&jump_from=webapi&authKey=Wle/K0ARM1YQWlpn6vvfiZuMedy2tT9BI73mUvXVvCuktvi0fNfmNR19Jhyrf2Nz">研发技术交流群：964440643</a>
 
 > - 同款好用elasticsearch客户端 `ES-King`，可以一起收藏下：https://github.com/Bronya0/ES-King
+> - **作者另一款开源编码 AI Agent**：[ally-agent](https://github.com/Bronya0/ally-agent)
 > - HDFS客户端：https://github.com/Bronya0/HDFS-King
 
 **文档（AI）**：[https://zread.ai/Bronya0/Kafka-King](https://zread.ai/Bronya0/Kafka-King)
