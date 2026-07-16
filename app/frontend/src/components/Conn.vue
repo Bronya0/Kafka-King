@@ -146,7 +146,7 @@
             </n-form-item>
             <n-form-item :label="t('conn.ssh_key_file')" path="ssh_key_file" >
               <n-flex vertical align="flex-start">
-                <n-button @click="SelectFile('ssh_key_file', '*')">.pem/.key</n-button>
+                <n-button @click="SelectFile('ssh_key_file', '*.pem;*.key')">.pem/.key</n-button>
                 <n-flex align="center" v-if="currentNode.ssh_key_file">
                   <p style="color: gray;">{{ currentNode.ssh_key_file }}</p>
                   <n-button size="tiny" @click="currentNode.ssh_key_file=''" :render-icon="renderIcon(CloseFilled)" />
