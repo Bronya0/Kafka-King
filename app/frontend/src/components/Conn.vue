@@ -146,7 +146,7 @@
             </n-form-item>
             <n-form-item :label="t('conn.ssh_key_file')" path="ssh_key_file" >
               <n-flex vertical align="flex-start">
-                <n-button @click="SelectFile('ssh_key_file', '*')">.pem/.key</n-button>
+                <n-button @click="SelectFile('ssh_key_file')">SSH Key</n-button>
                 <n-flex align="center" v-if="currentNode.ssh_key_file">
                   <p style="color: gray;">{{ currentNode.ssh_key_file }}</p>
                   <n-button size="tiny" @click="currentNode.ssh_key_file=''" :render-icon="renderIcon(CloseFilled)" />
@@ -192,7 +192,7 @@
           <div v-if="currentNode.use_kerberos === 'enable'" style="margin-left: 10px">
             <n-form-item :label="t('conn.kerberos_user_keytab')" path="kerberos_user_keytab">
               <n-flex vertical align="flex-start">
-                <n-button @click="SelectFile('kerberos_user_keytab','')">keytab</n-button>
+                <n-button @click="SelectFile('kerberos_user_keytab')">keytab</n-button>
                 <n-flex align="center" v-if="currentNode.kerberos_user_keytab">
                   <p style="color: gray;">{{ currentNode.kerberos_user_keytab }}</p>
                   <n-button size="tiny" @click="currentNode.kerberos_user_keytab=''"
@@ -204,7 +204,7 @@
 
             <n-form-item :label="t('conn.kerberos_krb5_conf')" path="kerberos_krb5_conf">
               <n-flex vertical align="flex-start">
-                <n-button @click="SelectFile('kerberos_krb5_conf','')">krb5_conf</n-button>
+                <n-button @click="SelectFile('kerberos_krb5_conf')">krb5_conf</n-button>
                 <n-flex align="center" v-if="currentNode.kerberos_krb5_conf">
                   <p style="color: gray;">{{ currentNode.kerberos_krb5_conf }}</p>
                   <n-button size="tiny" @click="currentNode.kerberos_krb5_conf=''"
@@ -452,9 +452,13 @@ const selectNode = async (node) => {
 // 文件选择
 const SelectFile = async (key, pattern) => {
   try {
-    const filePath = await OpenFileDialog({Filters: [{Pattern: pattern}]})
+    const trimmedPattern = typeof pattern === 'string' ? pattern.trim() : ''
+    const options = trimmedPattern && trimmedPattern !== '*'
+        ? {Filters: [{Pattern: trimmedPattern}]}
+        : {}
+    const filePath = await OpenFileDialog(options)
     if (filePath) {
-      currentNode.value[key] = filePath;
+      currentNode.value[key] = filePath
     }
   } catch (err) {
     console.error('Failed to open file dialog:', err)
