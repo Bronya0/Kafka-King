@@ -212,6 +212,8 @@ export default {
         kafkaKing: "Kafka-King",
         esClient: "Matching ES Client",
         esKing: "ES-King",
+        newProject: "New Project",
+        allyAgent: "Ally Agent",
         technicalGroup: "Technical Exchange Group",
         qqGroup: "QQ Exchange Group",
         translate: 'Are there any problems with the translation? Report it or participate in the translation',

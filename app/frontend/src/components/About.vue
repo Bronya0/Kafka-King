@@ -34,6 +34,11 @@
           {{ t('about.esKing') }} Github
         </n-button>
       </n-form-item>
+      <n-form-item :label="t('about.newProject')">
+        <n-button @click="BrowserOpenURL(ally_agent_url)" :render-icon="renderIcon(HouseTwotone)">
+          {{ t('about.allyAgent') }} Github
+        </n-button>
+      </n-form-item>
       <n-form-item :label="t('about.technicalGroup')">
         <n-button :focusable="false" @click="openUrl(qq_url)">
           {{ t('about.qqGroup') }}
@@ -60,6 +65,7 @@ const { t } = useI18n()
 const es_home_url = "https://github.com/Bronya0/ES-King"
 const es_translation_url = "https://github.com/Bronya0/Kafka-King/issues/51"
 const kafka_home_url = "https://github.com/Bronya0/kafka-King"
+const ally_agent_url = "https://github.com/Bronya0/ally-agent"
 const qq_url = "https://qm.qq.com/cgi-bin/qm/qr?k=pDqlVFyLMYEEw8DPJlRSBN27lF8qHV2v&jump_from=webapi&authKey=Wle/K0ARM1YQWlpn6vvfiZuMedy2tT9BI73mUvXVvCuktvi0fNfmNR19Jhyrf2Nz"
 
 

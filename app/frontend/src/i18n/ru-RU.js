@@ -189,6 +189,8 @@ export default {
         kafkaKing: "Kafka-King",
         esClient: "Сопутствующий ES клиент",
         esKing: "ES-King",
+        newProject: "Новый проект",
+        allyAgent: "Ally Agent",
         technicalGroup: "Группа технического обмена",
         qqGroup: "QQ группа обмена",
         translate: 'Ці ёсць праблемы з перакладам? Паведаміць або прыняць удзел у перакладзе',

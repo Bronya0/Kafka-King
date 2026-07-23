@@ -189,6 +189,8 @@ export default {
         kafkaKing: "Kafka-King",
         esClient: "동일한 ES 클라이언트",
         esKing: "ES-King",
+        newProject: "새 프로젝트",
+        allyAgent: "Ally Agent",
         technicalGroup: "기술 교류 그룹",
         qqGroup: "QQ 교류 그룹",
         translate: "번역: '번역에 문제가 있나요? 신고 또는 번역 참여'",
