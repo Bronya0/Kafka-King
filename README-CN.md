@@ -101,10 +101,6 @@ Apache-2.0 license
 
 修复或添加新语言：https://github.com/Bronya0/Kafka-King/issues/51
 
-# Star
-
-[![Stargazers over time](https://starchart.cc/Bronya0/Kafka-King.svg?variant=adaptive)](https://starchart.cc/Bronya0/Kafka-King)
-
 ## MY Project 我的项目 
 
 | 项目名称 | 描述 | Star & Download |
