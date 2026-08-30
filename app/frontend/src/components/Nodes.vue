@@ -39,6 +39,57 @@
               :pagination="pagination"
           />
         </n-tab-pane>
+        <n-tab-pane name="LogDirs">
+          <template #tab>
+            {{ t('node.logdirs') }}
+          </template>
+          <n-flex vertical>
+            <n-flex align="center">
+              <n-button @click="getLogDirs" :render-icon="renderIcon(RefreshOutlined)">{{ t('common.refresh') }}
+              </n-button>
+            </n-flex>
+            <n-text depth="3">{{ t('node.logdirsTip') }}</n-text>
+            <n-data-table
+                :columns="refColumns(logdir_columns)"
+                :data="logdir_data"
+                size="small"
+                :bordered="false"
+                striped
+                :pagination="pagination"
+            />
+            <n-text depth="3">{{ t('node.logdirsPartitions') }}</n-text>
+            <n-data-table
+                :columns="refColumns(logdir_partition_columns)"
+                :data="logdir_partitions"
+                size="small"
+                :bordered="false"
+                striped
+                :pagination="pagination"
+            />
+          </n-flex>
+        </n-tab-pane>
+        <n-tab-pane name="Quotas">
+          <template #tab>
+            {{ t('node.quotas') }}
+          </template>
+          <n-flex vertical>
+            <n-flex align="center">
+              <n-button @click="getQuotas" :render-icon="renderIcon(RefreshOutlined)">{{ t('common.refresh') }}
+              </n-button>
+              <n-button type="primary" secondary @click="showQuotaModal = true"
+                        :render-icon="renderIcon(AddFilled)">{{ t('node.addQuota') }}
+              </n-button>
+            </n-flex>
+            <n-data-table
+                :columns="refColumns(quota_columns)"
+                :data="quota_data"
+                size="small"
+                :bordered="false"
+                striped
+                :pagination="pagination"
+            />
+          </n-flex>
+        </n-tab-pane>
         <n-tab-pane name="Config">
           <template #tab>
             {{ t('common.config') }}
@@ -66,15 +117,42 @@
     </n-spin>
   </n-flex>
 
+  <n-modal v-model:show="showQuotaModal" preset="dialog" :title="t('node.addQuota')">
+    <n-form label-placement="top" style="text-align: left;">
+      <n-form-item :label="t('node.quotaEntityType')">
+        <n-select v-model:value="quotaForm.entityType" :options="quotaEntityOptions" style="width: 200px"/>
+      </n-form-item>
+      <n-form-item :label="t('node.quotaEntityName')">
+        <n-input v-model:value="quotaForm.entityName" :placeholder="t('node.quotaEntityNameTip')" style="width: 260px"/>
+      </n-form-item>
+      <n-form-item :label="t('node.quotaKey')">
+        <n-select v-model:value="quotaForm.key" :options="quotaKeyOptions" tag filterable style="width: 260px"/>
+      </n-form-item>
+      <n-form-item :label="t('node.quotaValue')">
+        <n-input-number v-model:value="quotaForm.value" :min="0" style="width: 260px"/>
+      </n-form-item>
+    </n-form>
+    <template #action>
+      <n-button @click="showQuotaModal = false">{{ t('common.cancel') }}</n-button>
+      <n-button type="primary" :loading="quotaLoading" @click="addQuota">{{ t('common.enter') }}</n-button>
+    </template>
+  </n-modal>
 
 </template>
 <script setup>
 import {h, onMounted, ref} from "vue";
 import emitter from "../utils/eventBus";
-import {NButton, NDataTable, NIcon, NInput, NTag, NText, useMessage} from 'naive-ui'
+import {NButton, NDataTable, NIcon, NInput, NInputNumber, NModal, NSelect, NTag, NText, useMessage} from 'naive-ui'
 import {createCsvContent, download_file, getCurrentDateTime, refColumns, renderIcon} from "../utils/common";
-import {DriveFileMoveTwotone, RefreshOutlined, SettingsTwotone} from "@vicons/material";
-import {AlterNodeConfig, GetBrokerConfig, GetBrokers} from "../../wailsjs/go/service/Service";
+import {AddFilled, DeleteOutlineTwotone, DriveFileMoveTwotone, RefreshOutlined, SettingsTwotone} from "@vicons/material";
+import {
+  AlterNodeConfig,
+  AlterQuota,
+  GetBrokerConfig,
+  GetBrokers,
+  GetLogDirs,
+  GetQuotas,
+} from "../../wailsjs/go/service/Service";
 import ShowOrEdit from "../common/ShowOrEdit.vue";
 import {useI18n} from "vue-i18n";
 
@@ -92,6 +170,9 @@ const loading = ref(false)
 const selectNode = async (node) => {
   config_data.value = []
   data.value = []
+  logdir_data.value = []
+  logdir_partitions.value = []
+  quota_data.value = []
   activeConfigNode.value = ''
   configSearchText.value = ''
   loading.value = false
@@ -150,7 +231,10 @@ const columns = [
   {title: 'node_id', key: 'node_id',  width: 20},
   {
     title: 'host', key: 'host',  width: 50,
-    render: (row) => h(NTag, {type: "info"}, {default: () => row['host']}),
+    render: (row) => h('span', {}, [
+      h(NTag, {type: "info"}, {default: () => row['host']}),
+      row['is_controller'] ? h(NTag, {type: 'warning', style: {marginLeft: '6px'}}, {default: () => t('node.controller')}) : null,
+    ]),
   },
   {
     title: 'port', key: 'port',  width: 20,
@@ -223,6 +307,169 @@ const getBrokerConfig = async (node_id) => {
 
 }
 
+
+// ---- LogDirs ----
+const logdir_data = ref([])
+const logdir_partitions = ref([])
+
+const formatBytes = (b) => {
+  if (b === null || b === undefined) return 'N/A'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let i = 0
+  let v = Number(b)
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024
+    i++
+  }
+  return v.toFixed(i === 0 ? 0 : 1) + ' ' + units[i]
+}
+
+const logdir_columns = [
+  {title: 'Broker', key: 'broker', width: 15},
+  {title: 'Dir', key: 'dir', width: 80},
+  {
+    title: t('node.size'), key: 'size', width: 25,
+    render: (row) => row['err'] ? h(NTag, {type: 'error'}, {default: () => row['err']}) : formatBytes(row['size']),
+  },
+]
+
+const logdir_partition_columns = [
+  {title: 'Broker', key: 'broker', width: 12},
+  {title: 'Topic', key: 'topic', width: 40},
+  {title: 'Partition', key: 'partition', width: 12},
+  {
+    title: t('node.size'), key: 'size', width: 18,
+    render: (row) => formatBytes(row['size']),
+  },
+  {
+    title: t('topic.lag'), key: 'offset_lag', width: 15,
+    render: (row) => row['offset_lag'] ?? 'N/A',
+  },
+]
+
+const getLogDirs = async () => {
+  loading.value = true
+  try {
+    const res = await GetLogDirs()
+    if (res.err !== "") {
+      message.error(res.err, {duration: 5000})
+    } else {
+      logdir_data.value = res.result?.dirs || []
+      logdir_partitions.value = (res.result?.partitions || []).slice(0, 200)
+      activeTab.value = 'LogDirs'
+    }
+  } catch (e) {
+    message.error(e.message, {duration: 5000})
+  }
+  loading.value = false
+}
+
+// ---- Quotas ----
+const quota_data = ref([])
+const showQuotaModal = ref(false)
+const quotaLoading = ref(false)
+const quotaForm = ref({
+  entityType: 'user',
+  entityName: '',
+  key: 'producer_byte_rate',
+  value: 10240,
+})
+const quotaEntityOptions = [
+  {label: 'user', value: 'user'},
+  {label: 'client-id', value: 'client-id'},
+  {label: 'ip', value: 'ip'},
+]
+const quotaKeyOptions = [
+  {label: 'producer_byte_rate', value: 'producer_byte_rate'},
+  {label: 'consumer_byte_rate', value: 'consumer_byte_rate'},
+  {label: 'request_percentage', value: 'request_percentage'},
+  {label: 'controller_mutation_rate', value: 'controller_mutation_rate'},
+]
+
+const quota_columns = [
+  {title: 'Entity', key: 'entity', width: 60},
+  {
+    title: 'Values', key: 'values', width: 60,
+    render: (row) => {
+      const vs = row['values'] || {}
+      return h('span', {}, Object.entries(vs).map(([k, v]) => `${k}=${v}`).join(', '))
+    },
+  },
+  {
+    title: t('common.action'), key: 'actions', width: 30,
+    render: (row) => h(NButton, {
+      strong: true, secondary: true, type: 'error',
+      onClick: () => deleteQuota(row),
+    }, {default: () => t('common.delete'), icon: () => h(NIcon, null, {default: () => h(DeleteOutlineTwotone)})}),
+  },
+]
+
+const getQuotas = async () => {
+  loading.value = true
+  try {
+    const res = await GetQuotas()
+    if (res.err !== "") {
+      message.error(res.err, {duration: 5000})
+    } else {
+      quota_data.value = res.results || []
+      activeTab.value = 'Quotas'
+    }
+  } catch (e) {
+    message.error(e.message, {duration: 5000})
+  }
+  loading.value = false
+}
+
+const addQuota = async () => {
+  quotaLoading.value = true
+  try {
+    const res = await AlterQuota(
+        quotaForm.value.entityType,
+        quotaForm.value.entityName || '',
+        [{key: quotaForm.value.key, value: Number(quotaForm.value.value)}],
+    )
+    if (res.err !== "") {
+      message.error(res.err, {duration: 8000})
+    } else {
+      message.success(t('message.addOk'))
+      showQuotaModal.value = false
+      await getQuotas()
+    }
+  } catch (e) {
+    message.error(e.message, {duration: 5000})
+  } finally {
+    quotaLoading.value = false
+  }
+}
+
+const deleteQuota = async (row) => {
+  const vs = row['values'] || {}
+  const ops = Object.keys(vs).map(k => ({key: k, remove: true}))
+  if (ops.length === 0) return
+  // 从 entity 字符串 "user=alice" 解析回类型与名字
+  const comps = String(row['entity']).replace(/[{}]/g, '').split(',').map(x => x.trim()).filter(Boolean)
+  let entityType = 'user'
+  let entityName = ''
+  if (comps.length > 0) {
+    const [etype, ename] = comps[0].split('=')
+    entityType = etype
+    entityName = ename === '<default>' ? '' : ename
+  }
+  loading.value = true
+  try {
+    const res = await AlterQuota(entityType, entityName, ops)
+    if (res.err !== "") {
+      message.error(res.err, {duration: 8000})
+    } else {
+      message.success(t('common.deleteFinish'))
+      await getQuotas()
+    }
+  } catch (e) {
+    message.error(e.message, {duration: 5000})
+  } finally {
+    loading.value = false
+  }
+}
 
 const alterNodeConfig = async (node_id, name, value) => {
   loading.value = true

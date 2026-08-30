@@ -39,6 +39,32 @@
     </n-spin>
   </n-flex>
 
+  <n-modal v-model:show="showReset" preset="dialog" :title="t('group.resetTitle')">
+    <n-form label-placement="top" style="text-align: left;">
+      <n-form-item label="Group">
+        <n-tag type="info">{{ resetForm.group }}</n-tag>
+      </n-form-item>
+      <n-form-item :label="t('group.resetStrategy')">
+        <n-select v-model:value="resetForm.strategy" :options="resetStrategyOptions" style="width: 260px"/>
+      </n-form-item>
+      <n-form-item v-if="resetForm.strategy === 'timestamp'" :label="t('consumer.startTimestamp')">
+        <n-date-picker v-model:value="resetForm.timestamp" type="datetime" style="width: 260px"
+                       value-format="timestamp"/>
+      </n-form-item>
+      <n-form-item v-if="resetForm.strategy === 'absolute'" :label="t('group.resetOffsetValue')">
+        <n-input-number v-model:value="resetForm.offset" :min="0" style="width: 260px"/>
+      </n-form-item>
+      <n-form-item :label="t('group.resetTopics')">
+        <n-dynamic-tags v-model:value="resetForm.topics"/>
+      </n-form-item>
+      <n-text depth="3">{{ t('group.resetTip') }}</n-text>
+    </n-form>
+    <template #action>
+      <n-button @click="showReset = false">{{ t('common.cancel') }}</n-button>
+      <n-button type="warning" :loading="resetLoading" @click="doReset">{{ t('common.enter') }}</n-button>
+    </template>
+  </n-modal>
+
   <n-drawer v-model:show="showDrawer" :width="800">
     <n-drawer-content :title="t('group.member')">
       <n-data-table
@@ -54,10 +80,10 @@
 <script setup>
 import {h, onMounted, ref} from "vue";
 import emitter from "../utils/eventBus";
-import {NButton, NButtonGroup, NDataTable, NIcon, NInput, NPopconfirm, NTag, NText, useMessage} from 'naive-ui'
+import {NButton, NButtonGroup, NDataTable, NIcon, NInput, NInputNumber, NModal, NDatePicker, NPopconfirm, NSelect, NTag, NText, useMessage} from 'naive-ui'
 import {createCsvContent, download_file, refColumns, renderIcon} from "../utils/common";
-import {DeleteForeverTwotone, DriveFileMoveTwotone, RefreshOutlined, SettingsTwotone} from "@vicons/material";
-import {DeleteGroup, GetGroupMembers, GetGroups} from "../../wailsjs/go/service/Service";
+import {DeleteForeverTwotone, DriveFileMoveTwotone, RefreshOutlined, SettingsTwotone, RestoreOutlined} from "@vicons/material";
+import {DeleteGroup, GetGroupMembers, GetGroups, ResetGroupOffsets} from "../../wailsjs/go/service/Service";
 import {useI18n} from "vue-i18n";
 
 const {t} = useI18n()
@@ -189,6 +215,19 @@ const columns = [
                 {default: () => t('group.member'), icon: () => h(NIcon, null, {default: () => h(SettingsTwotone)})}
             ),
             h(
+                NButton,
+                {
+                  strong: true,
+                  secondary: true,
+                  type: 'warning',
+                  onClick: () => openReset(row['Group'])
+                },
+                {
+                  default: () => t('group.resetOffset'),
+                  icon: () => h(NIcon, null, {default: () => h(RestoreOutlined)})
+                }
+            ),
+            h(
                 NPopconfirm,
                 {
                   onPositiveClick: () => deleteGroups(row["Group"])
@@ -272,6 +311,57 @@ const searchData = () => {
     filter_data.value = group_data.value;
   }
 };
+
+// ---- 重置消费组 Offset ----
+const showReset = ref(false)
+const resetLoading = ref(false)
+const resetForm = ref({
+  group: '',
+  strategy: 'end',
+  timestamp: null,
+  offset: 0,
+  topics: [],
+})
+const resetStrategyOptions = [
+  {label: () => t('group.resetToEnd'), value: 'end'},
+  {label: () => t('group.resetToStart'), value: 'start'},
+  {label: () => t('group.resetToTimestamp'), value: 'timestamp'},
+  {label: () => t('group.resetToAbsolute'), value: 'absolute'},
+]
+
+const openReset = (group) => {
+  resetForm.value = {group, strategy: 'end', timestamp: null, offset: 0, topics: []}
+  showReset.value = true
+}
+
+const doReset = async () => {
+  const f = resetForm.value
+  let value = 0
+  if (f.strategy === 'timestamp') {
+    if (!f.timestamp) {
+      message.error(t('group.needTimestamp'), {duration: 5000})
+      return
+    }
+    value = Number(f.timestamp)
+  } else if (f.strategy === 'absolute') {
+    value = Number(f.offset || 0)
+  }
+  resetLoading.value = true
+  try {
+    const res = await ResetGroupOffsets(f.group, f.topics, f.strategy, value)
+    if (res.err !== "") {
+      message.error(res.err, {duration: 8000})
+    } else {
+      const count = res.result?.offsets?.length ?? 0
+      message.success(t('group.resetDone', {count}))
+      showReset.value = false
+    }
+  } catch (e) {
+    message.error(e.message, {duration: 5000})
+  } finally {
+    resetLoading.value = false
+  }
+}
 </script>
 
 

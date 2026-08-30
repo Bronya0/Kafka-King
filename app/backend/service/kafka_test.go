@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"testing"
 	"time"
 
@@ -33,7 +34,16 @@ import (
 
 // 引入 testing 包
 
+// integrationGuard 集成测试需要真实 Kafka 集群；默认跳过，设置 KAFKA_KING_INTEGRATION=1 才运行
+func integrationGuard(t *testing.T) {
+	t.Helper()
+	if os.Getenv("KAFKA_KING_INTEGRATION") == "" {
+		t.Skip("set KAFKA_KING_INTEGRATION=1 to run integration tests (require a live Kafka cluster)")
+	}
+}
+
 func TestNewKafkaService2(t *testing.T) { // 功能测试以 `Test` 前缀命名
+	integrationGuard(t)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -197,6 +207,7 @@ func gzipCompress(data []byte) ([]byte, error) {
 }
 
 func TestGroupMembers(t *testing.T) {
+	integrationGuard(t)
 	s := NewKafkaService()
 	s.SetConnect("dsd", map[string]any{
 		"name":              "debian",
@@ -210,6 +221,7 @@ func TestGroupMembers(t *testing.T) {
 }
 
 func TestConsume(t *testing.T) {
+	integrationGuard(t)
 	s := NewKafkaService()
 	s.SetConnect("dsd", map[string]any{
 		"name":              "debian",
@@ -221,10 +233,11 @@ func TestConsume(t *testing.T) {
 		"tls_ca_file":       "", "sasl": "disable", "sasl_mechanism": "PLAIN", "sasl_user": "", "sasl_pwd": "", "kerberos_user_keytab": "", "kerberos_krb5_conf": "", "Kerberos_user": "", "Kerberos_realm": "", "kerberos_service_name": "",
 	}, false)
 
-	res := s.Consumer("1", "__kafka_king_auto_generate__", 5, 1000, "", "read_committed", false, true, 1746879189000, "none")
+	res := s.Consumer("1", "__kafka_king_auto_generate__", 5, 1000, "", "read_committed", false, true, 1746879189000, 0, "none")
 	fmt.Printf("%+v", res)
 }
 func TestAcls(t *testing.T) {
+	integrationGuard(t)
 
 	svc := NewKafkaService()
 	svc.SetConnect("test", map[string]any{

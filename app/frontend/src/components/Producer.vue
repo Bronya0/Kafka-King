@@ -116,7 +116,7 @@ const messageKey = ref()
 const messageContent = ref('')
 const headers = ref([])
 const nums = ref(1)
-const partition = ref(0)
+const partition = ref(null) // null 表示自动分配分区
 const loading = ref(false)
 const compress = ref()
 let currentConnectName = ''
@@ -224,7 +224,8 @@ const produce = async () => {
   }
   loading.value = true
   try {
-    const res = await Produce(selectedTopic.value, messageKey.value, messageContent.value, partition.value, nums.value, headers.value, compress.value)
+    const res = await Produce(selectedTopic.value, messageKey.value, messageContent.value,
+        partition.value === null ? -1 : partition.value, nums.value, headers.value, compress.value)
     if (res.err !== "") {
       message.error(res.err, {duration:  5000})
     } else {

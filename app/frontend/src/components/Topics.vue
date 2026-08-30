@@ -216,11 +216,49 @@
 
   </n-modal>
 
+  <n-modal v-model:show="showDeleteRecords" preset="dialog" :title="t('topic.deleteRecords')">
+    <n-form label-placement="top" style="text-align: left;">
+      <n-form-item label="Topic">
+        <n-tag type="info">{{ deleteRecordsForm.topic }}</n-tag>
+      </n-form-item>
+      <n-form-item :label="t('topic.deleteRecordsScope')">
+        <n-switch v-model:value="deleteRecordsForm.all" :round="false">
+          <template #checked>{{ t('topic.deleteRecordsAll') }}</template>
+          <template #unchecked>{{ t('topic.deleteRecordsBefore') }}</template>
+        </n-switch>
+      </n-form-item>
+      <n-form-item v-if="!deleteRecordsForm.all" :label="t('topic.deleteRecordsOffset')">
+        <n-input-number v-model:value="deleteRecordsForm.offset" :min="0" style="width: 260px"/>
+      </n-form-item>
+      <n-text type="error">{{ t('topic.deleteRecordsWarning') }}</n-text>
+    </n-form>
+    <template #action>
+      <n-button @click="showDeleteRecords = false">{{ t('common.cancel') }}</n-button>
+      <n-button type="error" :loading="deleteRecordsLoading" @click="doDeleteRecords">{{ t('common.enter') }}</n-button>
+    </template>
+  </n-modal>
+
+  <n-modal v-model:show="showReassign" preset="dialog" :title="t('topic.reassign')">
+    <n-form label-placement="top" style="text-align: left;">
+      <n-form-item label="Topic">
+        <n-tag type="info">{{ reassignForm.topic }}</n-tag>
+      </n-form-item>
+      <n-form-item :label="t('topic.reassignJson')">
+        <n-input v-model:value="reassignForm.json" type="textarea" :rows="10" style="font-family: monospace"/>
+      </n-form-item>
+      <n-text depth="3">{{ t('topic.reassignTip') }}</n-text>
+    </n-form>
+    <template #action>
+      <n-button @click="showReassign = false">{{ t('common.cancel') }}</n-button>
+      <n-button type="primary" :loading="reassignLoading" @click="doReassign">{{ t('common.enter') }}</n-button>
+    </template>
+  </n-modal>
+
 </template>
 <script setup>
 import {h, onMounted, ref} from "vue";
 import emitter, { setConnectName, getConnectName } from "../utils/eventBus";
-import {NButton, NDataTable, NDropdown, NIcon, NInput, NTag, NText, useDialog, useMessage} from 'naive-ui'
+import {NButton, NDataTable, NDropdown, NIcon, NInput, NInputNumber, NModal, NTag, NText, useDialog, useMessage} from 'naive-ui'
 import {
   AddFilled,
   AddRoadOutlined,
@@ -240,9 +278,11 @@ import {
   renderSelect
 } from "../utils/common";
 import {
+  AlterPartitionReassignments,
   AlterTopicConfig,
   CreatePartitions,
   CreateTopics,
+  DeleteRecords,
   DeleteTopic,
   GetGroups,
   GetTopicConfig,
@@ -475,6 +515,8 @@ const columns = [
         {label: t('topic.viewOffset'), key: 'viewOffset'},
         {label: t('topic.viewConfig'), key: 'viewConfig'},
         {label: t('topic.viewPartition'), key: 'viewPartition'},
+        {label: t('topic.deleteRecords'), key: 'deleteRecords'},
+        {label: t('topic.reassign'), key: 'reassign'},
         {label: t('topic.deleteTopic'), key: 'deleteTopic'},
       ]
       return h(
@@ -507,6 +549,8 @@ const handleMenuSelect = async (key, row) => {
     "viewOffset": viewOffset,
     "viewConfig": viewConfig,
     "viewPartition": viewPartition,
+    "deleteRecords": openDeleteRecords,
+    "reassign": openReassign,
     "deleteTopic": deleteTopic,
   }
   loading.value = true
@@ -885,6 +929,83 @@ const alterTopicConfig = async (topic, name, value) => {
   }
   loading.value = false
 
+}
+
+// ---- 清理消息（DeleteRecords）----
+const showDeleteRecords = ref(false)
+const deleteRecordsForm = ref({topic: '', offset: 0, all: true})
+const deleteRecordsLoading = ref(false)
+
+const openDeleteRecords = (row) => {
+  deleteRecordsForm.value = {topic: row.topic, offset: 0, all: true}
+  showDeleteRecords.value = true
+}
+
+const doDeleteRecords = async () => {
+  const f = deleteRecordsForm.value
+  deleteRecordsLoading.value = true
+  try {
+    const res = await DeleteRecords(f.topic, [], f.all ? -1 : Number(f.offset || 0))
+    if (res.err !== "") {
+      message.error(res.err, {duration: 8000})
+    } else {
+      message.success(t('topic.deleteRecordsDone'))
+      showDeleteRecords.value = false
+      await getData()
+    }
+  } catch (e) {
+    message.error(e.message, {duration: 5000})
+  } finally {
+    deleteRecordsLoading.value = false
+  }
+}
+
+// ---- 副本重分配 ----
+const showReassign = ref(false)
+const reassignForm = ref({topic: '', json: '{}'})
+const reassignLoading = ref(false)
+
+const openReassign = (row) => {
+  // 预填当前分区到副本的映射，方便修改
+  let prefilled = {}
+  try {
+    const detail = data.value.find(item => item['topic'] === row.topic)
+    if (detail && detail.partitions) {
+      for (const p of detail.partitions) {
+        prefilled[String(p.partition)] = p.replicas
+      }
+    }
+  } catch (_) {}
+  reassignForm.value = {
+    topic: row.topic,
+    json: JSON.stringify(prefilled, null, 2),
+  }
+  showReassign.value = true
+}
+
+const doReassign = async () => {
+  const f = reassignForm.value
+  let assignments
+  try {
+    assignments = JSON.parse(f.json)
+  } catch (e) {
+    message.error(t('topic.reassignInvalidJson'), {duration: 5000})
+    return
+  }
+  reassignLoading.value = true
+  try {
+    const res = await AlterPartitionReassignments(f.topic, assignments)
+    if (res.err !== "") {
+      message.error(res.err, {duration: 8000})
+    } else {
+      message.success(t('topic.reassignDone'))
+      showReassign.value = false
+    }
+  } catch (e) {
+    message.error(e.message, {duration: 5000})
+  } finally {
+    reassignLoading.value = false
+  }
 }
 </script>
 

@@ -23,11 +23,20 @@ type Tag struct {
 	Body    string `json:"body"`
 }
 type Config struct {
-	Width    int       `json:"width"`
-	Height   int       `json:"height"`
-	Language string    `json:"language"`
-	Theme    string    `json:"theme"`
-	Connects []Connect `json:"connects"`
+	Width          int       `json:"width"`
+	Height         int       `json:"height"`
+	Language       string    `json:"language"`
+	Theme          string    `json:"theme"`
+	Connects       []Connect `json:"connects"`
+	SchemaRegistry *SRConfig `json:"schema_registry,omitempty"`
+}
+
+// SRConfig Schema Registry 连接配置
+type SRConfig struct {
+	URL     string `json:"url"`
+	User    string `json:"user"`
+	Pass    string `json:"pass"`
+	SkipTLS string `json:"skip_tls"`
 }
 type ResultsResp struct {
 	Results []any  `json:"results"`

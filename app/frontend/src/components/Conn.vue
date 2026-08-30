@@ -180,9 +180,20 @@
               <n-input
                   v-model:value="currentNode.sasl_pwd"
                   type="password"
-                  :placeholder="t('conn.sasl_pwd')"
+                  :placeholder="saslPwdPlaceholder"
               />
             </n-form-item>
+            <n-text v-if="currentNode.sasl_mechanism === 'OAUTHBEARER'" depth="3" style="font-size: 12px">
+              {{ t('conn.oauthTip') }}
+            </n-text>
+            <n-form-item v-if="currentNode.sasl_mechanism === 'AWS_MSK_IAM'"
+                         :label="t('conn.sessionToken')" path="sasl_session_token">
+              <n-input v-model:value="currentNode.sasl_session_token"
+                       :placeholder="t('conn.sessionTokenOptional')"/>
+            </n-form-item>
+            <n-text v-if="currentNode.sasl_mechanism === 'AWS_MSK_IAM'" depth="3" style="font-size: 12px">
+              {{ t('conn.mskTip') }}
+            </n-text>
           </div>
 
           <n-form-item label="kerberos" path="sasl">
@@ -274,6 +285,7 @@ const currentNode = ref({
   sasl_mechanism: "PLAIN",
   sasl_user: '',
   sasl_pwd: '',
+  sasl_session_token: '',
   use_kerberos: 'disable',
   kerberos_user_keytab: '',
   kerberos_krb5_conf: '',
@@ -307,9 +319,22 @@ const sasl_mechanism_options = [
     label: 'GSSAPI',
     value: 'GSSAPI'
   },
+  {
+    label: 'OAUTHBEARER (static token)',
+    value: 'OAUTHBEARER'
+  },
+  {
+    label: 'AWS MSK IAM',
+    value: 'AWS_MSK_IAM'
+  },
 ]
 
 const drawerTitle = computed(() => isEditing.value ? t('conn.edit') : t('conn.add_link'))
+
+const saslPwdPlaceholder = computed(() => {
+  if (currentNode.value.sasl_mechanism === 'OAUTHBEARER') return t('conn.oauthTokenPlaceholder')
+  return t('conn.sasl_pwd')
+})
 
 const formRef = ref(null)
 
@@ -346,6 +371,7 @@ const addNewNode = async () => {
     sasl_mechanism: 'PLAIN',
     sasl_user: '',
     sasl_pwd: '',
+    sasl_session_token: '',
     kerberos_user_keytab: '',
     kerberos_krb5_conf: '',
     Kerberos_user: '',

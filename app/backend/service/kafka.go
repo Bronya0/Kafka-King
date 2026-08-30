@@ -20,12 +20,10 @@ package service
 import (
 	"app/backend/common"
 	"app/backend/types"
-	"app/backend/utils"
 	"app/backend/utils/compress"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -39,8 +37,11 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
+	"github.com/twmb/franz-go/pkg/kerr"
 	"github.com/twmb/franz-go/pkg/kmsg"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/twmb/franz-go/pkg/sasl/aws"
+	"github.com/twmb/franz-go/pkg/sasl/oauth"
+	"github.com/twmb/franz-go/pkg/sr"
 	"golang.org/x/crypto/ssh"
 
 	"github.com/jcmturner/gokrb5/v8/client"
@@ -65,277 +66,61 @@ type Service struct {
 	config           []kgo.Opt
 	kac              *kadm.Client
 	client           *kgo.Client
-	consumer         []any // []any{group, topic, isolationLevel, _client}
+	oneShot          *oneShotCache // 单次消费的 client 缓存（与流式消费完全隔离）
 	mutex            sync.Mutex
 	topics           []any
 	groups           []any
 	sshTunnel        *sshTunnel // 新增：存储 SSH 隧道
+	streams          map[string]*StreamInstance
 	// Streaming
-	appCtx       context.Context    // Wails 运行时 context，用于 EventsEmit
-	streamCancel context.CancelFunc // 取消流式消费的 goroutine
-	streamState  *StreamState       // 流式消费状态
+	appCtx context.Context // Wails 运行时 context，用于 EventsEmit
+
+	// Schema Registry
+	srMu     sync.Mutex
+	srClient *sr.Client
+	srCodecs map[int]string // schemaID -> schema 全文缓存
+	srURL    string
 }
 
+// StreamState 兼容保留的结构体（旧版单流状态）
 type StreamState struct {
 	Running bool   `json:"running"`
 	Topic   string `json:"topic"`
 	Group   string `json:"group"`
 }
 
+// oneShotCache 缓存单次消费的 client，避免每次消费都重新加入消费组。
+// key 包含全部会影响 client 配置的参数，任一变化即重建。
+type oneShotCache struct {
+	key    string
+	client *kgo.Client
+}
+
 func (k *Service) ptr(s string) *string {
 	return &s
 }
 
+// mapStr 从 map[string]any 中安全读取字符串（Wails 传参 key 可能缺失或类型不符）
+func mapStr(m map[string]any, key string) string {
+	if v, ok := m[key].(string); ok {
+		return v
+	}
+	return ""
+}
+
 func NewKafkaService() *Service {
-	return &Service{}
+	return &Service{
+		streams: map[string]*StreamInstance{},
+	}
 }
 
 func (k *Service) Start(ctx context.Context) {
 	k.appCtx = ctx
 }
 
-func (k *Service) GetStreamState() *types.ResultResp {
-	result := &types.ResultResp{}
-	k.mutex.Lock()
-	defer k.mutex.Unlock()
-	if k.streamState == nil {
-		result.Result = map[string]any{
-			"running": false,
-			"topic":   "",
-			"group":   "",
-		}
-		return result
-	}
-	result.Result = map[string]any{
-		"running": k.streamState.Running,
-		"topic":   k.streamState.Topic,
-		"group":   k.streamState.Group,
-	}
-	return result
-}
-
-func (k *Service) StopStreamConsumer() *types.ResultResp {
-	result := &types.ResultResp{}
-
-	k.mutex.Lock()
-	cancel := k.streamCancel
-	k.streamCancel = nil
-	consumerClient := (*kgo.Client)(nil)
-	if k.consumer != nil && len(k.consumer) == 4 {
-		if c, ok := k.consumer[3].(*kgo.Client); ok {
-			consumerClient = c
-		}
-		k.consumer = nil
-	}
-	if k.streamState != nil {
-		k.streamState.Running = false
-	}
-	k.mutex.Unlock()
-
-	if cancel != nil {
-		cancel()
-	}
-	if consumerClient != nil {
-		consumerClient.Close()
-	}
-	return result
-}
-
-func (k *Service) StartStreamConsumer(topic string, group string, num int, timeout int, decompress string, isolationLevel string, isCommit bool, isLatest bool, startTimestamp int, decode string) *types.ResultResp {
-	result := &types.ResultResp{}
-
-	// 流式消费批量拉取，减少 IPC 批次数；至少取 10000 条
-	const streamBatchSize = 10000
-	if num < streamBatchSize {
-		num = streamBatchSize
-	}
-
-	if k.kac == nil {
-		result.Err = common.PleaseSelectErr
-		return result
-	}
-
-	// 停止已有的流
-	if k.streamCancel != nil {
-		k.streamCancel()
-		k.streamCancel = nil
-	}
-
-	// 创建流 context
-	streamCtx, cancel := context.WithCancel(context.Background())
-	k.streamCancel = cancel
-
-	// 复用 consumer client 缓存逻辑
-	k.mutex.Lock()
-	var _client *kgo.Client
-	if k.consumer == nil || k.consumer[0] != group || k.consumer[1] != topic || k.consumer[2] != isolationLevel {
-		if k.consumer != nil && len(k.consumer) == 4 {
-			if c, ok := k.consumer[3].(*kgo.Client); ok {
-				c.Close()
-			}
-		}
-		conf := append(k.config,
-			kgo.ConsumeTopics(topic),
-			kgo.DisableAutoCommit(),
-		)
-		if strings.ToLower(isolationLevel) == "read_committed" {
-			conf = append(conf, kgo.FetchIsolationLevel(kgo.ReadCommitted()))
-		} else {
-			conf = append(conf, kgo.FetchIsolationLevel(kgo.ReadUncommitted()))
-		}
-		if group != "__kafka_king_auto_generate__" {
-			conf = append(conf, kgo.ConsumerGroup(group))
-		} else {
-			conf = append(conf, kgo.ConsumerGroup("__kafka_king__"+uuid.New().String()))
-		}
-		if startTimestamp != 0 {
-			conf = append(conf, kgo.ConsumeResetOffset(kgo.NewOffset().AfterMilli(int64(startTimestamp))))
-		} else if isLatest {
-			conf = append(conf, kgo.ConsumeResetOffset(kgo.NewOffset().AtEnd()))
-		} else {
-			conf = append(conf, kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()))
-		}
-
-		cl, err := kgo.NewClient(conf...)
-		if err != nil {
-			k.mutex.Unlock()
-			k.streamCancel = nil
-			result.Err = "Consumer Error：" + err.Error()
-			return result
-		}
-		_client = cl
-		k.consumer = []any{group, topic, isolationLevel, _client}
-	} else {
-		_client = k.consumer[3].(*kgo.Client)
-	}
-	k.streamState = &StreamState{
-		Running: true,
-		Topic:   topic,
-		Group:   group,
-	}
-	k.mutex.Unlock()
-
-	// 启动 goroutine 循环 poll
-	appCtx := k.appCtx
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				log.Printf("stream consumer panic: %v", r)
-			}
-			k.mutex.Lock()
-			if k.streamState != nil {
-				k.streamState.Running = false
-			}
-			k.mutex.Unlock()
-			runtime.EventsEmit(appCtx, "consumer-end")
-		}()
-
-		for {
-			select {
-			case <-streamCtx.Done():
-				return
-			default:
-			}
-
-			ctx, cancel2 := context.WithTimeout(streamCtx, time.Duration(timeout)*time.Second)
-			fetches := _client.PollRecords(ctx, num)
-			cancel2()
-
-			if streamCtx.Err() != nil {
-				return
-			}
-
-			if fetches.IsClientClosed() {
-				runtime.EventsEmit(appCtx, "consumer-err", "Client Closed, Please Retry")
-				return
-			}
-
-			if errs := fetches.Errors(); len(errs) > 0 {
-				filtered := make([]string, 0, len(errs))
-				for _, e := range errs {
-					if errors.Is(e.Err, context.DeadlineExceeded) || errors.Is(e.Err, context.Canceled) {
-						continue
-					}
-					filtered = append(filtered, e.Err.Error())
-				}
-				if len(filtered) > 0 {
-					runtime.EventsEmit(appCtx, "consumer-err", strings.Join(filtered, "; "))
-				}
-			}
-
-			records := fetches.Records()
-			if len(records) > 0 {
-				res := make([]any, 0, len(records))
-				for _, v := range records {
-					if v == nil {
-						continue
-					}
-					var data []byte
-					var err error
-					switch decompress {
-					case "gzip":
-						data, err = compress.GzipDecompress(v.Value)
-					case "lz4":
-						data, err = compress.Lz4Decompress(v.Value)
-					case "zstd":
-						data, err = compress.ZstdDecompress(v.Value)
-					case "snappy":
-						data, err = compress.SnappyDecompress(v.Value)
-					default:
-						data = v.Value
-					}
-					if err != nil {
-						log.Printf("stream consumer decompress failed for offset %d: %v", v.Offset, err)
-						continue
-					}
-
-					var decodedData []byte
-					switch strings.ToLower(decode) {
-					case "base64":
-						decodedData, err = base64.StdEncoding.DecodeString(string(data))
-						if err != nil {
-							decodedData = data
-						}
-					default:
-						decodedData = data
-					}
-
-					res = append(res, map[string]any{
-						"Offset":        v.Offset,
-						"Key":           string(v.Key),
-						"Value":         string(decodedData),
-						"Timestamp":     v.Timestamp.Format(time.DateTime),
-						"Partition":     v.Partition,
-						"Topic":         v.Topic,
-						"Headers":       getHeadersString(v.Headers),
-						"LeaderEpoch":   v.LeaderEpoch,
-						"ProducerEpoch": v.ProducerEpoch,
-						"ProducerID":    v.ProducerID,
-					})
-				}
-				runtime.EventsEmit(appCtx, "consumer-msg", res)
-			}
-		}
-	}()
-
-	runtime.EventsEmit(k.appCtx, "consumer-start", map[string]any{
-		"topic": topic,
-		"group": group,
-	})
-	return result
-}
-
 func (k *Service) Close(_ context.Context) bool {
 	k.mutex.Lock()
 	defer k.mutex.Unlock()
-
-	if k.streamCancel != nil {
-		k.streamCancel()
-		k.streamCancel = nil
-	}
-	if k.streamState != nil {
-		k.streamState.Running = false
-	}
 
 	if k.client != nil {
 		k.client.Close()
@@ -343,27 +128,24 @@ func (k *Service) Close(_ context.Context) bool {
 	if k.kac != nil {
 		k.kac.Close()
 	}
-	// FIX: 增强的关闭逻辑，确保安全
-	// 修改：长度变为 4 (group, topic, isolation, client)，client 在索引 3
-	if k.consumer != nil && len(k.consumer) == 4 {
-		if consumerClient, ok := k.consumer[3].(*kgo.Client); ok && consumerClient != nil {
-			consumerClient.Close()
-		}
-		k.consumer = nil
+	if k.oneShot != nil && k.oneShot.client != nil {
+		k.oneShot.client.Close()
+		k.oneShot = nil
 	}
-	// FIX: 确保在关闭前检查 sshTunnel 是否为 nil
+	k.stopAllStreamsLocked()
 	if k.sshTunnel != nil {
 		_ = k.sshTunnel.client.Close()
 		k.sshTunnel = nil
 	}
+	k.ClearSchemaRegistry()
 	fmt.Println("连接已关闭")
 	return false
 }
 
 // SSH 隧道配置
 type sshTunnel struct {
-	client    *ssh.Client
-	dialFunc  func(ctx context.Context, network, addr string) (net.Conn, error)
+	client   *ssh.Client
+	dialFunc func(ctx context.Context, network, addr string) (net.Conn, error)
 }
 
 // setupSSHTunnel 建立 SSH 隧道
@@ -467,16 +249,16 @@ func (k *Service) SetConnect(connectName string, conn map[string]any, isTest boo
 		tlsConfig := &tls.Config{
 			InsecureSkipVerify: connCopy["skipTLSVerify"] == "true", // 开发环境可以设置为true
 		}
-		if connCopy["tls_cert_file"] != "" && connCopy["tls_key_file"] != "" {
-			cert, err := tls.LoadX509KeyPair(connCopy["tls_cert_file"].(string), connCopy["tls_key_file"].(string))
+		if certFile, keyFile := mapStr(connCopy, "tls_cert_file"), mapStr(connCopy, "tls_key_file"); certFile != "" && keyFile != "" {
+			cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 			if err != nil {
 				result.Err = fmt.Sprintf("loading x509 key pair failed: %v", err)
 				return result
 			}
 			tlsConfig.Certificates = []tls.Certificate{cert}
 		}
-		if connCopy["tls_ca_file"] != "" {
-			caCert, err := os.ReadFile(connCopy["tls_ca_file"].(string))
+		if caFile := mapStr(connCopy, "tls_ca_file"); caFile != "" {
+			caCert, err := os.ReadFile(caFile)
 			if err != nil {
 				result.Err = fmt.Sprintf("reading CA file failed: %v", err)
 				return result
@@ -489,9 +271,9 @@ func (k *Service) SetConnect(connectName string, conn map[string]any, isTest boo
 	}
 	// SASL配置
 	if connCopy["sasl"] == "enable" {
-		user := connCopy["sasl_user"].(string)
-		pwd := connCopy["sasl_pwd"].(string)
-		mechanism := connCopy["sasl_mechanism"].(string)
+		user := mapStr(connCopy, "sasl_user")
+		pwd := mapStr(connCopy, "sasl_pwd")
+		mechanism := mapStr(connCopy, "sasl_mechanism")
 		switch strings.ToUpper(mechanism) {
 		case "PLAIN":
 			config = append(config, kgo.SASL(plain.Auth{User: user, Pass: pwd}.AsMechanism()))
@@ -499,8 +281,34 @@ func (k *Service) SetConnect(connectName string, conn map[string]any, isTest boo
 			config = append(config, kgo.SASL(scram.Auth{User: user, Pass: pwd}.AsSha256Mechanism()))
 		case "SCRAM-SHA-512":
 			config = append(config, kgo.SASL(scram.Auth{User: user, Pass: pwd}.AsSha512Mechanism()))
+		case "OAUTHBEARER":
+			// 静态令牌模式：token 填在 SASL 密码框中
+			token := pwd
+			if token == "" {
+				token = mapStr(connCopy, "oauth_token")
+			}
+			if token == "" {
+				result.Err = "OAUTHBEARER token is required (fill it in the SASL password field)"
+				return result
+			}
+			config = append(config, kgo.SASL(oauth.Auth{Token: token}.AsMechanism()))
+		case "AWS_MSK_IAM":
+			// AccessKey 填 SASL 用户名，SecretKey 填 SASL 密码；MSK IAM 要求 TLS
+			if user == "" || pwd == "" {
+				result.Err = "AWS MSK IAM requires access key and secret key"
+				return result
+			}
+			if connCopy["tls"] != "enable" {
+				result.Err = "AWS MSK IAM requires TLS to be enabled"
+				return result
+			}
+			config = append(config, kgo.SASL(aws.Auth{
+				AccessKey:    user,
+				SecretKey:    pwd,
+				SessionToken: mapStr(connCopy, "sasl_session_token"),
+			}.AsManagedStreamingIAMMechanism()))
 		case "GSSAPI":
-			kt, err := keytab.Load(connCopy["kerberos_user_keytab"].(string))
+			kt, err := keytab.Load(mapStr(connCopy, "kerberos_user_keytab"))
 			if err != nil {
 				result.Err = err.Error()
 				return result
@@ -511,17 +319,17 @@ func (k *Service) SetConnect(connectName string, conn map[string]any, isTest boo
 				return result
 			}
 			kerberosClient := client.NewWithKeytab(
-				connCopy["Kerberos_user"].(string),  // username (principal的第一部分)
-				connCopy["Kerberos_realm"].(string), // realm (Kerberos领域，大写的域名)
-				kt,                                  // keytab对象
-				cfg,                                 // krb5配置对象
-				client.DisablePAFXFAST(true),        // 禁用PA-FX-FAST，提高兼容性
+				mapStr(connCopy, "Kerberos_user"),  // username (principal的第一部分)
+				mapStr(connCopy, "Kerberos_realm"), // realm (Kerberos领域，大写的域名)
+				kt,                                 // keytab对象
+				cfg,                                // krb5配置对象
+				client.DisablePAFXFAST(true),       // 禁用PA-FX-FAST，提高兼容性
 			)
 			// 创建GSSAPI认证
 			config = append(config,
 				kgo.SASL(kerberos.Auth{
 					Client:           kerberosClient,
-					Service:          connCopy["kerberos_service_name"].(string),
+					Service:          mapStr(connCopy, "kerberos_service_name"),
 					PersistAfterAuth: true,
 				}.AsMechanism()))
 		default:
@@ -539,7 +347,7 @@ func (k *Service) SetConnect(connectName string, conn map[string]any, isTest boo
 	config = append(
 		config,
 		kgo.SeedBrokers(bootstrapServers...),
-		kgo.RecordPartitioner(kgo.ManualPartitioner()),
+		kgo.RecordPartitioner(newAutoPartitioner()),
 	)
 
 	cl, err := kgo.NewClient(config...)
@@ -569,28 +377,20 @@ func (k *Service) SetConnect(connectName string, conn map[string]any, isTest boo
 	}
 
 	if !isTest {
-		// 正式切换：先关闭所有旧资源
-		if k.streamCancel != nil {
-			k.streamCancel()
-			k.streamCancel = nil
-		}
-		if k.streamState != nil {
-			k.streamState.Running = false
-		}
+		// 正式切换：先关闭所有旧资源（当前持有 mutex）
+		k.stopAllStreamsLocked()
 		if k.client != nil {
 			k.client.Close()
 		}
 		if k.kac != nil {
 			k.kac.Close()
 		}
+		if k.oneShot != nil && k.oneShot.client != nil {
+			k.oneShot.client.Close()
+			k.oneShot = nil
+		}
 		if k.sshTunnel != nil {
 			_ = k.sshTunnel.client.Close()
-		}
-		// 修改：长度变为 4，索引变为 3
-		if k.consumer != nil && len(k.consumer) == 4 {
-			if c, ok := k.consumer[3].(*kgo.Client); ok {
-				c.Close()
-			}
 		}
 
 		// 分配新资源
@@ -600,7 +400,6 @@ func (k *Service) SetConnect(connectName string, conn map[string]any, isTest boo
 		k.config = config
 		k.bootstrapServers = bootstrapServers
 		k.sshTunnel = sshTunnel // 存储新的隧道，可能为 nil
-		k.consumer = nil
 		k.clearCache()
 		k.topics = k.buildTopicsResp(topics)
 	} else {
@@ -625,31 +424,45 @@ func (k *Service) clearCache() {
 	k.groups = nil
 }
 
-// GetBrokers 获取集群信息
+// GetBrokers 获取集群信息（含 Controller）
 func (k *Service) GetBrokers() *types.ResultResp {
 	result := &types.ResultResp{}
 	if k.kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
 	brokers, err := k.kac.ListBrokers(ctx)
 	if err != nil {
 		result.Err = "ListBrokers Error：" + err.Error()
 		return result
 	}
 
+	// 通过 Metadata 请求获取 controller（KRaft 模式下同样是 controller quorum leader）
+	controllerID := int32(-1)
+	if k.client != nil {
+		mreq := kmsg.NewPtrMetadataRequest()
+		if mres, err := k.client.Request(ctx, mreq); err == nil {
+			if m, ok := mres.(*kmsg.MetadataResponse); ok {
+				controllerID = m.ControllerID
+			}
+		}
+	}
+
 	brokersResp := make([]map[string]any, 0)
 	for _, broker := range brokers {
 		brokersResp = append(brokersResp, map[string]any{
-			"node_id": broker.NodeID,
-			"host":    broker.Host,
-			"port":    broker.Port,
-			"rack":    broker.Rack,
+			"node_id":       broker.NodeID,
+			"host":          broker.Host,
+			"port":          broker.Port,
+			"rack":          broker.Rack,
+			"is_controller": broker.NodeID == controllerID,
 		})
 	}
 	clusterInfo := map[string]any{
-		"brokers": brokersResp,
+		"brokers":       brokersResp,
+		"controller_id": controllerID,
 	}
 	result.Result = clusterInfo
 	return result
@@ -820,11 +633,11 @@ func (k *Service) GetTopicOffsets(topics []string, groupID string) *types.Result
 		return result
 	}
 
-	//读取offset
+	//读取offset。group 不存在等情况不阻塞 start/end 的展示
 	committedOffsets, err := k.kac.FetchOffsetsForTopics(ctx, groupID, topics...)
 	if err != nil {
-		result.Err = "FetchOffsetsForTopics Error：" + err.Error()
-		return result
+		log.Printf("FetchOffsetsForTopics %s failed: %v", groupID, err)
+		committedOffsets = kadm.OffsetResponses{}
 	}
 
 	// {"topicname":{"0":{"Topic":"1","Partition":0,"At":100,"LeaderEpoch":0,"Metadata":""},"1":。。。
@@ -894,8 +707,9 @@ func (k *Service) GetGroupMembers(groupLst []string) *types.ResultsResp {
 	sortedGroups := groups.Sorted()
 	for _, describedGroup := range sortedGroups {
 		if describedGroup.Err != nil {
-			result.Err = fmt.Sprintf("Error describing group %s: %v\n", describedGroup.Group, describedGroup.Err)
-			return result
+			// 单个 group 出错不阻塞其余 group 的展示
+			log.Printf("describe group %s failed: %v", describedGroup.Group, describedGroup.Err)
+			continue
 		}
 		membersLst := make([]any, 0)
 		for _, member := range describedGroup.Members {
@@ -1133,13 +947,18 @@ func (k *Service) Produce(topic string, key, value string, partition, num int, h
 	}
 	var records []*kgo.Record
 	for i := 0; i < num; i++ {
-		records = append(records, &kgo.Record{
+		// partition < 0 表示自动分配（按 key hash 或轮询）；>= 0 时 kgo 直接使用指定分区
+		rec := &kgo.Record{
 			Topic:     topic,
 			Value:     data,
 			Key:       []byte(key),
 			Headers:   headers2,
-			Partition: int32(partition),
-		})
+			Partition: -1,
+		}
+		if partition >= 0 {
+			rec.Partition = int32(partition)
+		}
+		records = append(records, rec)
 	}
 	res := k.client.ProduceSync(ctx, records...)
 	if err := res.FirstErr(); err != nil {
@@ -1150,70 +969,103 @@ func (k *Service) Produce(topic string, key, value string, partition, num int, h
 	return result
 }
 
-// Consumer 消费消息 (此函数逻辑复杂，保留完整的优化后代码)
-// 修改：增加了 isolationLevel 参数 (例如传入 "read_committed" 或 "read_uncommitted")
-// 修改：增加了 decode 参数 (例如传入 "base64" 或 "")
-func (k *Service) Consumer(topic string, group string, num, timeout int, decompress string, isolationLevel string, isCommit, isLatest bool, startTimestamp int, decode string) *types.ResultsResp {
+// ReproduceMessages 将消费到的消息回放到目标 topic。
+// rows 来自 Consumer/流式消费的输出（Key、Value、Headers 等）；
+// Headers 为 JSON 字符串形式 {"k":"v"}。
+func (k *Service) ReproduceMessages(targetTopic string, rows []any) *types.ResultResp {
+	result := &types.ResultResp{}
+	if k.client == nil {
+		result.Err = common.PleaseSelectErr
+		return result
+	}
+	if targetTopic == "" {
+		result.Err = "target topic is required"
+		return result
+	}
+	if len(rows) == 0 {
+		result.Err = "no messages to reproduce"
+		return result
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	records := make([]*kgo.Record, 0, len(rows))
+	for _, r := range rows {
+		m, ok := r.(map[string]any)
+		if !ok {
+			continue
+		}
+		key, _ := m["Key"].(string)
+		value, _ := m["Value"].(string)
+		rec := &kgo.Record{
+			Topic:     targetTopic,
+			Key:       []byte(key),
+			Value:     []byte(value),
+			Partition: -1,
+		}
+		if hs, ok := m["Headers"].(string); ok && hs != "" {
+			var hm map[string]string
+			if err := json.Unmarshal([]byte(hs), &hm); err == nil {
+				for hk, hv := range hm {
+					rec.Headers = append(rec.Headers, kgo.RecordHeader{Key: hk, Value: []byte(hv)})
+				}
+			}
+		}
+		records = append(records, rec)
+	}
+	if len(records) == 0 {
+		result.Err = "no valid messages to reproduce"
+		return result
+	}
+	res := k.client.ProduceSync(ctx, records...)
+	if err := res.FirstErr(); err != nil {
+		result.Err = "Reproduce Error：" + err.Error()
+		return result
+	}
+	result.Result = map[string]any{"count": len(records)}
+	return result
+}
+
+// Consumer 消费消息（单次拉取）。
+// startOffset > 0 时按该 offset 起始（对所有分区生效），优先级高于 isLatest/startTimestamp。
+// 说明：client 缓存的 key 包含全部影响行为的参数；相同 key 复用 client 可以继续上次的进度，
+// 与流式消费的 client 完全隔离，避免并发 PollRecords。
+func (k *Service) Consumer(topic string, group string, num, timeout int, decompress string, isolationLevel string, isCommit, isLatest bool, startTimestamp int, startOffset int64, decode string) *types.ResultsResp {
 	result := &types.ResultsResp{Results: make([]any, 0)}
 	if k.kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
 	st := time.Now()
+	if topic == "" {
+		result.Err = "topic is required"
+		return result
+	}
+	if group == "" {
+		group = "__kafka_king_auto_generate__"
+	}
+
+	// 缓存 key：任何影响 client 配置的参数都参与
+	resetKey := fmt.Sprintf("%d|%d|%d", startTimestamp, bool2int(isLatest), startOffset)
+	cacheKey := strings.Join([]string{group, topic, strings.ToLower(isolationLevel), resetKey}, "\x00")
 
 	k.mutex.Lock()
 	var _client *kgo.Client
-	if k.consumer == nil || k.consumer[0] != group || k.consumer[1] != topic || k.consumer[2] != isolationLevel {
-
-		fmt.Println("创建新的consumer", k.consumer)
-		// 关闭旧 client
-		if k.consumer != nil && len(k.consumer) == 4 {
-			if c, ok := k.consumer[3].(*kgo.Client); ok {
-				c.Close()
-			}
+	if k.oneShot == nil || k.oneShot.key != cacheKey {
+		if k.oneShot != nil && k.oneShot.client != nil {
+			k.oneShot.client.Close()
+			k.oneShot = nil
 		}
-		conf := append(k.config,
-			kgo.ConsumeTopics(topic),
-			kgo.DisableAutoCommit(),
-		)
-
-		// 新增：配置隔离级别
-		if strings.ToLower(isolationLevel) == "read_committed" {
-			conf = append(conf, kgo.FetchIsolationLevel(kgo.ReadCommitted()))
-		} else {
-			// 默认为 ReadUncommitted
-			conf = append(conf, kgo.FetchIsolationLevel(kgo.ReadUncommitted()))
-		}
-
-		if group != "__kafka_king_auto_generate__" {
-			conf = append(conf, kgo.ConsumerGroup(group))
-		} else {
-			conf = append(conf, kgo.ConsumerGroup("__kafka_king__"+uuid.New().String()))
-		}
-		if startTimestamp != 0 {
-			conf = append(conf, kgo.ConsumeResetOffset(kgo.NewOffset().AfterMilli(int64(startTimestamp))))
-		} else if isLatest {
-			conf = append(conf, kgo.ConsumeResetOffset(kgo.NewOffset().AtEnd()))
-		} else {
-			conf = append(conf, kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()))
-		}
-
-		cl, err := kgo.NewClient(conf...)
+		_client, err := k.newConsumerClient(topic, group, isolationLevel, isLatest, startTimestamp, startOffset)
 		if err != nil {
 			k.mutex.Unlock()
 			result.Err = "Consumer Error：" + err.Error()
 			return result
 		}
-		_client = cl
-
-		// 更新缓存结构，包含 isolationLevel
-		k.consumer = []any{group, topic, isolationLevel, _client}
-		fmt.Println("创建新的consumer完成", k.consumer)
-	} else {
-		fmt.Println("使用缓存的consumer", k.consumer)
-		// 从索引 3 获取 client
-		_client = k.consumer[3].(*kgo.Client)
+		k.oneShot = &oneShotCache{key: cacheKey, client: _client}
 	}
+	_client = k.oneShot.client
 	k.mutex.Unlock()
 
 	log.Println("开始poll...")
@@ -1224,7 +1076,9 @@ func (k *Service) Consumer(topic string, group string, num, timeout int, decompr
 
 	if fetches.IsClientClosed() {
 		k.mutex.Lock()
-		k.consumer = nil
+		if k.oneShot != nil && k.oneShot.client == _client {
+			k.oneShot = nil
+		}
 		k.mutex.Unlock()
 		result.Err = "Client Closed, Please Retry"
 		return result
@@ -1236,8 +1090,17 @@ func (k *Service) Consumer(topic string, group string, num, timeout int, decompr
 		}
 	}
 	if errs := fetches.Errors(); len(errs) > 0 {
-		result.Err = fmt.Sprint(errs)
-		return result
+		errStrs := make([]string, 0, len(errs))
+		for _, e := range errs {
+			if errors.Is(e.Err, context.DeadlineExceeded) || errors.Is(e.Err, context.Canceled) {
+				continue
+			}
+			errStrs = append(errStrs, e.Err.Error())
+		}
+		if len(errStrs) > 0 {
+			result.Err = strings.Join(errStrs, "; ")
+			return result
+		}
 	}
 	log.Println("poll完成...", len(fetches.Records()))
 
@@ -1246,51 +1109,13 @@ func (k *Service) Consumer(topic string, group string, num, timeout int, decompr
 		if v == nil {
 			continue
 		}
-		var data []byte
-		var err error
-		switch decompress {
-		case "gzip":
-			data, err = compress.GzipDecompress(v.Value)
-		case "lz4":
-			data, err = compress.Lz4Decompress(v.Value)
-		case "zstd":
-			data, err = compress.ZstdDecompress(v.Value)
-		case "snappy":
-			data, err = compress.SnappyDecompress(v.Value)
-		default:
-			data = v.Value
-		}
+		row, err := k.buildMessageRow(v, decompress, decode)
 		if err != nil {
-			result.Err = "Failed to decompress data: " + err.Error()
+			result.Err = "Failed to decode message: " + err.Error()
 			return result
 		}
-
-		// 根据decode参数进行解码
-		var decodedData []byte
-		switch strings.ToLower(decode) {
-		case "base64":
-			decodedData, err = base64.StdEncoding.DecodeString(string(data))
-			if err != nil {
-				result.Err = "Failed to decode base64 data: " + err.Error()
-				return result
-			}
-		default:
-			decodedData = data
-		}
-
-		res = append(res, map[string]any{
-			"ID":            i,
-			"Offset":        v.Offset,
-			"Key":           string(v.Key),
-			"Value":         string(decodedData),
-			"Timestamp":     v.Timestamp.Format(time.DateTime),
-			"Partition":     v.Partition,
-			"Topic":         v.Topic,
-			"Headers":       getHeadersString(v.Headers),
-			"LeaderEpoch":   v.LeaderEpoch,
-			"ProducerEpoch": v.ProducerEpoch,
-			"ProducerID":    v.ProducerID,
-		})
+		row["ID"] = i
+		res = append(res, row)
 	}
 	result.Results = res
 
@@ -1305,6 +1130,44 @@ func (k *Service) Consumer(topic string, group string, num, timeout int, decompr
 		}
 	}
 	return result
+}
+
+// newConsumerClient 创建一个用于消费（单次或流式）的 kgo client。
+// 与主 client（k.client）分离，关闭互不影响。
+func (k *Service) newConsumerClient(topic string, group string, isolationLevel string, isLatest bool, startTimestamp int, startOffset int64) (*kgo.Client, error) {
+	if group == "__kafka_king_auto_generate__" {
+		group = "__kafka_king__" + uuid.New().String()
+	}
+	conf := append(k.config,
+		kgo.ConsumeTopics(topic),
+		kgo.DisableAutoCommit(),
+	)
+	if strings.ToLower(isolationLevel) == "read_committed" {
+		conf = append(conf, kgo.FetchIsolationLevel(kgo.ReadCommitted()))
+	} else {
+		conf = append(conf, kgo.FetchIsolationLevel(kgo.ReadUncommitted()))
+	}
+	conf = append(conf, kgo.ConsumerGroup(group))
+
+	switch {
+	case startOffset > 0:
+		conf = append(conf, kgo.ConsumeResetOffset(kgo.NewOffset().At(startOffset)))
+	case startTimestamp != 0:
+		conf = append(conf, kgo.ConsumeResetOffset(kgo.NewOffset().AfterMilli(int64(startTimestamp))))
+	case isLatest:
+		conf = append(conf, kgo.ConsumeResetOffset(kgo.NewOffset().AtEnd()))
+	default:
+		conf = append(conf, kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()))
+	}
+
+	return kgo.NewClient(conf...)
+}
+
+func bool2int(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }
 
 // getHeadersString 从RecordHeader切片获取json字符串
@@ -1338,31 +1201,43 @@ func (k *Service) GetAcls() *types.ResultsResp {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
 
-	// 创建 ACL 查询构建器以查询所有 ACL
-	aclBuilder := kadm.NewACLs().
-		AnyResource().
-		Operations().
-		ResourcePatternType(kadm.ACLPatternAny)
-
-	acls, err := k.kac.DescribeACLs(ctx, aclBuilder)
+	// 使用原始请求查询全部 ACL（所有过滤维度均为 Any）。
+	// 不用 kadm 的 builder：它无法表达“任意 principal/host”的全通配查询，
+	// 构造不出任何 describe 请求时会静默返回空列表。
+	req := kmsg.NewPtrDescribeACLsRequest()
+	req.ResourceType = kmsg.ACLResourceTypeAny
+	req.ResourcePatternType = kmsg.ACLResourcePatternTypeAny
+	req.Operation = kmsg.ACLOperationAny
+	req.PermissionType = kmsg.ACLPermissionTypeAny
+	resp, err := k.client.Request(ctx, req)
 	if err != nil {
 		result.Err = fmt.Sprintf("Failed to list ACLs: %v", err)
 		return result
 	}
-
-	// 构建响应
-	for _, acl := range acls {
-		result.Results = append(result.Results, map[string]any{
-			"principal":      acl.Principal,
-			"host":           acl.Host,
-			"operation":      acl.Operation.String(),
-			"resourceType":   acl.Type.String(),
-			"resourceName":   utils.TernaryF(acl.Name != nil, func() string { return *acl.Name }, func() string { return "" }),
-			"patternType":    acl.Pattern.String(),
-			"permissionType": acl.Permission.String(),
-		})
+	mres, ok := resp.(*kmsg.DescribeACLsResponse)
+	if !ok {
+		result.Err = "unexpected DescribeACLs response type"
+		return result
+	}
+	if code := kerr.ErrorForCode(mres.ErrorCode); code != nil {
+		result.Err = fmt.Sprintf("Failed to list ACLs: %v", code)
+		return result
+	}
+	for _, res := range mres.Resources {
+		for _, acl := range res.ACLs {
+			result.Results = append(result.Results, map[string]any{
+				"principal":      acl.Principal,
+				"host":           acl.Host,
+				"operation":      acl.Operation.String(),
+				"resourceType":   res.ResourceType.String(),
+				"resourceName":   res.ResourceName,
+				"patternType":    res.ResourcePatternType.String(),
+				"permissionType": acl.PermissionType.String(),
+			})
+		}
 	}
 	return result
 }
@@ -1626,6 +1501,9 @@ func sendWebhookRequest(url string, customHeader string, message string) error {
 
 // ManageKafkaSCRAMUsers  添加、更新或删除 Kafka SCRAM 用户。
 func (k *Service) ManageKafkaSCRAMUsers(usersToUpsert map[string]string, usersToDelete []string) (kadm.AlteredUserSCRAMs, error) {
+	if k.kac == nil {
+		return nil, fmt.Errorf("please connect to a cluster first")
+	}
 	var upserts []kadm.UpsertSCRAM
 	var deletes []kadm.DeleteSCRAM
 	// 3. 准备要添加或更新的用户数据 (Upserts)

@@ -1,19 +1,19 @@
 <!--
- - Copyright 2025 Bronya0 <tangssst@163.com>.
- - Author Github: https://github.com/Bronya0
- -
- - Licensed under the Apache License, Version 2.0 (the "License");
- - you may not use this file except in compliance with the License.
- - You may obtain a copy of the License at
- -
- -     https://www.apache.org/licenses/LICENSE-2.0
- -
- - Unless required by applicable law or agreed to in writing, software
- - distributed under the License is distributed on an "AS IS" BASIS,
- - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- - See the License for the specific language governing permissions and
- - limitations under the License.
- -->
+  - Copyright 2025 Bronya0 <tangssst@163.com>.
+  - Author Github: https://github.com/Bronya0
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     https://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  -->
 
 <template>
   <n-flex vertical>
@@ -22,6 +22,9 @@
       <p>{{ t('consumer.desc') }}</p>
       <n-button :render-icon="renderIcon(DriveFileMoveTwotone)" @click="downloadAllDataCsv">{{ t('common.csv') }}
       </n-button>
+      <n-button :render-icon="renderIcon(DriveFileMoveTwotone)" @click="downloadAllDataJson">{{ t('common.json') }}
+      </n-button>
+      <n-button :render-icon="renderIcon(ReplayOutlined)" @click="openReplay">{{ t('consumer.replay') }}</n-button>
     </n-flex>
     <!-- 查询条件区域 -->
     <n-form ref="formRef" :model="select" :rules="{
@@ -63,19 +66,34 @@
       </n-form-item>
 
       <n-form-item>
-        <n-button v-if="!streamRunning" :loading="streamStarting" :render-icon="renderIcon(PlayArrowOutlined)"
+        <n-button :loading="streamStarting" :render-icon="renderIcon(PlayArrowOutlined)"
           tertiary type="success" @click="startStream">
           {{ t('consumer.subscribe') }}
-        </n-button>
-        <n-button v-else :loading="streamStopping" :render-icon="renderIcon(StopOutlined)" tertiary type="error"
-          @click="stopStream">
-          {{ t('consumer.stop') }}
         </n-button>
       </n-form-item>
 
       <n-form-item>
-        <n-input v-model:value="searchText" clearable placeholder="local search" style="max-width: 150px"
+        <n-button v-if="activeStreams.length > 0" :loading="streamStopping" :render-icon="renderIcon(StopOutlined)"
+          tertiary type="error" @click="stopAllStreams">
+          {{ t('consumer.stopAll') }}
+        </n-button>
+      </n-form-item>
+
+      <n-form-item>
+        <n-input v-model:value="searchText" clearable :placeholder="t('consumer.localSearch')" style="max-width: 150px"
           @input="searchData" />
+      </n-form-item>
+
+      <n-form-item>
+        <n-tooltip>
+          <template #trigger>
+            <n-switch v-model:value="filterRegex" size="small" @update:value="searchData">
+              <template #checked>{{ t('consumer.regex') }}</template>
+              <template #unchecked>{{ t('consumer.keyword') }}</template>
+            </n-switch>
+          </template>
+          {{ t('consumer.filterModeTip') }}
+        </n-tooltip>
       </n-form-item>
 
       <!-- 高级选项折叠按钮 -->
@@ -87,7 +105,7 @@
               <ExpandLessOutlined v-else />
             </n-icon>
           </template>
-          {{ advancedOptionsCollapsed ? '展开高级选项' : '收起高级选项' }}
+          {{ advancedOptionsCollapsed ? t('consumer.showAdvanced') : t('consumer.hideAdvanced') }}
         </n-button>
       </n-form-item>
     </n-form>
@@ -117,7 +135,19 @@
         <n-select v-model:value="select.decode" :options="[
           { label: 'utf8', value: 'utf8' },
           { label: 'Base64', value: 'base64' },
-        ]" clearable filterable style="width: 100px" />
+          { label: 'Avro (Schema Registry)', value: 'avro' },
+          { label: 'JSON (Schema Registry)', value: 'sr_json' },
+          { label: 'Protobuf (Schema Registry)', value: 'sr_pb' },
+        ]" clearable filterable style="width: 170px" />
+      </n-form-item>
+
+      <n-form-item :label="t('consumer.startOffset')" path="startOffset">
+        <n-tooltip>
+          <template #trigger>
+            <n-input-number v-model:value="select.startOffset" :min="0" style="max-width: 140px" clearable />
+          </template>
+          {{ t('consumer.startOffsetTip') }}
+        </n-tooltip>
       </n-form-item>
 
       <n-form-item :label="t('consumer.isolationLevel')" path="isolationLevel">
@@ -161,6 +191,19 @@
         </n-tooltip>
       </n-form-item>
     </n-form>
+
+    <!-- 活跃流列表 -->
+    <n-flex v-if="activeStreams.length > 0" align="center" :size="8" style="flex-wrap: wrap;">
+      <n-tag v-for="s in activeStreams" :key="s.id" :type="s.running ? 'success' : 'default'" size="small" round
+        closable @close="stopStream(s.id)">
+        <template #icon>
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;"
+            :style="{ background: s.running ? '#18a058' : '#ccc' }" />
+        </template>
+        {{ s.topic }} @ {{ s.group }}
+      </n-tag>
+    </n-flex>
+
     <!-- 流式订阅状态栏 -->
     <n-flex v-if="streamRunning || streamMsgCount > 0" align="center" :size="16" style="padding: 4px 0;">
       <n-tag :type="streamRunning ? 'success' : 'default'" size="small" round>
@@ -190,14 +233,32 @@
     <n-data-table :bordered="true" :columns="refColumns(columns)" :data="filter_messages" :pagination="pagination"
       striped />
   </n-flex>
+
+  <!-- 回放对话框 -->
+  <n-modal v-model:show="showReplay" preset="dialog" :title="t('consumer.replay')">
+    <n-flex vertical>
+      <n-text>{{ t('consumer.replayTip', { count: filter_messages.length }) }}</n-text>
+      <n-select v-model:value="replayTarget" :options="topic_data" filterable :placeholder="t('consumer.replayTarget')" />
+    </n-flex>
+    <template #action>
+      <n-button @click="showReplay = false">{{ t('common.cancel') }}</n-button>
+      <n-button type="primary" :loading="replaying" @click="doReplay">{{ t('common.enter') }}</n-button>
+    </template>
+  </n-modal>
 </template>
 <script setup>
 import { onMounted, onUnmounted, ref, shallowRef, h, nextTick, watch, onActivated } from 'vue'
 import emitter, { setConnectName, getConnectName } from "../utils/eventBus";
 import { createCsvContent, download_file, refColumns, renderIcon, renderSelect } from "../utils/common";
-import { DriveFileMoveTwotone, MessageOutlined, ContentCopyOutlined, ExpandMoreOutlined, ExpandLessOutlined, PlayArrowOutlined, StopOutlined } from "@vicons/material";
+import {
+  DriveFileMoveTwotone, MessageOutlined, ContentCopyOutlined, ExpandMoreOutlined, ExpandLessOutlined,
+  PlayArrowOutlined, StopOutlined, ReplayOutlined,
+} from "@vicons/material";
 import { NButton, NDataTable, NFlex, NInput, NTooltip, NIcon, NTag, NText, NSwitch, useMessage } from 'naive-ui'
-import { Consumer, GetGroups, GetTopics, StartStreamConsumer, StopStreamConsumer, GetStreamState } from "../../wailsjs/go/service/Service";
+import {
+  Consumer, GetGroups, GetStreamState, GetTopics, ReproduceMessages,
+  StartStreamConsumer, StopStreamConsumer,
+} from "../../wailsjs/go/service/Service";
 import { EventsOn, EventsOff } from "../../wailsjs/runtime";
 import { useI18n } from "vue-i18n";
 
@@ -210,6 +271,7 @@ const group_data = ref([]);
 let messages = []
 const filter_messages = shallowRef([])
 const searchText = ref(null)
+const filterRegex = ref(false)
 
 // 新增状态变量，用于跟踪是否是首次消费
 const isFirstConsume = ref(true)
@@ -228,14 +290,16 @@ const select = ref({
   decompress: null,
   decode: "utf8", // 默认按 utf8 解码
   startTimestamp: null,
+  startOffset: null, // 指定起始 offset（对每个分区生效）
   isolationLevel: "read_uncommitted", // 默认为read_uncommitted
 })
 
 const loading = ref(false)
 
-const streamRunning = ref(false)
+const activeStreams = ref([]) // [{id, topic, group, running}]
 const streamStarting = ref(false)
 const streamStopping = ref(false)
+const streamRunning = ref(false)
 const streamMsgCount = ref(0)
 const totalReceived = ref(0)
 const streamRate = ref(0)
@@ -245,6 +309,11 @@ let streamMsgTimestamps = []
 let streamEventsRegistered = false
 let renderScheduled = false
 let currentConnectName = ''
+
+// 回放
+const showReplay = ref(false)
+const replayTarget = ref(null)
+const replaying = ref(false)
 
 // 内存保护：最大缓存 200MB，基于估算的消息大小
 const MAX_MESSAGES_SIZE = 200 * 1024 * 1024
@@ -280,13 +349,25 @@ const scheduleRender = () => {
   })
 }
 
+const refreshStreams = async () => {
+  try {
+    const res = await GetStreamState()
+    if (res.err === "") {
+      activeStreams.value = res.result?.streams || []
+      streamRunning.value = activeStreams.value.some(s => s.running)
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
+
 const refreshTopic = async () => {
   await getData()
 }
 
 const selectNode = async (node) => {
-  if (streamRunning.value) {
-    await stopStream()
+  if (activeStreams.value.length > 0) {
+    await StopStreamConsumer("")
   }
   currentConnectName = node?.name || ''
   setConnectName(currentConnectName)
@@ -297,6 +378,8 @@ const selectNode = async (node) => {
   totalMessagesSize = 0
   totalReceived.value = 0
   streamMsgCount.value = 0
+  activeStreams.value = []
+  streamRunning.value = false
   select.value.selectedTopic = null
   select.value.selectedGroup = null
   loading.value = false
@@ -324,25 +407,23 @@ onMounted(async () => {
   emitter.on('refreshTopic', refreshTopic)
   getData()
   await registerStreamEvents()
+  await refreshStreams()
 })
 
 // keep-alive 缓存激活时从 localStorage 恢复 topic
 onActivated(() => {
   const connectName = currentConnectName || getConnectName()
-  console.log('[Consumer] onActivated, connectName:', connectName, 'selected:', select.value.selectedTopic)
   if (connectName) {
     const cached = localStorage.getItem('kafkaKing:consumer:topic:' + connectName)
-    console.log('[Consumer] cached topic:', cached)
     if (cached) {
-      console.log('[Consumer] restoring topic:', cached)
       select.value.selectedTopic = cached
     }
   }
 })
 
 onUnmounted(() => {
-  if (streamRunning.value) {
-    StopStreamConsumer()
+  if (activeStreams.value.length > 0) {
+    StopStreamConsumer("")
   }
   EventsOff("consumer-msg")
   EventsOff("consumer-err")
@@ -352,7 +433,6 @@ onUnmounted(() => {
 
 
 const getData = async () => {
-  console.log('初始化消费者数据')
   try {
     const res = await GetTopics()
     if (res.err !== "") {
@@ -446,15 +526,12 @@ const columns = [
     title: 'Offset',
     key: 'Offset',
     width: 20,
-
     sorter: 'default'
   },
   {
     title: 'Key',
     key: 'Key',
     width: 15,
-
-
     sorter: 'default'
   },
   {
@@ -483,8 +560,6 @@ const columns = [
     title: 'Timestamp',
     key: 'Timestamp',
     width: 20,
-
-
     sorter: (rowA, rowB) => {
       const dateA = new Date(rowA['Timestamp']);
       const dateB = new Date(rowB['Timestamp']);
@@ -495,40 +570,24 @@ const columns = [
     title: 'Topic',
     key: 'Topic',
     width: 20,
-
-
     sorter: 'default'
   },
   {
     title: 'Partition',
     key: 'Partition',
     width: 10,
-
     sorter: 'default'
   },
   {
     title: 'Headers',
     key: 'Headers',
     width: 20,
-
-
     sorter: 'default'
   },
-  // {
-  //   title: 'LeaderEpoch',
-  //   key: 'LeaderEpoch',
-  //   width: 10,
-  // },
-  // {
-  //   title: 'ProducerEpoch',
-  //   key: 'ProducerEpoch',
-  //   width: 10,
-  // },
   {
     title: 'ProducerID',
     key: 'ProducerID',
     width: 10,
-
     sorter: 'default'
   }
 ]
@@ -555,7 +614,8 @@ const consume = async () => {
     const result = await Consumer(select.value.selectedTopic, select.value.selectedGroup,
       select.value.maxMessages, select.value.timeout, select.value.decompress,
       select.value.isolationLevel,
-      select.value.isCommit, select.value.isLatest, select.value.startTimestamp, select.value.decode)
+      select.value.isCommit, select.value.isLatest, select.value.startTimestamp,
+      select.value.startOffset || 0, select.value.decode)
 
     if (result.err !== "") {
       message.error(result.err, { duration: 5000 })
@@ -576,22 +636,27 @@ const consume = async () => {
   }
 }
 
+function newStreamID() {
+  return (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`)
+}
+
 function registerStreamEvents() {
   if (streamEventsRegistered) return
   streamEventsRegistered = true
 
-  EventsOn("consumer-msg", (batch) => {
-    if (!batch || batch.length === 0) return
-    messages.push(...batch)
-    totalReceived.value += batch.length
+  EventsOn("consumer-msg", (payload) => {
+    if (!payload || !payload.rows || payload.rows.length === 0) return
+    const rows = payload.rows.map(r => ({ ...r, Stream: String(payload.id || '').slice(0, 6) }))
+    messages.push(...rows)
+    totalReceived.value += rows.length
 
     // 累计新消息的估算内存大小
-    for (const msg of batch) {
+    for (const msg of rows) {
       totalMessagesSize += estimateMsgSize(msg)
     }
 
     const now = Date.now()
-    streamMsgTimestamps.push({ time: now, count: batch.length })
+    streamMsgTimestamps.push({ time: now, count: rows.length })
     streamMsgTimestamps = streamMsgTimestamps.filter(e => e.time > now - 5000)
     const totalInWindow = streamMsgTimestamps.reduce((sum, e) => sum + e.count, 0)
     streamRate.value = Math.round(totalInWindow / 5)
@@ -623,21 +688,39 @@ function registerStreamEvents() {
     scheduleRender()
   })
 
-  EventsOn("consumer-err", (errMsg) => {
-    message.warning(String(errMsg), { duration: 5000 })
+  EventsOn("consumer-err", (payload) => {
+    const errText = typeof payload === 'string' ? payload : payload?.err
+    message.warning(String(errText ?? ''), { duration: 5000 })
   })
 
-  EventsOn("consumer-start", () => {
-    streamRunning.value = true
+  EventsOn("consumer-start", (payload) => {
     streamStarting.value = false
+    if (payload && payload.id) {
+      const exists = activeStreams.value.some(s => s.id === payload.id)
+      if (!exists) {
+        activeStreams.value.push({
+          id: payload.id,
+          topic: payload.topic || '',
+          group: payload.group || '',
+          running: true,
+        })
+      } else {
+        activeStreams.value.find(s => s.id === payload.id).running = true
+      }
+    }
+    streamRunning.value = true
     message.success(t('message.streamStarted'))
   })
 
-  EventsOn("consumer-end", () => {
-    streamRunning.value = false
-    streamStopping.value = false
-    streamRate.value = 0
-    streamMsgTimestamps = []
+  EventsOn("consumer-end", (payload) => {
+    const id = payload?.id ?? payload
+    activeStreams.value = activeStreams.value.filter(s => s.id !== id)
+    streamRunning.value = activeStreams.value.some(s => s.running)
+    if (activeStreams.value.length === 0) {
+      streamStopping.value = false
+      streamRate.value = 0
+      streamMsgTimestamps = []
+    }
   })
 }
 
@@ -651,24 +734,21 @@ async function startStream() {
     return
   }
   streamStarting.value = true
-  messages = []
-  filter_messages.value = []
-  streamMsgCount.value = 0
-  totalReceived.value = 0
-  totalMessagesSize = 0
-  streamMsgTimestamps = []
 
   try {
     const result = await StartStreamConsumer(
+      newStreamID(),
       select.value.selectedTopic, select.value.selectedGroup,
       select.value.maxMessages, select.value.timeout, select.value.decompress,
       select.value.isolationLevel,
       select.value.isCommit, select.value.isLatest,
-      select.value.startTimestamp || 0, select.value.decode)
+      select.value.startTimestamp || 0, select.value.startOffset || 0, select.value.decode)
 
     if (result.err !== "") {
       message.error(result.err, { duration: 5000 })
       streamStarting.value = false
+    } else {
+      await refreshStreams()
     }
   } catch (e) {
     message.error(e.message, { duration: 5000 })
@@ -676,13 +756,54 @@ async function startStream() {
   }
 }
 
-async function stopStream() {
+async function stopStream(id) {
+  try {
+    await StopStreamConsumer(id)
+  } catch (e) {
+    message.error(e.message, { duration: 5000 })
+  }
+  await refreshStreams()
+}
+
+async function stopAllStreams() {
   streamStopping.value = true
   try {
-    await StopStreamConsumer()
+    await StopStreamConsumer("")
   } catch (e) {
     message.error(e.message, { duration: 5000 })
     streamStopping.value = false
+  }
+  await refreshStreams()
+}
+
+// 回放：把当前表格中的消息原样发到目标 topic
+const openReplay = () => {
+  if (filter_messages.value.length === 0) {
+    message.warning(t('consumer.replayEmpty'), { duration: 5000 })
+    return
+  }
+  replayTarget.value = select.value.selectedTopic
+  showReplay.value = true
+}
+
+const doReplay = async () => {
+  if (!replayTarget.value) {
+    message.error(t('message.selectTopic'), { duration: 5000 })
+    return
+  }
+  replaying.value = true
+  try {
+    const res = await ReproduceMessages(replayTarget.value, filter_messages.value)
+    if (res.err !== "") {
+      message.error(res.err, { duration: 5000 })
+    } else {
+      message.success(t('consumer.replayDone', { count: res.result?.count ?? 0 }))
+      showReplay.value = false
+    }
+  } catch (e) {
+    message.error(e.message, { duration: 5000 })
+  } finally {
+    replaying.value = false
   }
 }
 
@@ -693,23 +814,9 @@ const downloadAllDataCsv = async () => {
   download_file(csvContent, 'messages.csv', 'text/csv;charset=utf-8;')
 }
 
-// 保存为文本文件
-const saveMessageAsString = (message) => {
-  const content = message.content
-  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
-  // saveAs(blob, `message-${message.offset}.txt`)
-}
-
-// 保存为二进制文件
-const saveMessageAsBinary = (message) => {
-  // 这里假设message.content是base64编码的二进制数据
-  const content = atob(message.content)
-  const bytes = new Uint8Array(content.length)
-  for (let i = 0; i < content.length; i++) {
-    bytes[i] = content.charCodeAt(i)
-  }
-  const blob = new Blob([bytes], { type: 'application/octet-stream' })
-  // saveAs(blob, `message-${message.offset}.bin`)
+const downloadAllDataJson = () => {
+  const content = JSON.stringify(filter_messages.value, null, 2)
+  download_file(content, 'messages.json', 'application/json;charset=utf-8;')
 }
 
 // 流式显示窗口大小：自动滚底时只取最新 N 条，避免全量复制
@@ -717,7 +824,19 @@ const STREAM_WINDOW = 10000
 
 const searchData = () => {
   if (searchText.value) {
-    filter_messages.value = messages.filter(message => message.Value.includes(searchText.value))
+    let pred
+    if (filterRegex.value) {
+      try {
+        const re = new RegExp(searchText.value)
+        pred = m => re.test(m.Value) || re.test(m.Key)
+      } catch (_) {
+        pred = () => true // 非法正则时不过滤
+      }
+    } else {
+      const q = searchText.value
+      pred = m => (m.Value || '').includes(q) || (m.Key || '').includes(q)
+    }
+    filter_messages.value = messages.filter(pred).slice().reverse()
   } else {
     // 自动滚底时只窗口化最新消息，大幅减少数组复制和 table 渲染
     if (streamRunning.value && autoScroll.value && messages.length > STREAM_WINDOW) {

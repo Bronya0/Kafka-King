@@ -45,7 +45,12 @@ repo-root/
       app.go              # App lifecycle (Start, DomReady, Shutdown)
       common/vars.go      # Constants, GitHub URLs, Version (injected at build)
       config/app.go       # Config read/write (~/.kafka-king/config.yaml), file dialogs
-      service/kafka.go    # All Kafka operations (connect, topics, consume, produce, ACLs)
+      service/kafka.go    # Core Kafka operations (connect, topics, produce, consume, ACLs, SCRAM)
+      service/stream.go   # Multi-instance streaming consumers (events: consumer-start/msg/err/end)
+      service/offsets.go  # Group offset reset, DeleteRecords
+      service/cluster.go  # LogDirs, partition reassignments, client quotas
+      service/sr.go       # Schema Registry (browse subjects/schemas, Avro/JSON/PB decode)
+      service/partitioner.go # autoPartitioner: explicit partition or sticky-key fallback
       system/update.go    # GitHub release update checker
       types/resp.go       # Request/response structs, Connect, Config, AlertConfig
       utils/              # compress (gzip/lz4/snappy/zstd), Ternary utility
@@ -62,14 +67,15 @@ repo-root/
 - **Go module root is `app/`**, not repo root. All `go` commands must run from `app/`.
 - The `common.Version` variable is set at **build time** via ldflags. At dev time it is empty string.
 - Config is persisted as YAML at `~/.kafka-king/config.yaml`. The `Config.Connects` field stores saved cluster connections (including passwords in plain text — never commit config.yaml).
-- The `consumer` cache on `Service` stores `[group, topic, isolationLevel, *kgo.Client]` — the client pointer is at **index 3**, not index 2.
+- One-shot consume and streaming consume use **separate clients**: `Service.oneShot` caches the one-shot client keyed by all behavior-affecting params; each stream in `Service.streams` owns its own client. Never share a kgo.Client between concurrent poll loops.
+- Produce treats `partition < 0` as auto-assign (key hash / sticky) and `partition >= 0` as explicit, via `autoPartitioner` — kgo's default partitioner ignores `record.Partition`.
 - The frontend uses a `mitt` event bus (`emitter`) for cross-component communication (theme change, menu select, language change).
 
 ## Testing
 
-- Only `app/backend/service/kafka_test.go` exists, with hardcoded broker addresses.
-- Tests are **integration tests** — they require a running Kafka cluster. No mocks.
-- Run a single test: `go test -run TestConsume ./backend/service/`
+- `kafka_kfake_test.go` runs against **kfake** (franz-go's in-process fake broker) plus **srfake** — no real cluster needed; these run in plain `go test ./...`.
+- `kafka_test.go` contains integration tests with hardcoded broker addresses; they are skipped unless `KAFKA_KING_INTEGRATION=1` is set.
+- Run a single test: `go test -run TestFakeProduceConsume ./backend/service/`
 
 ## Build/CI
 

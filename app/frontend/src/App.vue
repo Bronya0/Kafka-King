@@ -84,12 +84,14 @@ import {
   LibraryBooksOutlined,
   MessageOutlined,
   PermDataSettingTwotone,
+  SchemaOutlined,
   SendTwotone,
   SettingsOutlined,
 } from '@vicons/material'
 import Header from './components/Header.vue'
 import Settings from './components/Settings.vue'
 import {GetConfig, SaveConfig} from "../wailsjs/go/config/AppConfig";
+import {SetSchemaRegistry} from "../wailsjs/go/service/Service";
 import {getLocalLanguage, renderIcon} from "./utils/common";
 import Aside from "./components/Aside.vue";
 import Conn from "./components/Conn.vue";
@@ -101,6 +103,7 @@ import Producer from "./components/Producer.vue";
 import Consumer from "./components/Consumer.vue";
 import Monitor from "./components/Monitor.vue";
 import Acl from "./components/Acl.vue";
+import Sr from "./components/Sr.vue";
 import About from "./components/About.vue";
 import {useI18n} from 'vue-i18n'
 import koKR from "./i18n/ko-KR";
@@ -118,6 +121,19 @@ onMounted(async () => {
 
   // 从后端加载配置
   config = await GetConfig()
+  // 自动恢复 Schema Registry 连接（Consumer 的 avro 解码依赖它）
+  if (config.schema_registry && config.schema_registry.url) {
+    SetSchemaRegistry(
+        config.schema_registry.url,
+        config.schema_registry.user || '',
+        config.schema_registry.pass || '',
+        config.schema_registry.skip_tls === 'true',
+    ).then(res => {
+      if (res.err !== "") {
+        console.warn('Schema Registry auto connect failed:', res.err)
+      }
+    })
+  }
   // 设置主题
   themeChange(config.theme)
   // 初始化语言
@@ -176,6 +192,12 @@ const sideMenuOptions = computed(() => [
     key: 'Acl',
     icon: renderIcon(PermDataSettingTwotone),
     component: Acl,
+  },
+  {
+    label: t('aside.sr'),
+    key: 'sr',
+    icon: renderIcon(SchemaOutlined),
+    component: Sr,
   },
   {
     label: t('aside.monitor'),
