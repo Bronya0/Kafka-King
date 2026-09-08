@@ -102,6 +102,7 @@ let version = ref({
 })
 
 const subtitle = ref("")
+const currentNodeName = ref(null)
 
 const notification = useNotification()
 
@@ -120,6 +121,7 @@ onMounted(async () => {
 })
 
 const selectNode = (node) => {
+  currentNodeName.value = node.name
   subtitle.value = `${t('header.c_node')}：【` + node.name + "】"
 }
 
@@ -187,9 +189,13 @@ const closeWindow = () => {
   Quit()
 }
 
-// 监听语言变化，重新设置 subtitle
-watch(locale, (newLocale) => {
-  subtitle.value = t('header.desc') + " " + version.value.tag_name
+// 监听语言变化，按当前状态重建 subtitle（已连接时保留集群名，避免被覆盖丢失）
+watch(locale, () => {
+  if (currentNodeName.value) {
+    subtitle.value = `${t('header.c_node')}：【` + currentNodeName.value + "】"
+  } else {
+    subtitle.value = t('header.desc') + " " + version.value.tag_name
+  }
 })
 </script>
 

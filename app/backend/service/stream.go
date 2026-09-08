@@ -210,9 +210,9 @@ func (k *Service) streamLoop(inst *StreamInstance, streamCtx context.Context, nu
 		if r := recover(); r != nil {
 			log.Printf("stream consumer %s panic: %v", inst.ID, r)
 		}
-		inst.Running = false
 		// 从注册表中移除自己（若未被替换）
 		k.mutex.Lock()
+		inst.Running = false
 		if cur, ok := k.streams[inst.ID]; ok && cur == inst {
 			delete(k.streams, inst.ID)
 		}
@@ -279,9 +279,12 @@ func (k *Service) streamLoop(inst *StreamInstance, streamCtx context.Context, nu
 				k.emitEvent("consumer-msg", streamMsgEvent{ID: inst.ID, Rows: rows})
 			}
 			if isCommit {
-				if err := inst.client.CommitUncommittedOffsets(context.Background()); err != nil {
+				// 提交跟随 streamCtx：停流时取消；单次提交限制 15s，避免 broker 不可达时无限重试
+				commitCtx, commitCancel := context.WithTimeout(streamCtx, 15*time.Second)
+				if err := inst.client.CommitUncommittedOffsets(commitCtx); err != nil {
 					log.Printf("stream consumer %s commit offsets failed: %v", inst.ID, err)
 				}
+				commitCancel()
 			}
 		}
 	}

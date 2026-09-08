@@ -281,7 +281,10 @@ const getIntervalInMilliseconds = () => {
 const setFetchInterval = () => {
   if (intervalId) {
     clearInterval(intervalId);
+    intervalId = null;
   }
+  // 仅在巡检进行中才重建定时器，避免未开始巡检时改间隔就“偷跑”轮询
+  if (!isInspecting.value) return;
   intervalId = setInterval(fetchData, getIntervalInMilliseconds());
 };
 
@@ -306,7 +309,10 @@ const startInspection = async () => {
 
 const stopInspection = () => {
   isInspecting.value = false;
-  clearInterval(intervalId);
+  if (intervalId) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
 };
 
 
@@ -564,6 +570,8 @@ const checkAndSendAlert = async (totalLag, res) => {
 };
 
 const selectNode = async () => {
+  // 切换集群先停止巡检，否则旧 topic/group 的轮询会打到新集群上
+  stopInspection();
   topic_data.value = [];
   group_data.value = [];
   selectedTopics.value = [];

@@ -657,7 +657,13 @@ const getTopicConfig = async (topic) => {
 const getTopicDetail = async (topic) => {
   loading.value = true
   try {
-    let partitions = data.value.find(item => item['topic'] === topic)['partitions']
+    const row = data.value.find(item => item['topic'] === topic)
+    // topic 可能不在当前（被搜索过滤后的）列表里，避免 find 结果为 undefined 直接取属性
+    if (!row) {
+      message.warning(t('message.topicNotFound') || topic, {duration: 5000})
+      return
+    }
+    let partitions = row['partitions']
     partitions.sort((a, b) => a['partition'] > b['partition'] ? 1 : -1)
     // 给每个item添加topic属性，后面匹配会用到
     partitions.forEach(item => item['topic'] = topic)

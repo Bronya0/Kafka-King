@@ -40,7 +40,8 @@ import (
 // 注意：若 group 仍有活跃成员，broker 会拒绝提交（需要先停止消费者）。
 func (k *Service) ResetGroupOffsets(group string, topics []string, strategy string, value int64) *types.ResultResp {
 	result := &types.ResultResp{}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -63,7 +64,7 @@ func (k *Service) ResetGroupOffsets(group string, topics []string, strategy stri
 
 	// 未指定 topics：用该 group 已提交过的 offsets 推断 topic 列表
 	if len(topics) == 0 {
-		fetched, err := k.kac.FetchOffsets(ctx, group)
+		fetched, err := kac.FetchOffsets(ctx, group)
 		if err != nil {
 			result.Err = "FetchOffsets Error：" + err.Error()
 			return result
@@ -84,14 +85,14 @@ func (k *Service) ResetGroupOffsets(group string, topics []string, strategy stri
 	var target kadm.Offsets
 	switch strings.ToLower(strategy) {
 	case "start":
-		listed, err := k.kac.ListStartOffsets(ctx, topics...)
+		listed, err := kac.ListStartOffsets(ctx, topics...)
 		if err != nil {
 			result.Err = "ListStartOffsets Error：" + err.Error()
 			return result
 		}
 		target = listed.Offsets()
 	case "end":
-		listed, err := k.kac.ListEndOffsets(ctx, topics...)
+		listed, err := kac.ListEndOffsets(ctx, topics...)
 		if err != nil {
 			result.Err = "ListEndOffsets Error：" + err.Error()
 			return result
@@ -102,7 +103,7 @@ func (k *Service) ResetGroupOffsets(group string, topics []string, strategy stri
 			result.Err = "timestamp must be positive milliseconds"
 			return result
 		}
-		listed, err := k.kac.ListOffsetsAfterMilli(ctx, value, topics...)
+		listed, err := kac.ListOffsetsAfterMilli(ctx, value, topics...)
 		if err != nil {
 			result.Err = "ListOffsetsAfterMilli Error：" + err.Error()
 			return result
@@ -114,7 +115,7 @@ func (k *Service) ResetGroupOffsets(group string, topics []string, strategy stri
 			return result
 		}
 		target = kadm.Offsets{}
-		ends, err := k.kac.ListEndOffsets(ctx, topics...)
+		ends, err := kac.ListEndOffsets(ctx, topics...)
 		if err != nil {
 			result.Err = "ListEndOffsets Error：" + err.Error()
 			return result
@@ -127,7 +128,7 @@ func (k *Service) ResetGroupOffsets(group string, topics []string, strategy stri
 		return result
 	}
 
-	committed, err := k.kac.CommitOffsets(ctx, group, target)
+	committed, err := kac.CommitOffsets(ctx, group, target)
 	if err != nil {
 		result.Err = "CommitOffsets Error：" + err.Error()
 		return result
@@ -157,7 +158,8 @@ func (k *Service) ResetGroupOffsets(group string, topics []string, strategy stri
 // offset 传 -1 表示删除各分区的全部已存在消息（以 ListEndOffsets 为准）。
 func (k *Service) DeleteRecords(topic string, partitions []int32, offset int64) *types.ResultResp {
 	result := &types.ResultResp{}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -172,7 +174,7 @@ func (k *Service) DeleteRecords(topic string, partitions []int32, offset int64) 
 	os := kadm.Offsets{}
 	if len(partitions) == 0 {
 		// 全部分区：用 end offsets 确定分区集合
-		ends, err := k.kac.ListEndOffsets(ctx, topic)
+		ends, err := kac.ListEndOffsets(ctx, topic)
 		if err != nil {
 			result.Err = "ListEndOffsets Error：" + err.Error()
 			return result
@@ -188,7 +190,7 @@ func (k *Service) DeleteRecords(topic string, partitions []int32, offset int64) 
 			os.AddOffset(l.Topic, l.Partition, at, -1)
 		})
 	} else {
-		ends, err := k.kac.ListEndOffsets(ctx, topic)
+		ends, err := kac.ListEndOffsets(ctx, topic)
 		if err != nil {
 			result.Err = "ListEndOffsets Error：" + err.Error()
 			return result
@@ -199,14 +201,19 @@ func (k *Service) DeleteRecords(topic string, partitions []int32, offset int64) 
 		})
 		for _, p := range partitions {
 			at := offset
-			if end, ok := endByPartition[p]; ok && at > end {
-				at = end
+			if end, ok := endByPartition[p]; ok {
+				if offset < 0 {
+					at = end // -1：删除该分区全部已存在消息
+				} else if at > end {
+					// 目标 offset 超过分区水位（该分区消息不足），钳制为删除全部
+					at = end
+				}
 			}
 			os.AddOffset(topic, p, at, -1)
 		}
 	}
 
-	resps, err := k.kac.DeleteRecords(ctx, os)
+	resps, err := kac.DeleteRecords(ctx, os)
 	if err != nil {
 		result.Err = "DeleteRecords Error：" + err.Error()
 		return result

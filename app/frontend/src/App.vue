@@ -225,8 +225,11 @@ const activeItem = shallowRef(sideMenuOptions.value[0])
 
 // 切换菜单
 function handleMenuSelect(key) {
-  // 根据key寻找item
-  activeItem.value = sideMenuOptions.value.find(item => item.key === key)
+  // 根据key寻找item，找不到时保留当前项，避免 activeItem 变成 undefined
+  const found = sideMenuOptions.value.find(item => item.key === key)
+  if (found) {
+    activeItem.value = found
+  }
 }
 
 
@@ -259,6 +262,9 @@ async function handleLanguageChange(language) {
     config.language = language;
     console.info("未配置语言，使用本地语言并保存配置：" + language);
     await SaveConfig(config);
+  } else if (!supportedLanguages.includes(language)) {
+    // 配置了不支持的语言（如手改配置文件），回退默认
+    language = DEFAULT_LANGUAGE
   }
 
   console.info("selectedLanguage：" + language);

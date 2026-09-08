@@ -50,6 +50,8 @@ const inputValue = ref(props.value)
 
 // 双击触发编辑
 function handleDblClick() {
+  // 每次进入编辑都重置为当前值，避免残留上一次编辑的内容
+  inputValue.value = props.value
   isEdit.value = true
   nextTick(() => {
     inputRef.value?.focus()

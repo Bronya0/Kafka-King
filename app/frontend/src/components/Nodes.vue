@@ -219,10 +219,30 @@ const pagination = ref({
 })
 
 const downloadAllDataCsv = async () => {
-  const csvContent = createCsvContent(
-      activeTab.value === "Broker" ? data.value : config_data.value,
-      activeTab.value === "Broker" ? columns : config_columns
-  )
+  // 按当前 tab 导出对应数据，避免在 LogDirs/Quotas 页导出成 Config 数据
+  let rows, cols
+  switch (activeTab.value) {
+    case 'Config':
+      rows = config_data.value
+      cols = config_columns
+      break
+    case 'LogDirs':
+      rows = logdir_data.value
+      cols = logdir_columns
+      break
+    case 'Quotas':
+      // values 是对象，导出时拍平为 k=v 字符串
+      rows = quota_data.value.map(q => ({
+        entity: q.entity,
+        values: Object.entries(q.values || {}).map(([k, v]) => `${k}=${v}`).join(' '),
+      }))
+      cols = [{title: 'Entity', key: 'entity'}, {title: 'Values', key: 'values'}]
+      break
+    default:
+      rows = data.value
+      cols = columns
+  }
+  const csvContent = createCsvContent(rows, cols)
   download_file(csvContent, `${getCurrentDateTime()}.csv`, 'text/csv;charset=utf-8;')
 }
 

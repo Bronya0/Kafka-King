@@ -67,6 +67,7 @@ type Service struct {
 	kac              *kadm.Client
 	client           *kgo.Client
 	oneShot          *oneShotCache // 单次消费的 client 缓存（与流式消费完全隔离）
+	oneShotMu        sync.Mutex    // 串行化单次消费：kgo 禁止对同一 client 并发 PollRecords
 	mutex            sync.Mutex
 	topics           []any
 	groups           []any
@@ -400,7 +401,7 @@ func (k *Service) SetConnect(connectName string, conn map[string]any, isTest boo
 		k.config = config
 		k.bootstrapServers = bootstrapServers
 		k.sshTunnel = sshTunnel // 存储新的隧道，可能为 nil
-		k.clearCache()
+		k.clearCacheLocked()
 		k.topics = k.buildTopicsResp(topics)
 	} else {
 		// 测试连接：完成后关闭所有本次创建的资源
@@ -419,7 +420,29 @@ func (k *Service) TestClient(connectName string, conn map[string]any) *types.Res
 	return k.SetConnect(connectName, conn, true)
 }
 
+// clients 在锁内快照当前的 admin/client 指针，避免与 SetConnect/Close 换端竞争。
+// 快照后即使旧 client 被 Close，franz-go 也只返回错误，不会 panic。
+func (k *Service) clients() (*kadm.Client, *kgo.Client) {
+	k.mutex.Lock()
+	defer k.mutex.Unlock()
+	return k.kac, k.client
+}
+
+// adminClient 在锁内快照 admin 客户端指针。
+func (k *Service) adminClient() *kadm.Client {
+	kac, _ := k.clients()
+	return kac
+}
+
+// clearCache 清空 topic/group 缓存（调用方不持锁）。
 func (k *Service) clearCache() {
+	k.mutex.Lock()
+	defer k.mutex.Unlock()
+	k.clearCacheLocked()
+}
+
+// clearCacheLocked 清空缓存，要求调用方已持有 k.mutex。
+func (k *Service) clearCacheLocked() {
 	k.topics = nil
 	k.groups = nil
 }
@@ -427,13 +450,14 @@ func (k *Service) clearCache() {
 // GetBrokers 获取集群信息（含 Controller）
 func (k *Service) GetBrokers() *types.ResultResp {
 	result := &types.ResultResp{}
-	if k.kac == nil {
+	kac, client := k.clients()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	brokers, err := k.kac.ListBrokers(ctx)
+	brokers, err := kac.ListBrokers(ctx)
 	if err != nil {
 		result.Err = "ListBrokers Error：" + err.Error()
 		return result
@@ -441,9 +465,9 @@ func (k *Service) GetBrokers() *types.ResultResp {
 
 	// 通过 Metadata 请求获取 controller（KRaft 模式下同样是 controller quorum leader）
 	controllerID := int32(-1)
-	if k.client != nil {
+	if client != nil {
 		mreq := kmsg.NewPtrMetadataRequest()
-		if mres, err := k.client.Request(ctx, mreq); err == nil {
+		if mres, err := client.Request(ctx, mreq); err == nil {
 			if m, ok := mres.(*kmsg.MetadataResponse); ok {
 				controllerID = m.ControllerID
 			}
@@ -471,12 +495,13 @@ func (k *Service) GetBrokers() *types.ResultResp {
 // GetBrokerConfig 获取Broker配置
 func (k *Service) GetBrokerConfig(brokerID int32) *types.ResultsResp {
 	result := &types.ResultsResp{Results: make([]any, 0)}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
 	ctx := context.Background()
-	configs, err := k.kac.DescribeBrokerConfigs(ctx, brokerID)
+	configs, err := kac.DescribeBrokerConfigs(ctx, brokerID)
 	if err != nil {
 		result.Err = fmt.Sprintf("DescribeBrokerConfigs Error：%s", err.Error())
 		return result
@@ -554,38 +579,45 @@ func (k *Service) buildTopicsResp(topics kadm.TopicDetails) []any {
 // GetTopics 获取主题信息
 func (k *Service) GetTopics(noCache bool) *types.ResultsResp {
 	result := &types.ResultsResp{Results: make([]any, 0)}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
 
-	if !noCache && len(k.topics) > 0 {
-		result.Results = k.topics
+	k.mutex.Lock()
+	cached := k.topics
+	k.mutex.Unlock()
+	if !noCache && len(cached) > 0 {
+		result.Results = cached
 		return result
 	}
 
 	ctx := context.Background()
-	topics, err := k.kac.ListTopics(ctx)
+	topics, err := kac.ListTopics(ctx)
 	if err != nil {
 		result.Err = fmt.Sprintf("ListTopics Error：%v", err.Error())
 		return result
 	}
 	result.Results = k.buildTopicsResp(topics)
 
+	k.mutex.Lock()
 	k.topics = result.Results
+	k.mutex.Unlock()
 	return result
 }
 
 // GetTopicConfig 获取主题配置
 func (k *Service) GetTopicConfig(topic string) *types.ResultsResp {
 	result := &types.ResultsResp{Results: make([]any, 0)}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
 	ctx := context.Background()
 
-	res, err := k.kac.DescribeTopicConfigs(ctx, topic)
+	res, err := kac.DescribeTopicConfigs(ctx, topic)
 	if err != nil {
 		result.Err = err.Error()
 		return result
@@ -615,26 +647,27 @@ func (k *Service) GetTopicConfig(topic string) *types.ResultsResp {
 func (k *Service) GetTopicOffsets(topics []string, groupID string) *types.ResultResp {
 	result := &types.ResultResp{}
 
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
 
 	ctx := context.Background()
-	startOffsets, err := k.kac.ListStartOffsets(ctx, topics...)
+	startOffsets, err := kac.ListStartOffsets(ctx, topics...)
 	if err != nil {
 		result.Err = "ListStartOffsets Error：" + err.Error()
 		return result
 	}
 
-	endOffsets, err := k.kac.ListEndOffsets(ctx, topics...)
+	endOffsets, err := kac.ListEndOffsets(ctx, topics...)
 	if err != nil {
 		result.Err = "ListEndOffsets Error：" + err.Error()
 		return result
 	}
 
 	//读取offset。group 不存在等情况不阻塞 start/end 的展示
-	committedOffsets, err := k.kac.FetchOffsetsForTopics(ctx, groupID, topics...)
+	committedOffsets, err := kac.FetchOffsetsForTopics(ctx, groupID, topics...)
 	if err != nil {
 		log.Printf("FetchOffsetsForTopics %s failed: %v", groupID, err)
 		committedOffsets = kadm.OffsetResponses{}
@@ -666,12 +699,13 @@ func (k *Service) ToMap(mapStruct map[string]map[int32]kadm.Offset) map[string]m
 // GetGroups 获取消费组信息
 func (k *Service) GetGroups() *types.ResultsResp {
 	result := &types.ResultsResp{Results: make([]any, 0)}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
 	ctx := context.Background()
-	groups, err := k.kac.ListGroups(ctx)
+	groups, err := kac.ListGroups(ctx)
 	if err != nil {
 		result.Err = "ListGroups Error：" + err.Error()
 		return result
@@ -686,19 +720,22 @@ func (k *Service) GetGroups() *types.ResultsResp {
 			"Coordinator":  group.Coordinator,
 		})
 	}
+	k.mutex.Lock()
 	k.groups = result.Results
+	k.mutex.Unlock()
 	return result
 }
 
 // GetGroupMembers 获取消费组下的成员信息
 func (k *Service) GetGroupMembers(groupLst []string) *types.ResultsResp {
 	result := &types.ResultsResp{Results: make([]any, 0)}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
 	ctx := context.Background()
-	groups, err := k.kac.DescribeGroups(ctx, groupLst...)
+	groups, err := kac.DescribeGroups(ctx, groupLst...)
 	if err != nil {
 		result.Err = "DescribeGroups Error：" + err.Error()
 		return result
@@ -747,7 +784,8 @@ func (k *Service) GetGroupMembers(groupLst []string) *types.ResultsResp {
 // CreateTopics 创建主题
 func (k *Service) CreateTopics(topics []string, numPartitions, replicationFactor int, configs map[string]string) *types.ResultResp {
 	result := &types.ResultResp{}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -761,7 +799,7 @@ func (k *Service) CreateTopics(topics []string, numPartitions, replicationFactor
 	}
 
 	ctx := context.Background()
-	resp, err := k.kac.CreateTopics(ctx, int32(numPartitions), int16(replicationFactor), pointerMap, topics...)
+	resp, err := kac.CreateTopics(ctx, int32(numPartitions), int16(replicationFactor), pointerMap, topics...)
 	if err != nil {
 		result.Err = "CreateTopics Error：" + err.Error()
 		return result
@@ -778,7 +816,8 @@ func (k *Service) CreateTopics(topics []string, numPartitions, replicationFactor
 // DeleteTopic 删除主题
 func (k *Service) DeleteTopic(topics []string) *types.ResultResp {
 	result := &types.ResultResp{}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -787,7 +826,7 @@ func (k *Service) DeleteTopic(topics []string) *types.ResultResp {
 
 	ctx := context.Background()
 	for _, topic := range topics {
-		resp, err := k.kac.DeleteTopic(ctx, topic)
+		resp, err := kac.DeleteTopic(ctx, topic)
 		if err != nil {
 			result.Err = "DeleteTopic Error：" + err.Error()
 			return result
@@ -803,7 +842,8 @@ func (k *Service) DeleteTopic(topics []string) *types.ResultResp {
 // DeleteGroup 删除Group
 func (k *Service) DeleteGroup(group string) *types.ResultResp {
 	result := &types.ResultResp{}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -811,7 +851,7 @@ func (k *Service) DeleteGroup(group string) *types.ResultResp {
 	k.clearCache()
 
 	ctx := context.Background()
-	resp, err := k.kac.DeleteGroup(ctx, group)
+	resp, err := kac.DeleteGroup(ctx, group)
 	if err != nil {
 		result.Err = "DeleteGroup Error：" + err.Error()
 		return result
@@ -826,7 +866,8 @@ func (k *Service) DeleteGroup(group string) *types.ResultResp {
 // CreatePartitions 添加分区
 func (k *Service) CreatePartitions(topics []string, count int) *types.ResultResp {
 	result := &types.ResultResp{}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -835,7 +876,7 @@ func (k *Service) CreatePartitions(topics []string, count int) *types.ResultResp
 
 	ctx := context.Background()
 	for _, topic := range topics {
-		resp, err := k.kac.CreatePartitions(ctx, count, topic)
+		resp, err := kac.CreatePartitions(ctx, count, topic)
 		if err != nil {
 			result.Err = "CreatePartitions Error：" + err.Error()
 			return result
@@ -853,7 +894,8 @@ func (k *Service) CreatePartitions(topics []string, count int) *types.ResultResp
 // AlterTopicConfig 修改主题配置
 func (k *Service) AlterTopicConfig(topic string, name, value string) *types.ResultsResp {
 	result := &types.ResultsResp{Results: make([]any, 0)}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -866,7 +908,7 @@ func (k *Service) AlterTopicConfig(topic string, name, value string) *types.Resu
 	}
 
 	ctx := context.Background()
-	resp, err := k.kac.AlterTopicConfigs(ctx, ac, topic)
+	resp, err := kac.AlterTopicConfigs(ctx, ac, topic)
 	if err != nil {
 		result.Err = "AlterTopicConfigs Error：" + err.Error()
 		return result
@@ -882,7 +924,8 @@ func (k *Service) AlterTopicConfig(topic string, name, value string) *types.Resu
 
 func (k *Service) AlterNodeConfig(nodeId int32, name, value string) *types.ResultsResp {
 	result := &types.ResultsResp{Results: make([]any, 0)}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -895,7 +938,7 @@ func (k *Service) AlterNodeConfig(nodeId int32, name, value string) *types.Resul
 	}
 
 	ctx := context.Background()
-	resp, err := k.kac.AlterBrokerConfigs(ctx, ac, nodeId)
+	resp, err := kac.AlterBrokerConfigs(ctx, ac, nodeId)
 	if err != nil {
 		result.Err = "AlterBrokerConfigs Error：" + err.Error()
 		return result
@@ -912,7 +955,8 @@ func (k *Service) AlterNodeConfig(nodeId int32, name, value string) *types.Resul
 // Produce 生产消息
 func (k *Service) Produce(topic string, key, value string, partition, num int, headers []map[string]string, compressMethod string) *types.ResultsResp {
 	result := &types.ResultsResp{Results: make([]any, 0)}
-	if k.client == nil {
+	_, client := k.clients()
+	if client == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -960,7 +1004,7 @@ func (k *Service) Produce(topic string, key, value string, partition, num int, h
 		}
 		records = append(records, rec)
 	}
-	res := k.client.ProduceSync(ctx, records...)
+	res := client.ProduceSync(ctx, records...)
 	if err := res.FirstErr(); err != nil {
 		result.Err = "Produce Error：" + err.Error()
 		return result
@@ -974,7 +1018,8 @@ func (k *Service) Produce(topic string, key, value string, partition, num int, h
 // Headers 为 JSON 字符串形式 {"k":"v"}。
 func (k *Service) ReproduceMessages(targetTopic string, rows []any) *types.ResultResp {
 	result := &types.ResultResp{}
-	if k.client == nil {
+	_, client := k.clients()
+	if client == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -1018,7 +1063,7 @@ func (k *Service) ReproduceMessages(targetTopic string, rows []any) *types.Resul
 		result.Err = "no valid messages to reproduce"
 		return result
 	}
-	res := k.client.ProduceSync(ctx, records...)
+	res := client.ProduceSync(ctx, records...)
 	if err := res.FirstErr(); err != nil {
 		result.Err = "Reproduce Error：" + err.Error()
 		return result
@@ -1033,7 +1078,7 @@ func (k *Service) ReproduceMessages(targetTopic string, rows []any) *types.Resul
 // 与流式消费的 client 完全隔离，避免并发 PollRecords。
 func (k *Service) Consumer(topic string, group string, num, timeout int, decompress string, isolationLevel string, isCommit, isLatest bool, startTimestamp int, startOffset int64, decode string) *types.ResultsResp {
 	result := &types.ResultsResp{Results: make([]any, 0)}
-	if k.kac == nil {
+	if k.adminClient() == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -1049,6 +1094,11 @@ func (k *Service) Consumer(topic string, group string, num, timeout int, decompr
 	// 缓存 key：任何影响 client 配置的参数都参与
 	resetKey := fmt.Sprintf("%d|%d|%d", startTimestamp, bool2int(isLatest), startOffset)
 	cacheKey := strings.Join([]string{group, topic, strings.ToLower(isolationLevel), resetKey}, "\x00")
+
+	// 串行化单次消费：kgo 禁止对同一 client 并发 PollRecords，
+	// 且缓存 key 变化时会 Close 旧 client，不能与进行中的 poll 并发
+	k.oneShotMu.Lock()
+	defer k.oneShotMu.Unlock()
 
 	k.mutex.Lock()
 	var _client *kgo.Client
@@ -1124,7 +1174,10 @@ func (k *Service) Consumer(topic string, group string, num, timeout int, decompr
 
 	if group != "" && isCommit {
 		log.Println("提交offset...")
-		if err := _client.CommitUncommittedOffsets(context.Background()); err != nil {
+		// 带超时提交，避免 broker 不可达时无限重试导致 Wails 调用挂死
+		commitCtx, commitCancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer commitCancel()
+		if err := _client.CommitUncommittedOffsets(commitCtx); err != nil {
 			result.Err = "Failed to submit offsets: " + err.Error()
 			return result
 		}
@@ -1197,7 +1250,8 @@ func getHeadersString(headers []kgo.RecordHeader) string {
 // 默认情况下，或者在安全配置得当的 Kafka 集群中，匿名用户通常没有执行敏感管理操作（包括描述所有 ACLs）的权限。描述所有 ACLs 需要对 Cluster 资源有 Describe 权限，这通常不会授予匿名用户。
 func (k *Service) GetAcls() *types.ResultsResp {
 	result := &types.ResultsResp{Results: make([]any, 0)}
-	if k.kac == nil {
+	kac, client := k.clients()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -1212,7 +1266,7 @@ func (k *Service) GetAcls() *types.ResultsResp {
 	req.ResourcePatternType = kmsg.ACLResourcePatternTypeAny
 	req.Operation = kmsg.ACLOperationAny
 	req.PermissionType = kmsg.ACLPermissionTypeAny
-	resp, err := k.client.Request(ctx, req)
+	resp, err := client.Request(ctx, req)
 	if err != nil {
 		result.Err = fmt.Sprintf("Failed to list ACLs: %v", err)
 		return result
@@ -1333,7 +1387,8 @@ func (k *Service) parseAcl(acl map[string]any) (*kadm.ACLBuilder, error) {
 // CreateAcl 创建 ACL
 func (k *Service) CreateAcl(acl map[string]any) *types.ResultResp {
 	result := &types.ResultResp{}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -1345,7 +1400,7 @@ func (k *Service) CreateAcl(acl map[string]any) *types.ResultResp {
 		return result
 	}
 
-	results, err := k.kac.CreateACLs(ctx, aclBuilder)
+	results, err := kac.CreateACLs(ctx, aclBuilder)
 	if err != nil {
 		result.Err = fmt.Sprintf("Failed to create ACL: %v", err)
 		return result
@@ -1365,7 +1420,8 @@ func (k *Service) CreateAcl(acl map[string]any) *types.ResultResp {
 // DeleteAcl 删除 ACL
 func (k *Service) DeleteAcl(acl map[string]any) *types.ResultResp {
 	result := &types.ResultResp{}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -1377,7 +1433,7 @@ func (k *Service) DeleteAcl(acl map[string]any) *types.ResultResp {
 		return result
 	}
 
-	results, err := k.kac.DeleteACLs(ctx, aclBuilder)
+	results, err := kac.DeleteACLs(ctx, aclBuilder)
 	if err != nil {
 		result.Err = fmt.Sprintf("Failed to delete ACL: %v", err)
 		return result
@@ -1524,7 +1580,8 @@ func sendWebhookRequest(url string, customHeader string, message string) error {
 
 // ManageKafkaSCRAMUsers  添加、更新或删除 Kafka SCRAM 用户。
 func (k *Service) ManageKafkaSCRAMUsers(usersToUpsert map[string]string, usersToDelete []string) (kadm.AlteredUserSCRAMs, error) {
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		return nil, fmt.Errorf("please connect to a cluster first")
 	}
 	var upserts []kadm.UpsertSCRAM
@@ -1561,7 +1618,7 @@ func (k *Service) ManageKafkaSCRAMUsers(usersToUpsert map[string]string, usersTo
 	defer cancel()
 
 	// 同时传入删除列表和更新/插入列表
-	results, err := k.kac.AlterUserSCRAMs(ctx, deletes, upserts)
+	results, err := kac.AlterUserSCRAMs(ctx, deletes, upserts)
 	if err != nil {
 		return nil, fmt.Errorf("修改 SCRAM 用户失败: %v", err)
 	}

@@ -37,7 +37,7 @@ func (obj *Update) Start(ctx context.Context) {
 	obj.ctx = ctx
 }
 func (obj *Update) CheckUpdate() *types.Tag {
-	client := resty.New()
+	client := resty.New().SetTimeout(10 * time.Second)
 	tag := &types.Tag{}
 	resp, err := client.R().SetResult(tag).Get(common.UPDATE_URL)
 	if err != nil || resp.StatusCode() != 200 {

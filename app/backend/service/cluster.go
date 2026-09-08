@@ -34,14 +34,15 @@ import (
 // 返回 dirs：每个 broker 每个目录的汇总；partitions：每个 topic 分区的明细。
 func (k *Service) GetLogDirs() *types.ResultResp {
 	result := &types.ResultResp{}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	all, err := k.kac.DescribeAllLogDirs(ctx, nil)
+	all, err := kac.DescribeAllLogDirs(ctx, nil)
 	if err != nil {
 		result.Err = "DescribeAllLogDirs Error：" + err.Error()
 		return result
@@ -92,7 +93,8 @@ func (k *Service) GetLogDirs() *types.ResultResp {
 // ListReassignments 查询正在进行的分区副本重分配。
 func (k *Service) ListReassignments(topics []string) *types.ResultResp {
 	result := &types.ResultResp{}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -103,7 +105,7 @@ func (k *Service) ListReassignments(topics []string) *types.ResultResp {
 	for _, t := range topics {
 		s.Add(t)
 	}
-	resps, err := k.kac.ListPartitionReassignments(ctx, s)
+	resps, err := kac.ListPartitionReassignments(ctx, s)
 	if err != nil {
 		result.Err = "ListPartitionReassignments Error：" + err.Error()
 		return result
@@ -126,7 +128,8 @@ func (k *Service) ListReassignments(topics []string) *types.ResultResp {
 // assignments 形如 {"0":[1,2], "1":[2,3]}；replicas 为 null/空表示取消该分区的进行中重分配。
 func (k *Service) AlterPartitionReassignments(topic string, assignments map[string][]int32) *types.ResultResp {
 	result := &types.ResultResp{}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -163,7 +166,12 @@ func (k *Service) AlterPartitionReassignments(topic string, assignments map[stri
 
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
-	resp, err := k.client.Request(ctx, req)
+	_, client := k.clients()
+	if client == nil {
+		result.Err = common.PleaseSelectErr
+		return result
+	}
+	resp, err := client.Request(ctx, req)
 	if err != nil {
 		result.Err = "AlterPartitionReassignments Error：" + err.Error()
 		return result
@@ -203,7 +211,8 @@ func kerrString(code int16, msg *string) string {
 // GetQuotas 查询所有客户端配额。
 func (k *Service) GetQuotas() *types.ResultsResp {
 	result := &types.ResultsResp{Results: make([]any, 0)}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -211,7 +220,7 @@ func (k *Service) GetQuotas() *types.ResultsResp {
 	defer cancel()
 
 	// strict=false, 组件为空 => 匹配所有实体
-	quotas, err := k.kac.DescribeClientQuotas(ctx, false, nil)
+	quotas, err := kac.DescribeClientQuotas(ctx, false, nil)
 	if err != nil {
 		result.Err = "DescribeClientQuotas Error：" + err.Error()
 		return result
@@ -234,7 +243,8 @@ func (k *Service) GetQuotas() *types.ResultsResp {
 // ops: [{"key":"producer_byte_rate","value":102400,"remove":false}, ...]
 func (k *Service) AlterQuota(entityType string, entityName string, ops []map[string]any) *types.ResultResp {
 	result := &types.ResultResp{}
-	if k.kac == nil {
+	kac := k.adminClient()
+	if kac == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
@@ -285,7 +295,7 @@ func (k *Service) AlterQuota(entityType string, entityName string, ops []map[str
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	altered, err := k.kac.AlterClientQuotas(ctx, []kadm.AlterClientQuotaEntry{entry})
+	altered, err := kac.AlterClientQuotas(ctx, []kadm.AlterClientQuotaEntry{entry})
 	if err != nil {
 		result.Err = "AlterClientQuotas Error：" + err.Error()
 		return result
