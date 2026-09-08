@@ -40,6 +40,13 @@ func (a *AppConfig) Start(ctx context.Context) {
 }
 
 func (a *AppConfig) GetConfig() *types.Config {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.getConfigLocked()
+}
+
+// getConfigLocked 读取配置文件，要求调用方已持有 a.mu。
+func (a *AppConfig) getConfigLocked() *types.Config {
 	var defaultConfig = &types.Config{
 		Width:    common.Width,
 		Height:   common.Height,
@@ -64,33 +71,131 @@ func (a *AppConfig) SaveConfig(config *types.Config) string {
 	defer a.mu.Unlock()
 	configPath := a.getConfigPath()
 	fmt.Println(configPath)
-
-	data, err := yaml.Marshal(config)
-	if err != nil {
-		return err.Error()
-	}
-
-	err = os.WriteFile(configPath, data, 0644)
-	if err != nil {
-		return err.Error()
-	}
-	return ""
+	return a.writeConfigLocked(configPath, config)
 }
 func (a *AppConfig) SaveTheme(theme string) string {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	config := a.GetConfig()
+	config := a.getConfigLocked()
 	config.Theme = theme
+	return a.writeConfigLocked(a.getConfigPath(), config)
+}
+
+// writeConfigLocked 序列化并落盘，要求调用方已持有 a.mu。
+func (a *AppConfig) writeConfigLocked(configPath string, config *types.Config) string {
 	data, err := yaml.Marshal(config)
 	if err != nil {
 		return err.Error()
 	}
-	configPath := a.getConfigPath()
-	err = os.WriteFile(configPath, data, 0644)
-	if err != nil {
+	if err := os.WriteFile(configPath, data, 0644); err != nil {
 		return err.Error()
 	}
 	return ""
+}
+
+// connectsFile 连接配置导出/导入文件的格式：只包含连接，不含窗口等本机配置。
+type connectsFile struct {
+	Connects []types.Connect `yaml:"connects"`
+}
+
+// ExportConnects 将已保存的全部连接导出到 path（YAML）。无扩展名时自动补 .yaml。
+func (a *AppConfig) ExportConnects(path string) *types.ResultResp {
+	result := &types.ResultResp{}
+	if path == "" {
+		result.Err = "path is required"
+		return result
+	}
+	if filepath.Ext(path) == "" {
+		path += ".yaml"
+	}
+
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	cfg := a.getConfigLocked()
+	data, err := yaml.Marshal(connectsFile{Connects: cfg.Connects})
+	if err != nil {
+		result.Err = err.Error()
+		return result
+	}
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		result.Err = err.Error()
+		return result
+	}
+	result.Result = map[string]any{"count": len(cfg.Connects), "path": path}
+	return result
+}
+
+// ImportConnects 从 path 导入连接（YAML 或 JSON，yaml 是 json 超集均可解析）。
+// overwrite 为 true 时同名连接被覆盖（保留原 id），否则跳过；新增连接自动分配 id。
+func (a *AppConfig) ImportConnects(path string, overwrite bool) *types.ResultResp {
+	result := &types.ResultResp{}
+	if path == "" {
+		result.Err = "path is required"
+		return result
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		result.Err = err.Error()
+		return result
+	}
+	var file connectsFile
+	if err := yaml.Unmarshal(data, &file); err != nil {
+		result.Err = err.Error()
+		return result
+	}
+	if len(file.Connects) == 0 {
+		result.Err = "no connections found in file (expect a `connects` list)"
+		return result
+	}
+
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	cfg := a.getConfigLocked()
+
+	index := make(map[string]int, len(cfg.Connects))
+	maxID := 0
+	for i, c := range cfg.Connects {
+		index[c.Name] = i
+		if c.Id > maxID {
+			maxID = c.Id
+		}
+	}
+
+	imported, updated, skipped := 0, 0, 0
+	for _, c := range file.Connects {
+		// 过滤脏数据：无名字或无地址的连接不导入
+		if c.Name == "" || c.BootstrapServers == "" {
+			skipped++
+			continue
+		}
+		if idx, ok := index[c.Name]; ok {
+			if !overwrite {
+				skipped++
+				continue
+			}
+			c.Id = cfg.Connects[idx].Id // 保留本地 id，前端编辑/删除依赖它
+			cfg.Connects[idx] = c
+			updated++
+		} else {
+			maxID++
+			c.Id = maxID
+			cfg.Connects = append(cfg.Connects, c)
+			index[c.Name] = len(cfg.Connects) - 1
+			imported++
+		}
+	}
+
+	if errStr := a.writeConfigLocked(a.getConfigPath(), cfg); errStr != "" {
+		result.Err = errStr
+		return result
+	}
+	result.Result = map[string]any{
+		"imported": imported,
+		"updated":  updated,
+		"skipped":  skipped,
+		"total":    len(cfg.Connects),
+	}
+	return result
 }
 
 func (a *AppConfig) getConfigPath() string {
@@ -122,6 +227,10 @@ func (a *AppConfig) GetAppName() string {
 
 func (a *AppConfig) OpenFileDialog(options runtime.OpenDialogOptions) (string, error) {
 	return runtime.OpenFileDialog(a.ctx, options)
+}
+
+func (a *AppConfig) SaveFileDialog(options runtime.SaveDialogOptions) (string, error) {
+	return runtime.SaveFileDialog(a.ctx, options)
 }
 func (a *AppConfig) LogErrToFile(message string) {
 	file, err := os.OpenFile(common.ErrLogPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)

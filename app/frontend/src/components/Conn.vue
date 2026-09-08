@@ -25,6 +25,12 @@
             t('conn.add')
           }}
         </n-button>
+        <n-button tertiary @click="exportConnects" :render-icon="renderIcon(FileDownloadOutlined)">
+          {{ t('conn.exportConn') }}
+        </n-button>
+        <n-button tertiary @click="importConnects" :render-icon="renderIcon(FileUploadOutlined)">
+          {{ t('conn.importConn') }}
+        </n-button>
       </n-flex>
       <n-spin :show="spin_loading" description="Connecting...">
 
@@ -262,10 +268,17 @@
 import {computed, onMounted, ref} from 'vue'
 import {NButton, useMessage} from 'naive-ui'
 import {renderIcon} from "../utils/common";
-import {AddFilled, CloseFilled} from "@vicons/material";
+import {AddFilled, CloseFilled, FileDownloadOutlined, FileUploadOutlined} from "@vicons/material";
 import emitter, { setConnectName } from "../utils/eventBus";
 import {SetConnect, TestClient} from "../../wailsjs/go/service/Service";
-import {GetConfig, OpenFileDialog, SaveConfig} from "../../wailsjs/go/config/AppConfig";
+import {
+  ExportConnects,
+  GetConfig,
+  ImportConnects,
+  OpenFileDialog,
+  SaveConfig,
+  SaveFileDialog
+} from "../../wailsjs/go/config/AppConfig";
 import {useI18n} from 'vue-i18n'
 
 const {t} = useI18n()
@@ -354,6 +367,64 @@ const refreshNodeList = async () => {
   spin_loading.value = false
 }
 
+// 导出已保存的全部连接到 YAML 文件
+const exportConnects = async () => {
+  if (Nodes.value.length === 0) {
+    message.warning(t('message.noConnToExport'))
+    return
+  }
+  let path
+  try {
+    path = await SaveFileDialog({
+      title: t('conn.exportConn'),
+      defaultFilename: 'kafka-king-connections.yaml',
+      filters: [{name: 'YAML', extensions: ['yaml', 'yml']}],
+    })
+  } catch (e) {
+    message.error(e.message, {duration: 5000})
+    return
+  }
+  if (!path) return
+  const res = await ExportConnects(path)
+  if (res.err !== "") {
+    message.error(res.err, {duration: 5000})
+    return
+  }
+  message.success(t('message.exportConnOk', {count: res.result.count}))
+}
+
+// 从 YAML/JSON 文件导入连接，同名连接直接更新（保留本地 id）
+const importConnects = async () => {
+  let path
+  try {
+    path = await OpenFileDialog({
+      title: t('conn.importConn'),
+      filters: [{name: 'YAML/JSON', extensions: ['yaml', 'yml', 'json']}],
+    })
+  } catch (e) {
+    message.error(e.message, {duration: 5000})
+    return
+  }
+  if (!path) return
+
+  spin_loading.value = true
+  try {
+    const res = await ImportConnects(path, true)
+    if (res.err !== "") {
+      message.error(res.err, {duration: 5000})
+      return
+    }
+    message.success(t('message.importConnOk', {
+      imported: res.result.imported,
+      updated: res.result.updated,
+      skipped: res.result.skipped,
+    }))
+    await refreshNodeList()
+  } finally {
+    spin_loading.value = false
+  }
+}
+
 function editNode(node) {
   currentNode.value = {...node}
   isEditing.value = true
@@ -376,6 +447,7 @@ const addNewNode = async () => {
     sasl_user: '',
     sasl_pwd: '',
     sasl_session_token: '',
+    use_kerberos: 'disable',
     kerberos_user_keytab: '',
     kerberos_krb5_conf: '',
     Kerberos_user: '',
