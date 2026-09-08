@@ -538,15 +538,15 @@ const checkAndSendAlert = async (totalLag, res) => {
 
   try {
     const alertData = {
-      consumer_group: selectedGroup.value,
+      consumer_group: selectedGroup.value || '',
       total_lag: totalLag,
       threshold: alertConfig.value.threshold,
       topic_lags: selectedTopics.value.map(topic => {
-        const endOffset = addOffsets(res.result.end_map[topic]) || 0;
-        const commitOffset = addOffsets(res.result.commit_map[topic]) || 0;
+        const endOffset = addOffsets(res?.result?.end_map?.[topic]) || 0;
+        const commitOffset = addOffsets(res?.result?.commit_map?.[topic]) || 0;
         return { topic_name: topic, lag: endOffset - commitOffset };
       }),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toLocaleString()
     };
     console.log('发送告警数据:', alertData);
     console.log('告警配置:', alertConfig.value);

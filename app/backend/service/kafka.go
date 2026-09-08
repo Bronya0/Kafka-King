@@ -313,7 +313,7 @@ func (k *Service) SetConnect(connectName string, conn map[string]any, isTest boo
 				result.Err = err.Error()
 				return result
 			}
-			cfg, err := krbConfig.Load(connCopy["kerberos_krb5_conf"].(string))
+			cfg, err := krbConfig.Load(mapStr(connCopy, "kerberos_krb5_conf"))
 			if err != nil {
 				result.Err = err.Error()
 				return result
@@ -1446,19 +1446,42 @@ Topic积压详情:
 {{topics}}`
 	}
 
-	// 替换占位符
-	msg := template
-	msg = strings.ReplaceAll(msg, "[group]", alertReq.ConsumerGroup)
-	msg = strings.ReplaceAll(msg, "[total_lag]", fmt.Sprintf("%d", alertReq.TotalLag))
-	msg = strings.ReplaceAll(msg, "[threshold]", fmt.Sprintf("%d", alertReq.Threshold))
-	msg = strings.ReplaceAll(msg, "[timestamp]", alertReq.Timestamp)
+	// 探测模板是否为 JSON 格式
+	var js json.RawMessage
+	isJSON := json.Unmarshal([]byte(strings.TrimSpace(template)), &js) == nil
 
 	// 构建topics部分
-	topicsStr := ""
+	var topicsLines []string
 	for _, topic := range alertReq.TopicLags {
-		topicsStr += fmt.Sprintf("  %s: %d\n", topic.TopicName, topic.Lag)
+		topicsLines = append(topicsLines, fmt.Sprintf("  %s: %d", topic.TopicName, topic.Lag))
 	}
-	msg = strings.ReplaceAll(msg, "[topics]", topicsStr)
+	var topicsStr string
+	if isJSON {
+		// 在 JSON 字符串中，换行符需要转义为 \n
+		topicsStr = strings.Join(topicsLines, "\\n")
+	} else {
+		topicsStr = strings.Join(topicsLines, "\n")
+	}
+
+	// 替换占位符（同时兼容 {{...}} 与 [...]）
+	msg := template
+	replacements := []struct{ old, new string }{
+		{"{{consumer_group}}", alertReq.ConsumerGroup},
+		{"[consumer_group]", alertReq.ConsumerGroup},
+		{"[group]", alertReq.ConsumerGroup},
+		{"{{total_lag}}", fmt.Sprintf("%d", alertReq.TotalLag)},
+		{"[total_lag]", fmt.Sprintf("%d", alertReq.TotalLag)},
+		{"[lag]", fmt.Sprintf("%d", alertReq.TotalLag)},
+		{"{{threshold}}", fmt.Sprintf("%d", alertReq.Threshold)},
+		{"[threshold]", fmt.Sprintf("%d", alertReq.Threshold)},
+		{"{{timestamp}}", alertReq.Timestamp},
+		{"[timestamp]", alertReq.Timestamp},
+		{"{{topics}}", topicsStr},
+		{"[topics]", topicsStr},
+	}
+	for _, r := range replacements {
+		msg = strings.ReplaceAll(msg, r.old, r.new)
+	}
 
 	return msg, nil
 }

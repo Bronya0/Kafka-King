@@ -18,8 +18,10 @@
 package service
 
 import (
+	"app/backend/types"
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -551,3 +553,40 @@ func TestFakeOauthAndMskValidation(t *testing.T) {
 		t.Fatalf("expected msk tls error, got: %s", res.Err)
 	}
 }
+
+func TestPrepareAlertMessage(t *testing.T) {
+	req := types.AlertRequest{
+		ConsumerGroup: "my-group",
+		TotalLag:      150,
+		Threshold:     100,
+		Timestamp:     "2026-09-08 11:00:00",
+		TopicLags: []types.TopicAlertInfo{
+			{TopicName: "test-topic", Lag: 150},
+		},
+	}
+
+	// 1. 测试默认模板
+	msg, err := prepareAlertMessage(req, "")
+	if err != nil {
+		t.Fatalf("prepareAlertMessage default failed: %v", err)
+	}
+	if strings.Contains(msg, "{{consumer_group}}") || !strings.Contains(msg, "my-group") {
+		t.Fatalf("default template placeholder not replaced: %s", msg)
+	}
+
+	// 2. 测试 JSON 格式模板，确保换行转义且 JSON 仍然合法
+	jsonTemplate := `{"msgtype":"text","text":{"content":"group:[group]\nlag:[total_lag]\ntopics:[topics]"}}`
+	msg, err = prepareAlertMessage(req, jsonTemplate)
+	if err != nil {
+		t.Fatalf("prepareAlertMessage json failed: %v", err)
+	}
+	if !strings.Contains(msg, "my-group") || !strings.Contains(msg, "test-topic: 150") {
+		t.Fatalf("json template placeholder not replaced: %s", msg)
+	}
+	// 验证生成的消息是合法 JSON
+	var parsed map[string]any
+	if err := json.Unmarshal([]byte(msg), &parsed); err != nil {
+		t.Fatalf("generated alert message is invalid JSON: %v, content: %s", err, msg)
+	}
+}
+

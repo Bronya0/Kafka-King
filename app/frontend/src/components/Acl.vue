@@ -210,7 +210,7 @@ const deleteAcl = async (acl) => {
     if (res.err !== "") {
       message.error(res.err, {duration: 5000});
     } else {
-      message.success(t('message.deleteFinish'));
+      message.success(t('common.deleteFinish'));
     }
     await getAcls();
   } catch (e) {

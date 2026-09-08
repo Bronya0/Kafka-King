@@ -429,6 +429,7 @@ onUnmounted(() => {
   EventsOff("consumer-err")
   EventsOff("consumer-start")
   EventsOff("consumer-end")
+  streamEventsRegistered = false
 })
 
 

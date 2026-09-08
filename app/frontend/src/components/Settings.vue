@@ -87,7 +87,7 @@ const config = ref({
   width: 1248,
   height: 768,
   language: 'en-US',
-  theme: theme,
+  theme: theme.value,
 })
 const languageOptions = [
   {label: '中文', value: 'zh-CN'},
@@ -115,7 +115,7 @@ onMounted(async () => {
 
 
 const saveConfig = async () => {
-  config.value.theme = theme
+  config.value.theme = theme.value
   const err = await SaveConfig(config.value)
   if (err !== "") {
     message.error(t('message.saveErr') + "：" + err, {duration:  5000})

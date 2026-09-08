@@ -787,16 +787,15 @@ const mergeOffsets = () => {
     const v = partitions_data.value[k]
     const topic = v['topic']
     const partitions_num = v['partition']
-    if (topic in offsets.value.start_map) {
+    if (topic in offsets.value.start_map && offsets.value.start_map[topic]?.[partitions_num]) {
       v['StartOffset'] = offsets.value.start_map[topic][partitions_num]['At']
     }
-    if (topic in offsets.value.end_map) {
+    if (topic in offsets.value.end_map && offsets.value.end_map[topic]?.[partitions_num]) {
       v['EndOffset'] = offsets.value.end_map[topic][partitions_num]['At']
     }
-    if (topic in offsets.value.commit_map) {
+    if (topic in offsets.value.commit_map && offsets.value.commit_map[topic]?.[partitions_num]) {
       v['CommittedOffset'] = offsets.value.commit_map[topic][partitions_num]['At']
     }
-
   }
 
 }
