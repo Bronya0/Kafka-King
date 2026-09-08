@@ -51,6 +51,7 @@ export default {
     },
     conn: {
         title: "クラスタ",
+        click_to_connect: "クリックして接続",
         add: "クラスタを追加",
         edit: "接続を編集",
         test: "接続テスト",

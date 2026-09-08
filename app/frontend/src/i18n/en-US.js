@@ -51,6 +51,7 @@ export default {
     },
     conn: {
         title: "Cluster",
+        click_to_connect: "Click to connect",
         add: "Add Cluster",
         edit: "Edit Connection",
         test: "Test Connection",

@@ -233,7 +233,7 @@ function handleMenuSelect(key) {
 // 主题切换
 function themeChange(newTheme) {
   Theme.value = newTheme === lightTheme.name ? lightTheme : darkTheme
-  headerClass = newTheme === lightTheme.name ? "lightTheme" : "darkTheme"
+  headerClass.value = newTheme === lightTheme.name ? "lightTheme" : "darkTheme"
 }
 
 // naive ui language

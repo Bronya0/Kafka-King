@@ -51,6 +51,7 @@ export default {
     },
     conn: {
         title: '集群',
+        click_to_connect: '点击连接集群',
         add: '添加集群',
         edit: '编辑连接',
         test: '连接测试',

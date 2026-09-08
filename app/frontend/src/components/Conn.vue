@@ -52,6 +52,10 @@
                   {{ node.bootstrap_servers.length > 30 ? node.bootstrap_servers.substring(0, 30) + '...' : node.bootstrap_servers }}
                 </n-descriptions-item>
               </n-descriptions>
+              <div class="conn_card_hint">
+                <span>{{ t('conn.click_to_connect') }}</span>
+                <span class="conn_arrow">→</span>
+              </div>
             </n-card>
           </n-gi>
         </n-grid>
@@ -494,8 +498,75 @@ const SelectFile = async (key, pattern) => {
 </script>
 
 <style>
+.conn_card {
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.conn_card:hover {
+  transform: translateY(-3px);
+  border-color: #18a058 !important;
+  --n-border-color: #18a058 !important;
+  box-shadow: 0 6px 16px rgba(24, 160, 88, 0.16), 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.conn_card:hover .n-card-header__main {
+  color: #18a058;
+  transition: color 0.2s ease;
+}
+
+.conn_card:active {
+  transform: translateY(-1px);
+}
+
+.conn_card_hint {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #8c8c8c;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s ease;
+}
+
+.conn_card_hint .conn_arrow {
+  transition: transform 0.2s ease;
+}
+
+.conn_card:hover .conn_card_hint {
+  color: #18a058;
+}
+
+.conn_card:hover .conn_arrow {
+  transform: translateX(3px);
+}
 
 .lightTheme .conn_card {
-  background-color: #fafafc
+  background-color: #fafafc;
+}
+
+.lightTheme .conn_card:hover {
+  background-color: #ffffff;
+  border-color: #18a058 !important;
+  --n-border-color: #18a058 !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08), 0 0 0 1px #18a058;
+}
+
+.darkTheme .conn_card:hover {
+  border-color: #63e2b7 !important;
+  --n-border-color: #63e2b7 !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 8px rgba(99, 226, 183, 0.25);
+}
+
+.darkTheme .conn_card:hover .n-card-header__main {
+  color: #63e2b7;
+}
+
+.darkTheme .conn_card:hover .conn_card_hint {
+  color: #63e2b7;
 }
 </style>

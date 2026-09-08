@@ -51,6 +51,7 @@ export default {
     },
     conn: {
         title: "클러스터",
+        click_to_connect: "클릭하여 연결",
         add: "클러스터 추가",
         edit: "연결 편집",
         test: "연결 테스트",
