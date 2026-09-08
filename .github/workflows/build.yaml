@@ -8,7 +8,7 @@ env:
   NODE_OPTIONS: "--max-old-space-size=4096"
   APP_NAME: 'Kafka-King'
   APP_WORKING_DIRECTORY: 'app'
-  GO_VERSION: '1.24'
+  GO_VERSION: '1.25'
   NODE_VERSION: "22.x"
 
 # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -29,13 +29,13 @@ jobs:
         run: choco install 7zip
 
       - name: GoLang
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v6
         with:
           check-latest: true
           go-version: ${{ env.GO_VERSION }}
 
       - name: NodeJS
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -51,7 +51,7 @@ jobs:
           & "C:\Program Files\7-Zip\7z.exe" a -t7z "${{ env.APP_NAME }}-${{ github.ref_name }}-windows-x64.7z" ".\app\build\bin\*" -r
           
       - name: Upload
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: "*.7z"
           fail_on_unmatched_files: true
@@ -66,18 +66,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
       - name: GoLang
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v6
         with:
           check-latest: true
           go-version: ${{ env.GO_VERSION }}
 
       - name: NodeJS
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -105,7 +105,7 @@ jobs:
             "_build/"
 
       - name: Upload
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: | 
             ${{ env.APP_WORKING_DIRECTORY }}/_dist/*
@@ -121,18 +121,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
       - name: GoLang
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v6
         with:
           check-latest: true
           go-version: ${{ env.GO_VERSION }}
 
       - name: NodeJS
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -154,7 +154,7 @@ jobs:
           mv ${{ env.APP_NAME }}-${{ github.ref_name }}-ubuntu-x64.tar.gz ..
 
       - name: Upload Release Assets
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: "*.tar.gz"
           fail_on_unmatched_files: true
