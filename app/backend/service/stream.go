@@ -154,8 +154,8 @@ func (k *Service) StartStreamConsumer(streamID string, topic string, group strin
 		result.Err = "topic is required"
 		return result
 	}
-	if group == "" {
-		group = "__kafka_king_auto_generate__"
+	if group == "__kafka_king_auto_generate__" {
+		group = ""
 	}
 	if streamID == "" {
 		streamID = uuid.NewString()
@@ -278,7 +278,7 @@ func (k *Service) streamLoop(inst *StreamInstance, streamCtx context.Context, nu
 			if len(rows) > 0 {
 				k.emitEvent("consumer-msg", streamMsgEvent{ID: inst.ID, Rows: rows})
 			}
-			if isCommit {
+			if isCommit && inst.Group != "" {
 				// 提交跟随 streamCtx：停流时取消；单次提交限制 15s，避免 broker 不可达时无限重试
 				commitCtx, commitCancel := context.WithTimeout(streamCtx, 15*time.Second)
 				if err := inst.client.CommitUncommittedOffsets(commitCtx); err != nil {

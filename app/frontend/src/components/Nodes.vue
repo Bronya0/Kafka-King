@@ -43,12 +43,12 @@
           <template #tab>
             {{ t('node.logdirs') }}
           </template>
-          <n-flex vertical>
+          <n-flex vertical style="text-align: left;">
             <n-flex align="center">
               <n-button @click="getLogDirs" :render-icon="renderIcon(RefreshOutlined)">{{ t('common.refresh') }}
               </n-button>
             </n-flex>
-            <n-text depth="3">{{ t('node.logdirsTip') }}</n-text>
+            <n-text depth="3" style="text-align: left; display: block;">{{ t('node.logdirsTip') }}</n-text>
             <n-data-table
                 :columns="refColumns(logdir_columns)"
                 :data="logdir_data"
@@ -57,7 +57,7 @@
                 striped
                 :pagination="pagination"
             />
-            <n-text depth="3">{{ t('node.logdirsPartitions') }}</n-text>
+            <n-text depth="3" style="text-align: left; display: block;">{{ t('node.logdirsPartitions') }}</n-text>
             <n-data-table
                 :columns="refColumns(logdir_partition_columns)"
                 :data="logdir_partitions"

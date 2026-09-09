@@ -36,7 +36,6 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/google/uuid"
 	"github.com/twmb/franz-go/pkg/kerr"
 	"github.com/twmb/franz-go/pkg/kmsg"
 	"github.com/twmb/franz-go/pkg/sasl/aws"
@@ -1087,8 +1086,8 @@ func (k *Service) Consumer(topic string, group string, num, timeout int, decompr
 		result.Err = "topic is required"
 		return result
 	}
-	if group == "" {
-		group = "__kafka_king_auto_generate__"
+	if group == "__kafka_king_auto_generate__" {
+		group = ""
 	}
 
 	// 缓存 key：任何影响 client 配置的参数都参与
@@ -1187,20 +1186,22 @@ func (k *Service) Consumer(topic string, group string, num, timeout int, decompr
 
 // newConsumerClient 创建一个用于消费（单次或流式）的 kgo client。
 // 与主 client（k.client）分离，关闭互不影响。
+// group 为空时采用 Direct Consume 独立直连消费，不向 Kafka 注册消费组。
 func (k *Service) newConsumerClient(topic string, group string, isolationLevel string, isLatest bool, startTimestamp int, startOffset int64) (*kgo.Client, error) {
 	if group == "__kafka_king_auto_generate__" {
-		group = "__kafka_king__" + uuid.New().String()
+		group = ""
 	}
 	conf := append(k.config,
 		kgo.ConsumeTopics(topic),
-		kgo.DisableAutoCommit(),
 	)
 	if strings.ToLower(isolationLevel) == "read_committed" {
 		conf = append(conf, kgo.FetchIsolationLevel(kgo.ReadCommitted()))
 	} else {
 		conf = append(conf, kgo.FetchIsolationLevel(kgo.ReadUncommitted()))
 	}
-	conf = append(conf, kgo.ConsumerGroup(group))
+	if group != "" {
+		conf = append(conf, kgo.ConsumerGroup(group), kgo.DisableAutoCommit())
+	}
 
 	switch {
 	case startOffset > 0:

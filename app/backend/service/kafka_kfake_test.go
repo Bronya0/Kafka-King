@@ -177,6 +177,13 @@ func TestFakeProduceConsume(t *testing.T) {
 		t.Fatalf("expected fewer messages after offset jump, got %d", len(res.Results))
 	}
 
+	// 无消费组直接消费（Standalone / Direct Consume）
+	res = s.Consumer("topic-c", "", 100, 10, "", "read_uncommitted", false, false, 0, 0, "utf8")
+	mustOk(t, "Consumer empty group", res.Err)
+	if len(res.Results) != 12 {
+		t.Fatalf("expected 12 messages with empty group, got %d", len(res.Results))
+	}
+
 }
 
 func TestFakeGzipRoundTrip(t *testing.T) {

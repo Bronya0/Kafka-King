@@ -29,7 +29,6 @@
     <!-- 查询条件区域 -->
     <n-form ref="formRef" :model="select" :rules="{
       selectedTopic: { required: true, trigger: 'blur' },
-      selectedGroup: { required: true, trigger: 'blur' },
       maxMessages: { required: true, type: 'number', trigger: 'blur' },
     }" inline label-placement="top" label-width="auto" style="text-align: left;">
 
@@ -52,9 +51,9 @@
         <n-tooltip>
           <template #trigger>
             <n-select v-model:value="select.selectedGroup" :options="group_data" :render-option="renderSelect" clearable
-              filterable style="max-width: 200px" tag />
+              filterable style="max-width: 220px" tag :placeholder="t('consumer.noGroupPlaceholder')" />
           </template>
-          support create
+          {{ t('consumer.groupTooltip') }}
         </n-tooltip>
       </n-form-item>
 
@@ -160,12 +159,12 @@
       <n-form-item label="Commit Offset" path="isCommit">
         <n-tooltip>
           <template #trigger>
-            <n-switch v-model:value="select.isCommit" :checked-value=true :round="false" :unchecked-value=false>
+            <n-switch v-model:value="select.isCommit" :disabled="!select.selectedGroup" :checked-value=true :round="false" :unchecked-value=false>
               <template #unchecked>false</template>
               <template #checked>true</template>
             </n-switch>
           </template>
-          {{ t('consumer.commitOffsetTooltip') }}
+          {{ select.selectedGroup ? t('consumer.commitOffsetTooltip') : t('consumer.commitOffsetDisabledTip') }}
         </n-tooltip>
       </n-form-item>
 
@@ -200,7 +199,7 @@
           <span style="display:inline-block;width:8px;height:8px;border-radius:50%;"
             :style="{ background: s.running ? '#18a058' : '#ccc' }" />
         </template>
-        {{ s.topic }} @ {{ s.group }}
+        {{ s.topic }} @ {{ s.group || t('consumer.noGroup') }}
       </n-tag>
     </n-flex>
 
@@ -282,7 +281,7 @@ const advancedOptionsCollapsed = ref(true)
 // 表单数据
 const select = ref({
   selectedTopic: null,
-  selectedGroup: "__kafka_king_auto_generate__",
+  selectedGroup: null, // 默认无消费组（直连模式）
   maxMessages: 100,
   timeout: 5,
   isCommit: false,
@@ -386,12 +385,19 @@ const selectNode = async (node) => {
   await getData()
 }
 
+// 当消费组清空（无消费组模式）时，自动关闭提交 Offset 开关
+watch(() => select.value.selectedGroup, (val) => {
+  if (!val) {
+    select.value.isCommit = false
+  }
+})
+
 // 消费参数变更时持久化到 localStorage
 const CACHE_PARAMS_KEY = 'kafkaKing:consumer:params:'
 watch(() => select.value, (val) => {
-  if (currentConnectName && val.selectedGroup) {
+  if (currentConnectName) {
     const cache = {
-      selectedGroup: val.selectedGroup,
+      selectedGroup: val.selectedGroup || null,
       maxMessages: val.maxMessages,
       timeout: val.timeout,
     }
@@ -463,8 +469,8 @@ const getData = async () => {
       message.error(res2.err, { duration: 5000 })
     } else {
       let groups = [{
-        label: '(auto generate)',
-        value: '__kafka_king_auto_generate__',
+        label: t('consumer.noGroupOption'),
+        value: '',
       }]
       for (const k in res2.results) {
         const g_data = res2.results[k]
@@ -476,7 +482,11 @@ const getData = async () => {
           Coordinator: g_data['Coordinator'],
         })
       }
-      groups.sort((a, b) => a['label'] > b['label'] ? 1 : -1)
+      groups.sort((a, b) => {
+        if (a.value === '') return -1
+        if (b.value === '') return 1
+        return a['label'] > b['label'] ? 1 : -1
+      })
       group_data.value = groups
 
       // 恢复上次的消费参数（消费组、数量、超时）
@@ -485,8 +495,10 @@ const getData = async () => {
         if (cached) {
           try {
             const params = JSON.parse(cached)
-            if (params.selectedGroup && groups.some(g => g.value === params.selectedGroup)) {
+            if (params.selectedGroup && params.selectedGroup !== '__kafka_king_auto_generate__' && groups.some(g => g.value === params.selectedGroup)) {
               select.value.selectedGroup = params.selectedGroup
+            } else {
+              select.value.selectedGroup = null
             }
             if (typeof params.maxMessages === 'number') {
               select.value.maxMessages = params.maxMessages
@@ -600,19 +612,15 @@ const consume = async () => {
     message.error(t('message.selectTopic'), { duration: 5000 })
     return
   }
-  if (!select.value.selectedGroup) {
-    message.error("Group is needed", { duration: 5000 })
-    return
-  }
   loading.value = true
   try {
-    // 如果是首次消费，显示提示
-    if (isFirstConsume.value) {
+    // 如果是首次消费且指定了消费组，显示重平衡提示
+    if (isFirstConsume.value && select.value.selectedGroup) {
       message.info(t('consumer.firstConsumeTip'))
       isFirstConsume.value = false
     }
 
-    const result = await Consumer(select.value.selectedTopic, select.value.selectedGroup,
+    const result = await Consumer(select.value.selectedTopic, select.value.selectedGroup || "",
       select.value.maxMessages, select.value.timeout, select.value.decompress,
       select.value.isolationLevel,
       select.value.isCommit, select.value.isLatest, select.value.startTimestamp,
@@ -730,16 +738,12 @@ async function startStream() {
     message.error(t('message.selectTopic'), { duration: 5000 })
     return
   }
-  if (!select.value.selectedGroup) {
-    message.error("Group is needed", { duration: 5000 })
-    return
-  }
   streamStarting.value = true
 
   try {
     const result = await StartStreamConsumer(
       newStreamID(),
-      select.value.selectedTopic, select.value.selectedGroup,
+      select.value.selectedTopic, select.value.selectedGroup || "",
       select.value.maxMessages, select.value.timeout, select.value.decompress,
       select.value.isolationLevel,
       select.value.isCommit, select.value.isLatest,
