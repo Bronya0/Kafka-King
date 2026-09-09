@@ -678,8 +678,9 @@ const getTopicDetail = async (topic) => {
     console.log(activeTab.value)
   } catch (e) {
     message.error(e.message, {duration:  5000})
+  } finally {
+    loading.value = false
   }
-  loading.value = false
 
 }
 

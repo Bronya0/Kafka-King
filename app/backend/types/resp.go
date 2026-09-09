@@ -59,6 +59,8 @@ type Connect struct {
 	SaslMechanism       string `json:"sasl_mechanism"`
 	SaslUser            string `json:"sasl_user"`
 	SaslPwd             string `json:"sasl_pwd"`
+	SaslSessionToken    string `json:"sasl_session_token"`
+	UseKerberos         string `json:"use_kerberos"`
 	KerberosUserKeytab  string `json:"kerberos_user_keytab"`
 	KerberosKrb5Conf    string `json:"kerberos_krb5_conf"`
 	KerberosUser        string `json:"Kerberos_user"`

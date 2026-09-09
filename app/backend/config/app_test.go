@@ -42,7 +42,7 @@ func TestExportImportConnects(t *testing.T) {
 		Height: 768,
 		Theme:  "darkTheme",
 		Connects: []types.Connect{
-			{Id: 1, Name: "prod", BootstrapServers: "b1:9092,b2:9092", Sasl: "enable", SaslMechanism: "SCRAM-SHA-512", SaslUser: "u", SaslPwd: "p"},
+			{Id: 1, Name: "prod", BootstrapServers: "b1:9092,b2:9092", Sasl: "enable", SaslMechanism: "SCRAM-SHA-512", SaslUser: "u", SaslPwd: "p", SaslSessionToken: "token123", UseKerberos: "enable"},
 			{Id: 2, Name: "dev", BootstrapServers: "localhost:9092"},
 		},
 	}
@@ -84,7 +84,7 @@ func TestExportImportConnects(t *testing.T) {
 			prod = &got.Connects[i]
 		}
 	}
-	if prod == nil || prod.SaslPwd != "p" || prod.BootstrapServers != "b1:9092,b2:9092" {
+	if prod == nil || prod.SaslPwd != "p" || prod.BootstrapServers != "b1:9092,b2:9092" || prod.SaslSessionToken != "token123" || prod.UseKerberos != "enable" {
 		t.Fatalf("imported prod conn fields lost: %+v", prod)
 	}
 

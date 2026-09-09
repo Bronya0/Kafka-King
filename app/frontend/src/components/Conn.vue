@@ -376,9 +376,9 @@ const exportConnects = async () => {
   let path
   try {
     path = await SaveFileDialog({
-      title: t('conn.exportConn'),
-      defaultFilename: 'kafka-king-connections.yaml',
-      filters: [{name: 'YAML', extensions: ['yaml', 'yml']}],
+      Title: t('conn.exportConn'),
+      DefaultFilename: 'kafka-king-connections.yaml',
+      Filters: [{DisplayName: 'YAML (*.yaml;*.yml)', Pattern: '*.yaml;*.yml'}],
     })
   } catch (e) {
     message.error(e.message, {duration: 5000})
@@ -398,8 +398,8 @@ const importConnects = async () => {
   let path
   try {
     path = await OpenFileDialog({
-      title: t('conn.importConn'),
-      filters: [{name: 'YAML/JSON', extensions: ['yaml', 'yml', 'json']}],
+      Title: t('conn.importConn'),
+      Filters: [{DisplayName: 'YAML/JSON (*.yaml;*.yml;*.json)', Pattern: '*.yaml;*.yml;*.json'}],
     })
   } catch (e) {
     message.error(e.message, {duration: 5000})

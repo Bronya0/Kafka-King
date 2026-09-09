@@ -146,7 +146,7 @@ func (k *Service) StartStreamConsumer(streamID string, topic string, group strin
 		num = streamBatchSize
 	}
 
-	if k.kac == nil {
+	if k.adminClient() == nil {
 		result.Err = common.PleaseSelectErr
 		return result
 	}
