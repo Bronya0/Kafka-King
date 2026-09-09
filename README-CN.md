@@ -41,6 +41,15 @@
 - [x] topic、分区健康检查（完成）
 - [x] 支持查看消费者组、消费者
 - [x] offset巡检报表
+- [x] Schema Registry 支持：Subject/版本管理、兼容性设置，以及 Avro、JSON、Protobuf 格式消息解码
+- [x] 多路流式消费：支持多路长连接实时消费、倒序查看、多标签管理与 Offset 自动/手动提交
+- [x] 消费组 Offset 重置：支持按 Start（最早）、End（最新）、时间戳或指定 Offset 灵活重置
+- [x] 消息清理（DeleteRecords）：支持清理指定分区或全部分区至指定水位，支持一键清空全部消息
+- [x] 分区副本重分配：可视化查看并调整副本分布，支持取消正在进行的重分配
+- [x] 集群节点增强：Broker Controller 标记、LogDirs 磁盘目录占用分析、客户端 Quotas 配额管理
+- [x] 连接配置导入与导出：全部集群连接配置一键导出为 YAML，支持从 YAML/JSON 智能导入与合并
+- [x] 认证支持扩展：支持 OAUTHBEARER（静态 Token）、AWS MSK IAM 认证及 SSH 跳板机隧道多 Broker 代理
+- [x] 消息回放与导出：支持将选中的历史消息一键重放至其他 Topic，支持消息导出为 JSON/CSV
 
 # 下载
 - 方法1：右侧下载，或者点[下载地址](https://github.com/Bronya0/Kafka-King/releases)，展开【Assets】，选择自己的平台下载，支持windows、macos、linux（一般用不到）。
@@ -106,6 +115,7 @@ Apache-2.0 license
 | 项目名称 | 描述 | Star & Download |
 | --- | --- | --- |
 | [**Kafka-King**](https://github.com/Bronya0/Kafka-King) | 一个现代且实用的Kafka GUI客户端 | [![GitHub Stars](https://img.shields.io/github/stars/Bronya0/Kafka-King.svg?style=flat-square)](https://github.com/Bronya0/Kafka-King) [![GitHub Downloads](https://img.shields.io/github/downloads/Bronya0/Kafka-King/total.svg?style=flat-square)](https://github.com/Bronya0/Kafka-King/releases) |
+| [**ally-agent**](https://github.com/Bronya0/ally-agent) | 开源桌面级 AI 编程/开发助手 | [![GitHub Stars](https://img.shields.io/github/stars/Bronya0/ally-agent.svg?style=flat-square)](https://github.com/Bronya0/ally-agent) [![GitHub Downloads](https://img.shields.io/github/downloads/Bronya0/ally-agent/total.svg?style=flat-square)](https://github.com/Bronya0/ally-agent/releases) |
 | [**ES-King**](https://github.com/Bronya0/ES-King) | 一个现代、实用的Elasticsearch本地客户端 | [![GitHub Stars](https://img.shields.io/github/stars/Bronya0/ES-King.svg?style=flat-square)](https://github.com/Bronya0/ES-King) [![GitHub Downloads](https://img.shields.io/github/downloads/Bronya0/ES-King/total.svg?style=flat-square)](https://github.com/Bronya0/ES-King/releases) |
 | [**Tab-King**](https://github.com/Bronya0/Tab-King) | 功能强大的浏览器自定义新标签页扩展 | [edge商店](https://microsoftedge.microsoft.com/addons/detail/tab-king/gjfaiiokimilnlmifafjhhcmjeakmmdf) | [![GitHub Stars](https://img.shields.io/github/stars/Bronya0/Tab-King.svg?style=flat-square)](https://github.com/Bronya0/Tab-King) [![GitHub Downloads](https://img.shields.io/github/downloads/Bronya0/Tab-King/total.svg?style=flat-square)](https://github.com/Bronya0/Tab-King/releases)
 | [**epub-merge**](https://github.com/Bronya0/epub-merge) | epub合并工具 | [![GitHub Stars](https://img.shields.io/github/stars/Bronya0/epub-merge.svg?style=flat-square)](https://github.com/Bronya0/epub-merge) [![GitHub Downloads](https://img.shields.io/github/downloads/Bronya0/epub-merge/total.svg?style=flat-square)](https://github.com/Bronya0/epub-merge/releases) |

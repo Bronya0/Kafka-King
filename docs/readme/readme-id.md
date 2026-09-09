@@ -38,6 +38,15 @@ Proyek ini adalah klien GUI Kafka yang kompatibel dengan berbagai sistem desktop
 - [x] Pemeriksaan kesehatan topic dan partisi (selesai).
 - [x] Lihat grup konsumen dan konsumen individu.
 - [x] Laporan inspeksi offset.
+- [x] Dukungan Schema Registry: Manajemen Subject/versi, konfigurasi kompatibilitas, dekode pesan Avro, JSON, Protobuf.
+- [x] Konsumsi streaming multi-instance: Streaming pesan real-time, urutan terbalik, manajemen tab, dan commit offset.
+- [x] Reset offset grup konsumen: Reset ke Start (paling awal), End (terbaru), timestamp, atau offset tertentu.
+- [x] Penghapusan pesan (DeleteRecords): Hapus pesan berdasarkan partisi atau seluruh topik hingga offset target.
+- [x] Realokasi replika partisi: Inspeksi dan penyesuaian replika partisi secara visual, dengan dukungan pembatalan.
+- [x] Peningkatan inspeksi node: Penanda Controller, analisis penggunaan ruang disk LogDirs, manajemen kuota client.
+- [x] Impor & ekspor koneksi: Ekspor koneksi ke YAML, impor dari YAML/JSON dengan deduplikasi pintar.
+- [x] Autentikasi yang diperluas: Dukungan OAUTHBEARER (token statis), AWS MSK IAM, dan SSH tunneling multi-broker.
+- [x] Pemutaran ulang & ekspor pesan: Kirim ulang pesan terpilih ke topik lain, ekspor pesan ke JSON/CSV.
 
 # Unduh
 Unduh dari sisi kanan atau kunjungi [halaman rilis](https://github.com/Bronya0/Kafka-King/releases). Buka 【Assets】 dan pilih versi yang sesuai dengan platform Anda: Windows, macOS, Linux.

@@ -38,6 +38,15 @@ Este projeto é um cliente GUI de Kafka compatível com vários sistemas desktop
 - [x] Verificação de saúde de topics e partições (concluído).
 - [x] Visualização de grupos de consumidores e consumidores individuais.
 - [x] Relatório de inspeção de offsets.
+- [x] Suporte ao Schema Registry: gerenciamento de subjects/versões, compatibilidade e decodificação Avro, JSON e Protobuf.
+- [x] Consumo em streaming múltiplo: streaming em tempo real, ordenação reversa, abas e commit de offsets.
+- [x] Redefinição de offsets de grupos: redefinir para Start (mais antigo), End (mais recente), timestamp ou offset específico.
+- [x] Limpeza de mensagens (DeleteRecords): exclusão de mensagens por partição ou em todo o tópico até o offset indicado.
+- [x] Reatribuição de réplicas de partição: inspeção visual e ajuste de réplicas, com suporte para cancelamento.
+- [x] Inspeção aprimorada de nós: indicador de Controller, análise de espaço em disco LogDirs e gestão de cotas de clientes.
+- [x] Importação e exportação de conexões: exportação para YAML e importação de YAML/JSON com desduplicação inteligente.
+- [x] Autenticação estendida: suporte a OAUTHBEARER (token estático), AWS MSK IAM e túnel SSH para múltiplos brokers.
+- [x] Reprodução e exportação de mensagens: reenviar mensagens selecionadas para outros tópicos e exportação em JSON/CSV.
 
 # Download
 Baixe pelo lado direito ou visite a [página de releases](https://github.com/Bronya0/Kafka-King/releases). Expanda 【Assets】 e escolha a versão adequada para sua plataforma: Windows, macOS, Linux.

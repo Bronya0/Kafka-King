@@ -38,6 +38,15 @@ Ce projet est un client GUI Kafka compatible avec tous les systèmes de bureau (
 - [x] Vérification de l'état des topics et partitions (terminé).
 - [x] Affichage des groupes de consommateurs et des consommateurs individuels.
 - [x] Rapport d'inspection des offsets.
+- [x] Prise en charge de Schema Registry : gestion des sujets et versions, compatibilité, décodage Avro, JSON et Protobuf.
+- [x] Consommation en streaming multiple : streaming en temps réel, tri inversé, onglets multiples et commit d'offsets.
+- [x] Réinitialisation des offsets de groupes : réinitialisation au début (Start), à la fin (End), par horodatage ou offset spécifique.
+- [x] Purge de messages (DeleteRecords) : suppression de messages par partition ou sur tout le topic jusqu'à un offset donné.
+- [x] Réassignation des répliques de partitions : inspection et ajustement visuel des répliques, annulation des tâches en cours.
+- [x] Vue des nœuds enrichie : indicateur de Controller, analyse de l'espace disque LogDirs et gestion des quotas clients.
+- [x] Import/Export des connexions : exportation au format YAML et importation depuis YAML/JSON avec déduplication.
+- [x] Authentification étendue : prise en charge d'OAUTHBEARER (jeton statique), AWS MSK IAM et tunnels SSH multi-brokers.
+- [x] Rejeu et exportation de messages : renvoi de messages sélectionnés vers d'autres topics et export en JSON/CSV.
 
 # Téléchargement
 Téléchargez depuis la droite ou visitez la [page des versions](https://github.com/Bronya0/Kafka-King/releases). Développez 【Assets】 et choisissez la version adaptée à votre plateforme : Windows, macOS, Linux.

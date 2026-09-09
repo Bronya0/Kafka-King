@@ -38,6 +38,15 @@ Dự án này là một GUI client Kafka, tương thích với nhiều hệ đi�
 - [x] Kiểm tra sức khỏe topic và partition (hoàn tất).
 - [x] Xem nhóm consumer và consumer riêng lẻ.
 - [x] Báo cáo kiểm tra offset.
+- [x] Hỗ trợ Schema Registry: Quản lý Subject/phiên bản, cấu hình tương thích, giải mã tin nhắn Avro, JSON, Protobuf.
+- [x] Tiêu thụ luồng đa phiên (Streaming): Nhận tin nhắn thời gian thực, hiển thị đảo ngược, quản lý tab và commit offset.
+- [x] Đặt lại offset nhóm tiêu thụ: Hỗ trợ đặt lại về Start (sớm nhất), End (mới nhất), timestamp hoặc offset cụ thể.
+- [x] Xóa tin nhắn (DeleteRecords): Xóa tin nhắn theo phân vùng hoặc toàn bộ topic đến offset chỉ định.
+- [x] Phân bổ lại bản sao phân vùng: Trực quan hóa và điều chỉnh bản sao phân vùng, hỗ trợ hủy tác vụ đang chạy.
+- [x] Nâng cấp thông tin node: Đánh dấu Controller, phân tích dung lượng đĩa LogDirs, quản lý hạn ngạch (Quotas) client.
+- [x] Nhập & xuất cấu hình kết nối: Xuất kết nối ra YAML, nhập từ YAML/JSON với khả năng khử trùng lặp thông minh.
+- [x] Mở rộng xác thực: Hỗ trợ OAUTHBEARER (token tĩnh), AWS MSK IAM và đường hầm SSH cho nhiều broker.
+- [x] Phát lại & xuất tin nhắn: Gửi lại tin nhắn đã chọn sang topic khác, xuất tin nhắn dưới dạng JSON/CSV.
 
 # Tải xuống
 Tải từ phía bên phải hoặc truy cập [trang release](https://github.com/Bronya0/Kafka-King/releases). Mở rộng 【Assets】 và chọn phiên bản phù hợp với nền tảng của bạn: Windows, macOS, Linux.

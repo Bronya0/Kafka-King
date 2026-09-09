@@ -23,6 +23,7 @@ English | <a href="README-CN.md">简体中文</a> | <a href="docs/readme/readme-
 This project is a kafka GUI client, adapted to various desktop systems (except Win7), supports kafka 0.8.0 to 3.8+ ，Based on [Wails](https://github.com/wailsapp/wails) and [franz-go](https://github.com/twmb/franz-go).
 
 > Another:
+> - AI Coding Agent: [ally-agent](https://github.com/Bronya0/ally-agent)
 > - ES Client: https://github.com/Bronya0/ES-King
 > - HDFS Client：https://github.com/Bronya0/HDFS-King
 
@@ -41,6 +42,15 @@ This project is a kafka GUI client, adapted to various desktop systems (except W
 - [x] Topic and partition health checks (completed).
 - [x] View consumer groups and individual consumers.
 - [x] Offset inspection reports.
+- [x] Schema Registry support: Subject and version management, compatibility configuration, and Avro, JSON, Protobuf message decoding.
+- [x] Multi-instance streaming consumption: Real-time message streaming with reverse ordering, tab management, and manual/auto offset commit.
+- [x] Consumer group offset reset: Support resetting to Start (earliest), End (latest), specific timestamp, or explicit offset.
+- [x] Message purge (DeleteRecords): Delete records up to target offsets for specific or all partitions, with full purge support.
+- [x] Partition replica reassignment: Visual inspection and adjustment of partition replicas, with cancellation support.
+- [x] Enhanced node inspection: Broker Controller indicator, LogDirs disk space usage analysis, and client Quotas management.
+- [x] Connection import & export: Export connections to YAML, and import from YAML/JSON with smart deduplication.
+- [x] Extended authentication: Support OAUTHBEARER (static token), AWS MSK IAM, and multi-broker SSH tunneling.
+- [x] Message replay & export: Re-produce selected messages to other topics, and export messages as JSON/CSV.
 
 # Download
 Download from the right side or visit the [release page](https://github.com/Bronya0/Kafka-King/releases). Expand 【Assets】and choose the version suitable for your platform, supporting Windows, macOS, Linux.
@@ -90,6 +100,7 @@ Fix or add new language：https://github.com/Bronya0/Kafka-King/issues/51
 | 项目名称 | 描述 | Star & Download |
 | --- | --- | --- |
 | [**Kafka-King**](https://github.com/Bronya0/Kafka-King) | 一个现代且实用的Kafka GUI客户端 | [![GitHub Stars](https://img.shields.io/github/stars/Bronya0/Kafka-King.svg?style=flat-square)](https://github.com/Bronya0/Kafka-King) [![GitHub Downloads](https://img.shields.io/github/downloads/Bronya0/Kafka-King/total.svg?style=flat-square)](https://github.com/Bronya0/Kafka-King/releases) |
+| [**ally-agent**](https://github.com/Bronya0/ally-agent) | 开源桌面级 AI 编程/开发助手 | [![GitHub Stars](https://img.shields.io/github/stars/Bronya0/ally-agent.svg?style=flat-square)](https://github.com/Bronya0/ally-agent) [![GitHub Downloads](https://img.shields.io/github/downloads/Bronya0/ally-agent/total.svg?style=flat-square)](https://github.com/Bronya0/ally-agent/releases) |
 | [**ES-King**](https://github.com/Bronya0/ES-King) | 一个现代、实用的Elasticsearch本地客户端 | [![GitHub Stars](https://img.shields.io/github/stars/Bronya0/ES-King.svg?style=flat-square)](https://github.com/Bronya0/ES-King) [![GitHub Downloads](https://img.shields.io/github/downloads/Bronya0/ES-King/total.svg?style=flat-square)](https://github.com/Bronya0/ES-King/releases) |
 | [**Tab-King**](https://github.com/Bronya0/Tab-King) | 功能强大的浏览器自定义新标签页扩展 | [edge商店](https://microsoftedge.microsoft.com/addons/detail/tab-king/gjfaiiokimilnlmifafjhhcmjeakmmdf) | [![GitHub Stars](https://img.shields.io/github/stars/Bronya0/Tab-King.svg?style=flat-square)](https://github.com/Bronya0/Tab-King) [![GitHub Downloads](https://img.shields.io/github/downloads/Bronya0/Tab-King/total.svg?style=flat-square)](https://github.com/Bronya0/Tab-King/releases)
 | [**epub-merge**](https://github.com/Bronya0/epub-merge) | epub合并工具 | [![GitHub Stars](https://img.shields.io/github/stars/Bronya0/epub-merge.svg?style=flat-square)](https://github.com/Bronya0/epub-merge) [![GitHub Downloads](https://img.shields.io/github/downloads/Bronya0/epub-merge/total.svg?style=flat-square)](https://github.com/Bronya0/epub-merge/releases) |
