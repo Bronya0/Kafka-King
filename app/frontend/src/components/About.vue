@@ -35,9 +35,22 @@
         </n-button>
       </n-form-item>
       <n-form-item :label="t('about.newProject')">
-        <n-button @click="BrowserOpenURL(ally_agent_url)" :render-icon="renderIcon(HouseTwotone)">
-          {{ t('about.allyAgent') }} Github
-        </n-button>
+        <n-card size="small" hoverable style="max-width: 500px; border-radius: 8px;">
+          <n-flex vertical size="small">
+            <n-flex justify="space-between" align="center">
+              <n-flex align="center" size="small">
+                <span style="font-weight: bold; font-size: 14px;">{{ t('about.allyAgent') }}</span>
+                <n-tag type="info" size="small" round :bordered="false">{{ t('about.allyAgentTag') }}</n-tag>
+              </n-flex>
+              <n-button type="primary" secondary size="small" @click="BrowserOpenURL(ally_agent_url)" :render-icon="renderIcon(HouseTwotone)">
+                GitHub
+              </n-button>
+            </n-flex>
+            <n-text depth="3" style="font-size: 13px; line-height: 1.6;">
+              {{ t('about.allyAgentDesc') }}
+            </n-text>
+          </n-flex>
+        </n-card>
       </n-form-item>
       <n-form-item :label="t('about.technicalGroup')">
         <n-button :focusable="false" @click="openUrl(qq_url)">
@@ -54,7 +67,7 @@
 </template>
 
 <script setup>
-import {NButton, NForm, NFormItem,} from 'naive-ui'
+import {NButton, NCard, NFlex, NForm, NFormItem, NTag, NText} from 'naive-ui'
 import {BrowserOpenURL} from "../../wailsjs/runtime";
 import {openUrl, renderIcon} from "../utils/common";
 import {HouseTwotone} from '@vicons/material'

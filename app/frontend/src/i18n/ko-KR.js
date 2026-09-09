@@ -273,8 +273,10 @@ export default {
         "kafkaKing": "Kafka-King",
         "esClient": "동일한 ES 클라이언트",
         "esKing": "ES-King",
-        "newProject": "새 프로젝트",
+        "newProject": "추천 프로젝트",
         "allyAgent": "Ally Agent",
+        "allyAgentTag": "AI 코딩 어시스턴트",
+        "allyAgentDesc": "로컬 프로젝트를 위한 오픈소스 데스크톱 AI 코딩 어시스턴트입니다. 대화를 통해 코드 이해, 파일 편집, 작업 관리 및 개발을 지원합니다。",
         "technicalGroup": "기술 교류 그룹",
         "qqGroup": "QQ 교류 그룹",
         "translate": "번역: '번역에 문제가 있나요? 신고 또는 번역 참여'"
